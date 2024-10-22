@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["RManLuo <34737002+RManLuo@users.noreply.github.com>"]
 readme = "README.md"
+packages = [{include = "deep_graphrag"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -28,6 +29,13 @@ priority = "explicit"
 name = "pyg-gpu"
 url = "https://data.pyg.org/whl/torch-2.4.0+cu124.html"
 priority = "explicit"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
+types-pyyaml = "^6.0.12.20240917"
+mypy = "^1.12.1"
+pytest = "^8.3.3"
 
 [build-system]
 requires = ["poetry-core"]

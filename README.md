@@ -11,3 +11,9 @@ conda activate deep_graphrag
 poetry install
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
 ```
+
+### For development
+Install pre-commit hooks
+```bash
+pre-commit install
+```
