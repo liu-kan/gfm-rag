@@ -17,3 +17,15 @@ Install pre-commit hooks
 ```bash
 pre-commit install
 ```
+
+## Workflow
+
+### Stage1: KG Construction
+
+### Stage2: Deep GraphRAG Training
+
+Unsupervised training on the constructed KG.
+
+```bash
+python workflow/stage2_kg_pretraining.py
+```
