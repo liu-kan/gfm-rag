@@ -48,6 +48,7 @@ jobs:
       #----------------------------------------------
       - name: Run quality checks
         run: |
+          mkdir .mypy_cache/
           source .venv/bin/activate
           pre-commit run --all-files
       #----------------------------------------------
