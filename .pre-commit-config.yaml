@@ -4,7 +4,7 @@
 #   pre-commit autoupdate
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v5.0.0
     hooks:
     -   id: check-ast
     -   id: check-byte-order-marker
@@ -18,28 +18,28 @@ repos:
     -   id: trailing-whitespace
     -   id: mixed-line-ending
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+    rev: v1.12.1
     hooks:
     -   id: mypy
-        args: [--ignore-missing-imports, --explicit-package-bases, --install-types, --non-interactive, --disallow-untyped-defs]
+        args: [--ignore-missing-imports, --install-types, --non-interactive]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.2
+    rev: v0.7.0
     hooks:
     -   id: ruff
-        args: [--fix]
+        args: [--fix, --unsafe-fixes]
     -   id: ruff-format
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.1
+    rev: v3.19.0
     hooks:
     -   id: pyupgrade
         args: [--py310-plus]
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.8.0
+    rev: 1.19.0
     hooks:
     -   id: blacken-docs
-        additional_dependencies: [black==20.8b1]
+        additional_dependencies: [black>=22.1]
 -   repo: https://github.com/python-poetry/poetry
-    rev: 1.6.1
+    rev: 1.8.0
     hooks:
     -   id: poetry-check
         args: [--lock]
