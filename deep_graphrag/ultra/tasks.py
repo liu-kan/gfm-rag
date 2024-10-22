@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from functools import reduce
 
 import torch

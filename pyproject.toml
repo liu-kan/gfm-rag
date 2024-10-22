@@ -40,10 +40,6 @@ types-pyyaml = "^6.0.12.20240917"
 mypy = "^1.12.1"
 pytest = "^8.3.3"
 
-[tool.mypy]
-mypy_path = "./deep_graphrag"
-cache_dir = "~/.mypy_cache"
-
 [tool.ruff]
 exclude = ['deep_graphrag/ultra']
 

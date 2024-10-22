@@ -35,7 +35,7 @@ def train_and_validate(
     device: torch.device,
     filtered_data: Data | None = None,
     batch_per_epoch: int | None = None,
-):
+) -> None:
     if cfg.train.num_epoch == 0:
         return
 
@@ -153,10 +153,10 @@ def train_and_validate(
 def test(
     cfg: DictConfig,
     model: nn.Module,
-    test_data,
-    device,
-    filtered_data=None,
-    return_metrics=False,
+    test_data: Data,
+    device: torch.device,
+    filtered_data: Data | None = None,
+    return_metrics: bool = False,
 ) -> float | dict:
     world_size = utils.get_world_size()
     rank = utils.get_rank()

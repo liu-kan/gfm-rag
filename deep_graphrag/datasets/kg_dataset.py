@@ -22,7 +22,7 @@ class KGDataset(InMemoryDataset):
         text_emb_model_name: str,
         transform: Callable | None = None,
         pre_transform: Callable | None = build_relation_graph,
-        **kwargs,
+        **kwargs: str,
     ) -> None:
         self.name = data_name
         self.emb_model_name = text_emb_model_name

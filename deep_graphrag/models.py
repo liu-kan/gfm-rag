@@ -2,6 +2,7 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch import nn
+from torch_geometric.data import Data
 
 
 class RelUltra(nn.Module):
@@ -12,7 +13,7 @@ class RelUltra(nn.Module):
         self.rel_mlp = nn.Linear(rel_emb_dim, entity_model_cfg["input_dim"])
         self.entity_model = instantiate(entity_model_cfg)
 
-    def forward(self, data, batch):
+    def forward(self, data: Data, batch: torch.Tensor) -> torch.Tensor:
         # batch shape: (bs, 1+num_negs, 3)
         # relations are the same all positive and negative triples, so we can extract only one from the first triple among 1+nug_negs
         batch_size = len(batch)
@@ -27,7 +28,7 @@ class RelUltra(nn.Module):
 class UltraQA(RelUltra):
     """Wrap a GNN model for QA."""
 
-    def forward(self, graph, batch):
+    def forward(self, graph: Data, batch: torch.Tensor) -> torch.Tensor:
         question_embedding = self.rel_mlp(
             batch["question_emb"]
         )  # TODO: Use separate mlp for question?

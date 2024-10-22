@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import torch
 import torch_geometric
 from torch import nn

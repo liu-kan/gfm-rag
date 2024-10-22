@@ -1,6 +1,6 @@
+# mypy: ignore-errors
 import argparse
 import ast
-import copy
 import logging
 import os
 import time
@@ -11,7 +11,6 @@ import torch
 import yaml
 from jinja2 import meta
 from torch import distributed as dist
-
 
 logger = logging.getLogger(__file__)
 

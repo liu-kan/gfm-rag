@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import os
 import pickle
 from collections import defaultdict
@@ -500,7 +501,7 @@ class InductiveFB15k237Query(LogicalQueryDataset):
 
 class WikiTopicsQuery(InductiveFB15k237Query):
     url = "https://reltrans.s3.us-east-2.amazonaws.com/WikiTopics_QE.zip"
-    md5 = None # type: ignore
+    md5 = None  # type: ignore
 
     @property
     def raw_file_names(self):

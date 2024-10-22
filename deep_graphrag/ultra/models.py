@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import torch
 from torch import nn
 

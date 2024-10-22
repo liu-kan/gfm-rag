@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import torch
 from torch_scatter import scatter_add, scatter_max, scatter_mean
 from torch_scatter.composite import scatter_log_softmax, scatter_softmax
