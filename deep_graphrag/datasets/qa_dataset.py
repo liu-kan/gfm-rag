@@ -8,6 +8,7 @@ from torch.utils import data as torch_data
 from torch_geometric.data import InMemoryDataset
 
 from deep_graphrag.datasets.kg_dataset import KGDataset
+from deep_graphrag.utils import is_main_process, synchronize
 from deep_graphrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class QADataset(InMemoryDataset):
 
     @property
     def raw_file_names(self) -> list:
-        return ["dataset_qa.json"]
+        return ["train.json", "test.json"]
 
     @property
     def raw_dir(self) -> str:
@@ -45,44 +46,51 @@ class QADataset(InMemoryDataset):
     def processed_file_names(self) -> str:
         return "qa_data.pt"
 
+    def _process(self) -> None:
+        if is_main_process():
+            logger.info("Processing QA dataset")
+            super()._process()
+        synchronize()
+
     def process(self) -> None:
         with open(os.path.join(self.processed_dir, "ent2id.json")) as fin:
             self.ent2id = json.load(fin)
         with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:
             self.rel2id = json.load(fin)
 
-        qa_path = self.raw_paths[0]
-
         num_nodes = self.kg.num_nodes
         questions = []
         question_entities_masks = []  # Convert question entities to mask with number of nodes
         supporting_entities_masks = []
+        num_samples = []
 
-        with open(qa_path) as fin:
-            self.raw_qa_data = json.load(fin)
-            for item in self.raw_qa_data:
-                question = item["question"]
-                questions.append(question)
+        for path in self.raw_paths:
+            with open(path) as fin:
+                data = json.load(fin)
+                num_samples.append(len(data))
+                for item in data:
+                    question = item["question"]
+                    questions.append(question)
 
-                question_entities = [
-                    self.ent2id[x]
-                    for x in item["question_entities"]
-                    if x in self.ent2id
-                ]
+                    question_entities = [
+                        self.ent2id[x]
+                        for x in item["question_entities"]
+                        if x in self.ent2id
+                    ]
 
-                question_entities_masks.append(
-                    entities_to_mask(question_entities, num_nodes)
-                )
+                    question_entities_masks.append(
+                        entities_to_mask(question_entities, num_nodes)
+                    )
 
-                supporting_entities = [
-                    self.ent2id[x]
-                    for x in item["supporting_entities"]
-                    if x in self.ent2id
-                ]
+                    supporting_entities = [
+                        self.ent2id[x]
+                        for x in item["supporting_entities"]
+                        if x in self.ent2id
+                    ]
 
-                supporting_entities_masks.append(
-                    entities_to_mask(supporting_entities, num_nodes)
-                )
+                    supporting_entities_masks.append(
+                        entities_to_mask(supporting_entities, num_nodes)
+                    )
 
         # Generate question embeddings
         logger.info("Generating question embeddings")
@@ -99,4 +107,10 @@ class QADataset(InMemoryDataset):
         dataset = torch_data.TensorDataset(
             question_embeddings, question_entities_masks, supporting_entities_masks
         )
-        torch.save(dataset, self.processed_paths[0])
+        offset = 0
+        splits = []
+        for num_sample in num_samples:
+            split = torch_data.Subset(dataset, range(offset, offset + num_sample))
+            splits.append(split)
+            offset += num_sample
+        torch.save(splits, self.processed_paths[0])

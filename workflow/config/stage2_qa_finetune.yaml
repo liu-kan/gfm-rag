@@ -25,7 +25,6 @@ model:
 
 task:
   name: TransductiveInference
-  num_negative: 256
   strict_negative: yes
   adversarial_temperature: 0.2
   sample_weight: no

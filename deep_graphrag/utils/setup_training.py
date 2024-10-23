@@ -14,6 +14,10 @@ def get_rank() -> int:
     return 0
 
 
+def is_main_process() -> bool:
+    return get_rank() == 0
+
+
 def get_local_rank() -> int:
     if "LOCAL_RANK" in os.environ:
         return int(os.environ["LOCAL_RANK"])

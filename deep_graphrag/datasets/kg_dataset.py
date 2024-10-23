@@ -8,12 +8,13 @@ from sentence_transformers import SentenceTransformer
 from torch_geometric.data import Data, InMemoryDataset, download_url
 
 from deep_graphrag.ultra.tasks import build_relation_graph
+from deep_graphrag.utils import get_rank, is_main_process, synchronize
 
 logger = logging.getLogger(__name__)
 
 
 class KGDataset(InMemoryDataset):
-    delimiter = "\t"
+    delimiter = ","
 
     def __init__(
         self,
@@ -79,6 +80,16 @@ class KGDataset(InMemoryDataset):
             "inv_entity_vocab": inv_entity_vocab,
             "inv_rel_vocab": inv_rel_vocab,
         }
+
+    def _process(self) -> None:
+        if is_main_process():
+            logger.info("Processing KG dataset at rank %d", get_rank())
+            super()._process()
+        else:
+            logger.info(
+                f"Rank [{get_rank}]: Waiting for main process to finish processing KG dataset"
+            )
+        synchronize()
 
     def process(self) -> None:
         kg_file = self.raw_paths[0]

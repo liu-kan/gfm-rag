@@ -86,7 +86,6 @@ def train_and_validate(
                 batch = query_utils.cuda(batch, device=device)
                 pred = parallel_model(graph, batch)
                 target = batch[-1]  # supporting_entities_mask
-                target[:, 0] = 1
                 loss = F.binary_cross_entropy_with_logits(
                     pred, target, reduction="none"
                 )
@@ -216,10 +215,7 @@ def main(cfg: DictConfig) -> None:
     qa_data = QADataset(**cfg.dataset)
     device = utils.get_device()
 
-    generator = torch.Generator().manual_seed(cfg.seed)
-    train_data, valid_data = torch_data.random_split(
-        qa_data._data, cfg.train.train_test_split, generator=generator
-    )
+    train_data, valid_data = qa_data._data
     graph = qa_data.kg
     rel_emb = graph.rel_emb
     graph = graph.to(device)
