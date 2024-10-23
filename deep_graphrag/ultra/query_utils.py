@@ -7,7 +7,7 @@ from torch import Tensor
 from torch import distributed as dist
 from torch_scatter import scatter_add, scatter_max, scatter_mean
 
-from . import datasets_query, variadic
+from . import variadic
 
 
 class Query(torch.Tensor):
@@ -505,16 +505,6 @@ def spmm_max(index: Tensor, value: Tensor, m: int, n: int, matrix: Tensor) -> Te
     out = scatter_max(out, row, dim=-2, dim_size=m)[0]
 
     return out
-
-
-def build_query_dataset(cfg):
-    data_config = copy.deepcopy(cfg.dataset)
-    cls = data_config.pop("class")
-
-    ds_cls = getattr(datasets_query, cls)
-    dataset = ds_cls(**data_config)
-
-    return dataset
 
 
 def cat(objs, *args, **kwargs):

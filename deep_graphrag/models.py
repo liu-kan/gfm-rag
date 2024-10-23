@@ -29,15 +29,13 @@ class UltraQA(RelUltra):
     """Wrap a GNN model for QA."""
 
     def forward(self, graph: Data, batch: torch.Tensor) -> torch.Tensor:
+        question_emb, question_entities_mask, _ = batch
         question_embedding = self.rel_mlp(
-            batch["question_emb"]
+            question_emb
         )  # TODO: Use separate mlp for question?
-        question_entities_mask = batch["question_entities_mask"]
         batch_size = question_embedding.size(0)
         relation_representations = (
-            self.rel_mlp(self.relation_representation)
-            .unsqueeze(0)
-            .expand(batch_size, -1, -1)
+            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
         )
 
         # initialize the input with the fuzzy set and question embs

@@ -1,25 +1,14 @@
 # mypy: ignore-errors
-import copy
 
 import torch
 
-from . import datasets_qa, variadic
+from deep_graphrag.ultra import variadic
 
 
 def entities_to_mask(entities, num_nodes):
     mask = torch.zeros(num_nodes)
     mask[entities] = 1
     return mask
-
-
-def build_qa_dataset(cfg):
-    data_config = copy.deepcopy(cfg.dataset)
-    cls = data_config.pop("class")
-
-    ds_cls = getattr(datasets_qa, cls)
-    dataset = ds_cls(**data_config)
-
-    return dataset
 
 
 def evaluate(pred, target, metrics):

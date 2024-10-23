@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class KGDataset(InMemoryDataset):
-    delimiter = ","
+    delimiter = "\t"
 
     def __init__(
         self,
@@ -50,11 +50,15 @@ class KGDataset(InMemoryDataset):
 
         with open(triplet_file, encoding="utf-8") as fin:
             for line in fin:
-                u, r, v = (
-                    line.split()
-                    if self.delimiter is None
-                    else line.strip().split(self.delimiter)
-                )
+                try:
+                    u, r, v = (
+                        line.split()
+                        if self.delimiter is None
+                        else line.strip().split(self.delimiter)
+                    )
+                except Exception as e:
+                    logger.error(f"Error in line: {line}, {e}, Skipping")
+                    continue
                 if u not in inv_entity_vocab:
                     inv_entity_vocab[u] = entity_cnt
                     entity_cnt += 1

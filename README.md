@@ -27,5 +27,15 @@ pre-commit install
 Unsupervised training on the constructed KG.
 
 ```bash
-python workflow/stage2_kg_pretraining.py
+python workflow/stage2_kg_pretrain.py
+# Multi-GPU training
+torchrun --nproc_per_node=4 workflow/stage2_kg_pretrain.py
+```
+
+Supervised training on the QA dataset.
+
+```bash
+python workflow/stage2_qa_finetune.py
+# Multi-GPU training
+torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py
 ```

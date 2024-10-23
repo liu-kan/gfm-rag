@@ -280,9 +280,7 @@ def test(
     return mrr if not return_metrics else metrics
 
 
-@hydra.main(
-    config_path="config", config_name="stage2_kg_pretraining", version_base=None
-)
+@hydra.main(config_path="config", config_name="stage2_kg_pretrain", version_base=None)
 def main(cfg: DictConfig) -> None:
     output_dir = HydraConfig.get().runtime.output_dir
     utils.init_distributed_mode(cfg, output_dir)
