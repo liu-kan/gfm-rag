@@ -1,3 +1,5 @@
 outputs/
 *.pyc
 data/*/processed/stage2/
+data/*/tmp/
+.vscode

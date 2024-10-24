@@ -8,7 +8,7 @@ from torch.utils import data as torch_data
 from torch_geometric.data import InMemoryDataset
 
 from deep_graphrag.datasets.kg_dataset import KGDataset
-from deep_graphrag.utils import is_main_process, synchronize
+from deep_graphrag.utils import get_rank, is_main_process, synchronize
 from deep_graphrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
@@ -48,8 +48,12 @@ class QADataset(InMemoryDataset):
 
     def _process(self) -> None:
         if is_main_process():
-            logger.info("Processing QA dataset")
+            logger.info("Processing QA dataset at rank %d", get_rank())
             super()._process()
+        else:
+            logger.info(
+                f"Rank [{get_rank()}]: Waiting for main process to finish processing QA dataset"
+            )
         synchronize()
 
     def process(self) -> None:

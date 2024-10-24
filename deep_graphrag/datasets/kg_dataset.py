@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import torch
 from sentence_transformers import SentenceTransformer
-from torch_geometric.data import Data, InMemoryDataset, download_url
+from torch_geometric.data import Data, InMemoryDataset
 
 from deep_graphrag.ultra.tasks import build_relation_graph
 from deep_graphrag.utils import get_rank, is_main_process, synchronize
@@ -33,13 +33,6 @@ class KGDataset(InMemoryDataset):
     @property
     def raw_file_names(self) -> list:
         return ["kg.txt"]
-
-    def download(self) -> None:
-        """Download the dataset."""
-
-        for url, path in zip(self.urls, self.raw_paths):
-            download_path = download_url(url, self.raw_dir)
-            os.rename(download_path, path)
 
     def load_file(
         self, triplet_file: str, inv_entity_vocab: dict, inv_rel_vocab: dict
@@ -87,7 +80,7 @@ class KGDataset(InMemoryDataset):
             super()._process()
         else:
             logger.info(
-                f"Rank [{get_rank}]: Waiting for main process to finish processing KG dataset"
+                f"Rank [{get_rank()}]: Waiting for main process to finish processing KG dataset"
             )
         synchronize()
 
