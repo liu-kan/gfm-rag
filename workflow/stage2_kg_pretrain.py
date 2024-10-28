@@ -283,7 +283,7 @@ def test(
 @hydra.main(config_path="config", config_name="stage2_kg_pretrain", version_base=None)
 def main(cfg: DictConfig) -> None:
     output_dir = HydraConfig.get().runtime.output_dir
-    utils.init_distributed_mode(cfg, output_dir)
+    utils.init_distributed_mode()
     torch.manual_seed(cfg.seed + utils.get_rank())
     if utils.get_rank() == 0:
         logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")

@@ -2,7 +2,6 @@ import os
 from typing import Any
 
 import torch
-from omegaconf import DictConfig
 from torch import distributed as dist
 
 
@@ -61,9 +60,10 @@ def setup_for_distributed(is_master: bool) -> None:
     __builtin__.print = print
 
 
-def init_distributed_mode(cfg: DictConfig, working_dir: str) -> None:
+def init_distributed_mode() -> None:
     world_size = get_world_size()
     if world_size > 1 and not dist.is_initialized():
+        torch.cuda.set_device(get_local_rank())
         dist.init_process_group("nccl", init_method="env://")
         synchronize()
         setup_for_distributed(get_rank() == 0)
