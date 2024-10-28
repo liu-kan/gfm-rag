@@ -1,0 +1,32 @@
+hydra:
+  run:
+    dir: outputs/kg_construction/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+defaults:
+  - _self_
+
+seed: 1024
+num_processes: 10
+
+dataset:
+  root: ./data
+  data_name: demo
+
+task:
+  name: DatasetConstruction
+  openie_cfg:
+    llm: gpt-3.5-turbo-1106
+    llm_api: openai
+    thresh: 0.8
+    type: ner
+    run_ner: True
+    num_passages: all
+  create_graph:
+    flag: True
+    cosine_sim_edges: True
+    graph_type: facts_and_sim
+    phrase_type: ents_only_lower_preprocess
+    version: v3
+    smodel: colbertv2
+
+checkpoint: null

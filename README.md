@@ -16,11 +16,28 @@ conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
 Install pre-commit hooks
 ```bash
 pre-commit install
+# Example: pre-commit run --files path/to/file.py
 ```
 
 ## Workflow
 
 ### Stage1: KG Construction
+Construct KG for corpus and query
+```bash
+python workflow/stage1_process_construction.py
+```
+
+Construct dataset for kgc task
+```bash
+python workflow/stage1_kg_construction.py
+```
+
+Construct dataset for qa reasoning task (Option)
+```bash
+
+python workflow/stage1_qa_construction.py
+```
+
 
 ### Stage2: Deep GraphRAG Training
 
