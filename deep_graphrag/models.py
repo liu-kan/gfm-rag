@@ -29,7 +29,9 @@ class UltraQA(RelUltra):
     """Wrap a GNN model for QA."""
 
     def forward(self, graph: Data, batch: torch.Tensor) -> torch.Tensor:
-        question_emb, question_entities_mask, _ = batch
+        question_emb = batch[0]
+        question_entities_mask = batch[1]
+
         question_embedding = self.rel_mlp(
             question_emb
         )  # TODO: Use separate mlp for question?

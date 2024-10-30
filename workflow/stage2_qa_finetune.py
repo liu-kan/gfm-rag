@@ -11,6 +11,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.nn import functional as F  # noqa:N812
 from torch.utils import data as torch_data
+from torch.utils.data import Dataset
 from torch_geometric.data import Data
 from tqdm import tqdm
 
@@ -32,8 +33,9 @@ def train_and_validate(
     output_dir: str,
     model: nn.Module,
     graph: Data,
-    train_data: torch.utils.data.Dataset,
-    valid_data: torch.utils.data.Dataset,
+    train_data: Dataset,
+    valid_data: Dataset,
+    ent2docs: torch.Tensor,
     device: torch.device,
     batch_per_epoch: int | None = None,
 ) -> None:
@@ -85,7 +87,7 @@ def train_and_validate(
             ):
                 batch = query_utils.cuda(batch, device=device)
                 pred = parallel_model(graph, batch)
-                target = batch[-1]  # supporting_entities_mask
+                target = batch[2]  # supporting_entities_mask
                 loss = F.binary_cross_entropy_with_logits(
                     pred, target, reduction="none"
                 )
@@ -138,7 +140,7 @@ def train_and_validate(
         if rank == 0:
             logger.warning(separator)
             logger.warning("Evaluate on valid")
-        result = test(cfg, model, graph, valid_data, device=device)
+        result = test(cfg, model, graph, valid_data, ent2docs, device=device)
         if result > best_result:
             best_result = result
             best_epoch = epoch
@@ -157,7 +159,8 @@ def test(
     cfg: DictConfig,
     model: nn.Module,
     graph: Data,
-    test_data: torch.utils.data.Dataset,
+    test_data: Dataset,
+    ent2docs: torch.Tensor,
     device: torch.device,
     return_metrics: bool = False,
 ) -> float | dict:
@@ -170,34 +173,61 @@ def test(
     )
 
     model.eval()
-    preds = []
-    targets = []
+    ent_preds = []
+    ent_targets = []
+    doc_preds = []
+    doc_targets = []
     for batch in tqdm(test_loader):
         batch = query_utils.cuda(batch, device=device)
-        pred = model(graph, batch)
-        target_mask = batch[-1]  # supporting_entities_mask
-        type = torch.zeros(target_mask.shape[0]).long().to(pred)  # Just a placeholder
-        target = (type, torch.zeros_like(target_mask).bool(), target_mask.bool())
-        ranking, answer_ranking = query_utils.batch_evaluate(pred, target)
+        ent_pred = model(graph, batch)
+        doc_pred = torch.sparse.mm(ent_pred, ent2docs)  # Ent2docs mapping
+        target_entities_mask = batch[2]  # supporting_entities_mask
+        target_docs_mask = batch[3]  # supporting_docs_mask
+        target_entities = target_entities_mask.bool()
+        target_docs = target_docs_mask.bool()
+        ent_ranking, target_ent_ranking = utils.batch_evaluate(
+            ent_pred, target_entities
+        )
+        doc_ranking, target_doc_ranking = utils.batch_evaluate(doc_pred, target_docs)
+
         # answer set cardinality prediction
-        prob = F.sigmoid(pred)
-        num_pred = (prob * (prob > 0.5)).sum(dim=-1)
-        num_hard = target_mask.sum(dim=-1)
-        num_easy = torch.zeros_like(num_hard)
-        preds.append((ranking, num_pred))
-        targets.append((type, answer_ranking, num_easy, num_hard))
+        ent_prob = F.sigmoid(ent_pred)
+        num_pred = (ent_prob * (ent_prob > 0.5)).sum(dim=-1)
+        num_target = target_entities_mask.sum(dim=-1)
+        ent_preds.append((ent_ranking, num_pred))
+        ent_targets.append((target_ent_ranking, num_target))
 
-    pred = query_utils.cat(preds)
-    target = query_utils.cat(targets)
+        # document set cardinality prediction
+        doc_prob = F.sigmoid(doc_pred)
+        num_pred = (doc_prob * (doc_prob > 0.5)).sum(dim=-1)
+        num_target = target_docs_mask.sum(dim=-1)
+        doc_preds.append((doc_ranking, num_pred))
+        doc_targets.append((target_doc_ranking, num_target))
 
-    pred, target = query_utils.gather_results(pred, target, rank, world_size, device)
+    ent_pred = query_utils.cat(ent_preds)
+    ent_target = query_utils.cat(ent_targets)
+    doc_pred = query_utils.cat(doc_preds)
+    doc_target = query_utils.cat(doc_targets)
+
+    ent_pred, ent_target = utils.gather_results(
+        ent_pred, ent_target, rank, world_size, device
+    )
+    doc_pred, doc_target = utils.gather_results(
+        doc_pred, doc_target, rank, world_size, device
+    )
 
     metrics = {}
     if rank == 0:
-        metrics = utils.evaluate(pred, target, cfg.task.metric)
+        ent_metrics = utils.evaluate(ent_pred, ent_target, cfg.task.metric)
+        doc_metrics = utils.evaluate(doc_pred, doc_target, cfg.task.metric)
+        for key, value in ent_metrics.items():
+            metrics[f"ent_{key}"] = value
+        for key, value in doc_metrics.items():
+            metrics[f"doc_{key}"] = value
+        metrics["mrr"] = (1 / ent_pred[0].float()).mean().item()
         query_utils.print_metrics(metrics, logger)
     else:
-        metrics["mrr"] = (1 / pred[0].float()).mean().item()
+        metrics["mrr"] = (1 / ent_pred[0].float()).mean().item()
     utils.synchronize()
     return metrics["mrr"] if not return_metrics else metrics
 
@@ -219,6 +249,7 @@ def main(cfg: DictConfig) -> None:
     graph = qa_data.kg
     rel_emb = graph.rel_emb
     graph = graph.to(device)
+    ent2docs = qa_data.ent2docs.to(device)
 
     model = UltraQA(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb.shape[-1])
 
@@ -234,6 +265,7 @@ def main(cfg: DictConfig) -> None:
         graph,
         train_data,
         valid_data,
+        ent2docs,
         device=device,
         batch_per_epoch=cfg.train.batch_per_epoch,
     )
@@ -241,7 +273,7 @@ def main(cfg: DictConfig) -> None:
     if utils.get_rank() == 0:
         logger.warning(separator)
         logger.warning("Evaluate on valid")
-    test(cfg, model, graph, valid_data, device=device)
+    test(cfg, model, graph, valid_data, ent2docs, device=device)
 
 
 if __name__ == "__main__":

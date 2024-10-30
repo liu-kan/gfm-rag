@@ -26,6 +26,7 @@ class QADataset(InMemoryDataset):
         self.kg = KGDataset(root, data_name, text_emb_model_name)[0]
         super().__init__(root, None, None)
         self.data = torch.load(self.processed_paths[0], weights_only=False)
+        self.load_property()
 
     def __repr__(self) -> str:
         return f"{self.name}()"
@@ -46,6 +47,22 @@ class QADataset(InMemoryDataset):
     def processed_file_names(self) -> str:
         return "qa_data.pt"
 
+    def load_property(self) -> None:
+        """
+        Load necessary properties from the KG dataset.
+        """
+        with open(os.path.join(self.processed_dir, "ent2id.json")) as fin:
+            self.ent2id = json.load(fin)
+        with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:
+            self.rel2id = json.load(fin)
+        with open(os.path.join(self.raw_dir, "document2entities.json")) as fin:
+            self.doc2entities = json.load(fin)
+
+        self.ent2docs = torch.load(
+            os.path.join(self.processed_dir, "ent2doc.pt"), weights_only=False
+        )  # (n_nodes, n_docs)
+        self.id2doc = {i: doc for i, doc in enumerate(self.doc2entities)}
+
     def _process(self) -> None:
         if is_main_process():
             logger.info("Processing QA dataset at rank %d", get_rank())
@@ -61,11 +78,25 @@ class QADataset(InMemoryDataset):
             self.ent2id = json.load(fin)
         with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:
             self.rel2id = json.load(fin)
+        with open(os.path.join(self.raw_dir, "document2entities.json")) as fin:
+            self.doc2entities = json.load(fin)
 
         num_nodes = self.kg.num_nodes
+        doc2id = {doc: i for i, doc in enumerate(self.doc2entities)}
+        # Convert document to entities to entity to document
+        n_docs = len(self.doc2entities)
+        # Create a sparse tensor for entity to document
+        doc2ent = torch.zeros((n_docs, num_nodes))
+        for doc, entities in self.doc2entities.items():
+            entity_ids = [self.ent2id[ent] for ent in entities if ent in self.ent2id]
+            doc2ent[doc2id[doc], entity_ids] = 1
+        ent2doc = doc2ent.T.to_sparse()  # (n_nodes, n_docs)
+        torch.save(ent2doc, os.path.join(self.processed_dir, "ent2doc.pt"))
+
         questions = []
         question_entities_masks = []  # Convert question entities to mask with number of nodes
         supporting_entities_masks = []
+        supporting_docs_masks = []
         num_samples = []
 
         for path in self.raw_paths:
@@ -95,6 +126,14 @@ class QADataset(InMemoryDataset):
                     supporting_entities_masks.append(
                         entities_to_mask(supporting_entities, num_nodes)
                     )
+                    supporting_docs = [
+                        doc2id[doc[0]]
+                        for doc in item["supporting_facts"]
+                        if doc[0] in doc2id
+                    ]
+                    supporting_docs_masks.append(
+                        entities_to_mask(supporting_docs, n_docs)
+                    )
 
         # Generate question embeddings
         logger.info("Generating question embeddings")
@@ -107,9 +146,13 @@ class QADataset(InMemoryDataset):
         ).cpu()
         question_entities_masks = torch.stack(question_entities_masks)
         supporting_entities_masks = torch.stack(supporting_entities_masks)
+        supporting_docs_masks = torch.stack(supporting_docs_masks)
 
         dataset = torch_data.TensorDataset(
-            question_embeddings, question_entities_masks, supporting_entities_masks
+            question_embeddings,
+            question_entities_masks,
+            supporting_entities_masks,
+            supporting_docs_masks,
         )
         offset = 0
         splits = []

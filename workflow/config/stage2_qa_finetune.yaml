@@ -13,7 +13,7 @@ dataset:
   text_emb_model_name: sentence-transformers/all-mpnet-base-v2
 
 model:
-  _target_: deep_graphrag.ultra.models.RelUltra
+  _target_: deep_graphrag.ultra.models.UltraQA
   entity_model_cfg:
     _target_: deep_graphrag.ultra.models.QueryNBFNet
     input_dim: 64
