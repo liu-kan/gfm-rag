@@ -57,7 +57,7 @@ python workflow/stage2_qa_finetune.py
 torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py
 ```
 
-Evaluate the trained model on the QA dataset.
+Evaluate retrieval performance of the trained model on QA dataset.
 
 ```bash
 python workflow/stage2_qa_finetune.py checkpoint=save_models/qa_ultra_epoch_20/model.pth train.num_epoch=0
