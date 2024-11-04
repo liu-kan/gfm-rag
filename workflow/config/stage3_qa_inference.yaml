@@ -1,0 +1,30 @@
+hydra:
+  run:
+    dir: outputs/qa_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+defaults:
+  - _self_
+
+seed: 1024
+
+dataset:
+  root: ./data
+  data_name: hotpotqa_example
+
+llm:
+  _target_: deep_graphrag.llms.ChatGPT
+  model_name_or_path: gpt-3.5-turbo
+  retry: 5
+
+retriever:
+  model_path: save_models/qa_ultra_epoch_20/
+  doc_retriever: deep_graphrag.retrievers.SimpleRetriever
+
+test:
+  retrieval_batch_size: 8
+  top_k: 2
+  metric: [em, f1, precision, recall]
+  evaluator:
+    _target_: deep_graphrag.evaluation.hotpot_qa_evaluator.HotpotQAEvaluator
+  n_threads: 5
+  prompt_mode: "one-shot"

@@ -6,3 +6,5 @@ data/*/tmp/
 checkpoints/
 data/*
 scripts/*
+tmp/
+.env

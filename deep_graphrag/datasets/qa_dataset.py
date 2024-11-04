@@ -55,8 +55,16 @@ class QADataset(InMemoryDataset):
             self.ent2id = json.load(fin)
         with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:
             self.rel2id = json.load(fin)
+        with open(
+            os.path.join(str(self.root), str(self.name), "raw", "dataset_corpus.json")
+        ) as fin:
+            self.doc = json.load(fin)
         with open(os.path.join(self.raw_dir, "document2entities.json")) as fin:
             self.doc2entities = json.load(fin)
+        with open(os.path.join(self.raw_dir, "train.json")) as fin:
+            self.raw_train_data = json.load(fin)
+        with open(os.path.join(self.raw_dir, "test.json")) as fin:
+            self.raw_test_data = json.load(fin)
 
         self.ent2docs = torch.load(
             os.path.join(self.processed_dir, "ent2doc.pt"), weights_only=False
@@ -93,6 +101,7 @@ class QADataset(InMemoryDataset):
         ent2doc = doc2ent.T.to_sparse()  # (n_nodes, n_docs)
         torch.save(ent2doc, os.path.join(self.processed_dir, "ent2doc.pt"))
 
+        sample_id = []
         questions = []
         question_entities_masks = []  # Convert question entities to mask with number of nodes
         supporting_entities_masks = []
@@ -103,7 +112,8 @@ class QADataset(InMemoryDataset):
             with open(path) as fin:
                 data = json.load(fin)
                 num_samples.append(len(data))
-                for item in data:
+                for index, item in enumerate(data):
+                    sample_id.append(index)
                     question = item["question"]
                     questions.append(question)
 
@@ -147,12 +157,14 @@ class QADataset(InMemoryDataset):
         question_entities_masks = torch.stack(question_entities_masks)
         supporting_entities_masks = torch.stack(supporting_entities_masks)
         supporting_docs_masks = torch.stack(supporting_docs_masks)
+        sample_id = torch.tensor(sample_id, dtype=torch.long)
 
         dataset = torch_data.TensorDataset(
             question_embeddings,
             question_entities_masks,
             supporting_entities_masks,
             supporting_docs_masks,
+            sample_id,
         )
         offset = 0
         splits = []

@@ -64,3 +64,10 @@ python workflow/stage2_qa_finetune.py checkpoint=save_models/qa_ultra_epoch_20/m
 # Multi-GPU evaluation
 torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py checkpoint=save_models/qa_ultra_epoch_20/model.pth train.num_epoch=0
 ```
+
+### Stage3: QA Reasoning
+```bash
+python workflow/stage3_qa_inference.py
+# Multi-GPU retrieval
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py
+```
