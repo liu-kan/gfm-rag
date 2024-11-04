@@ -73,12 +73,18 @@ def doc_retrieval(
         test_data, cfg.test.retrieval_batch_size, sampler=sampler
     )
 
+    # Create doc retriever
+    doc_ranker_args = {
+        key: value for key, value in cfg.doc_ranker.items() if key != "_target_"
+    }
+    doc_ranker = get_class(cfg.doc_ranker._target_)(ent2doc=ent2docs, **doc_ranker_args)
+
     model.eval()
     all_predictions: list[dict] = []
     for batch in tqdm(test_loader):
         batch = query_utils.cuda(batch, device=device)
         ent_pred = model(graph, batch)
-        doc_pred = torch.sparse.mm(ent_pred, ent2docs)
+        doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
         idx = batch[4]
         all_predictions.extend(
             {"id": i, "ent_pred": e, "doc_pred": d}
@@ -104,7 +110,7 @@ def ans_prediction(
     cfg: DictConfig, output_dir: str, qa_data: Dataset, retrieval_result: list[dict]
 ) -> None:
     llm = instantiate(cfg.llm)
-    doc_retriever = get_class(cfg.retriever.doc_retriever)(qa_data.doc, qa_data.id2doc)
+    doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2doc)
     test_data = qa_data.raw_test_data
 
     def predict(qa_input: tuple[dict, torch.Tensor]) -> dict | Exception:
@@ -175,7 +181,7 @@ def main(cfg: DictConfig) -> None:
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"Output directory: {output_dir}")
 
-    model, config = utils.load_model_from_pretrained(cfg.retriever.model_path)
+    model, config = utils.load_model_from_pretrained(cfg.graph_retriever.model_path)
     qa_data = QADataset(text_emb_model_name=config["text_emb_model"], **cfg.dataset)
     device = utils.get_device()
     model = model.to(device)

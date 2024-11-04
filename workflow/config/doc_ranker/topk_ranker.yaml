@@ -1,0 +1,2 @@
+_target_: deep_graphrag.doc_rankers.TopKRanker
+top_k: 10

@@ -7,6 +7,26 @@ from torch_scatter import scatter_add
 from deep_graphrag.ultra import variadic
 
 
+class DocumentRetriever:
+    """
+    Return documents based on document ranking
+    """
+
+    def __init__(self, docs: dict, id2doc: dict) -> None:
+        self.docs = docs
+        self.id2doc = id2doc
+
+    def __call__(self, doc_ranking: torch.Tensor, top_k: int = 1) -> list:
+        top_k_docs = doc_ranking.topk(top_k).indices
+        return [
+            {
+                "title": self.id2doc[doc.item()],
+                "content": self.docs[self.id2doc[doc.item()]],
+            }
+            for doc in top_k_docs
+        ]
+
+
 def entities_to_mask(entities, num_nodes):
     mask = torch.zeros(num_nodes)
     mask[entities] = 1

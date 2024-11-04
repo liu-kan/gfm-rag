@@ -4,6 +4,7 @@ hydra:
 
 defaults:
   - _self_
+  - doc_ranker: topk_ranker
 
 seed: 1024
 
@@ -16,13 +17,12 @@ llm:
   model_name_or_path: gpt-3.5-turbo
   retry: 5
 
-retriever:
+graph_retriever:
   model_path: save_models/qa_ultra_epoch_20/
-  doc_retriever: deep_graphrag.retrievers.SimpleRetriever
 
 test:
   retrieval_batch_size: 8
-  top_k: 2
+  top_k: 5
   metric: [em, f1, precision, recall]
   evaluator:
     _target_: deep_graphrag.evaluation.hotpot_qa_evaluator.HotpotQAEvaluator

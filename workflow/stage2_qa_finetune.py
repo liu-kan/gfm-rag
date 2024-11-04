@@ -177,10 +177,17 @@ def test(
     ent_targets = []
     doc_preds = []
     doc_targets = []
+
+    # Create doc retriever
+    doc_ranker_args = {
+        key: value for key, value in cfg.doc_ranker.items() if key != "_target_"
+    }
+    doc_ranker = get_class(cfg.doc_ranker._target_)(ent2doc=ent2docs, **doc_ranker_args)
+
     for batch in tqdm(test_loader):
         batch = query_utils.cuda(batch, device=device)
         ent_pred = model(graph, batch)
-        doc_pred = torch.sparse.mm(ent_pred, ent2docs)  # Ent2docs mapping
+        doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
         target_entities_mask = batch[2]  # supporting_entities_mask
         target_docs_mask = batch[3]  # supporting_docs_mask
         target_entities = target_entities_mask.bool()
