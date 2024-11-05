@@ -126,7 +126,7 @@ def generate_qa_dataset(
 ) -> None:
     qa_dataset = []
     for sample in tqdm(data, total=len(data)):
-        id = sample["_id"]
+        id = sample["_id"] if "_id" in sample else sample["id"]
         answer = sample["answer"]
         question = sample["question"]
         supporting_facts = sample["supporting_facts"]
