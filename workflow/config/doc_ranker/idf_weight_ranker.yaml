@@ -1,1 +1,1 @@
-_target_: deep_graphrag.doc_rankers.IDFWeightRanker
+_target_: deep_graphrag.doc_rankers.IDFWeightedRanker

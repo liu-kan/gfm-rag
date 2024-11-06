@@ -23,6 +23,8 @@ graph_retriever:
 test:
   retrieval_batch_size: 8
   top_k: 5
+  save_top_k_entity: 10
+  save_retrieval: False
   metric: [em, f1, precision, recall]
   evaluator:
     _target_: deep_graphrag.evaluation.hotpot_qa_evaluator.HotpotQAEvaluator
