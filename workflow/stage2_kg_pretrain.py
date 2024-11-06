@@ -18,7 +18,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from deep_graphrag import utils
-from deep_graphrag.models import RelUltra
+from deep_graphrag.models import SemanticUltra
 from deep_graphrag.ultra import tasks
 
 # A logger for this file
@@ -51,7 +51,7 @@ def train_and_validate(
     output_dir: str,
     model: nn.Module,
     kg_data_list: list[Data],
-    valid_data_list: list[Data],
+    valid_data_list: dict[str, Data],
     device: torch.device,
     filtered_data_list: list[Data],
     batch_per_epoch: int | None = None,
@@ -189,7 +189,11 @@ def train_and_validate(
     utils.synchronize()
     if rank == 0:
         logger.warning("Load checkpoint from model_best.pth")
-    state = torch.load(os.path.join(output_dir, "model_best.pth"), map_location=device)
+    state = torch.load(
+        os.path.join(output_dir, "model_best.pth"),
+        map_location=device,
+        weights_only=False,
+    )
     model.load_state_dict(state["model"])
     utils.synchronize()
 
@@ -198,19 +202,22 @@ def train_and_validate(
 def test(
     cfg: DictConfig,
     model: nn.Module,
-    test_data_list: list[Data],
+    test_data_list: dict[str, Data],
     device: torch.device,
     filtered_data_list: list[Data],
     return_metrics: bool = False,
-) -> float | list[dict]:
+) -> float | dict:
     world_size = utils.get_world_size()
     rank = utils.get_rank()
 
     # test_data is a tuple of validation/test datasets
     # process sequentially
-    all_metrics = []
+    all_metrics = {}
     all_mrr = []
-    for test_data, filtered_data in zip(test_data_list, filtered_data_list):
+    for test_data_tuple, filtered_data in zip(
+        test_data_list.items(), filtered_data_list
+    ):
+        test_data_name, test_data = test_data_tuple
         test_triplets = torch.cat(
             [test_data.target_edge_index, test_data.target_edge_type.unsqueeze(0)]
         ).t()
@@ -290,6 +297,7 @@ def test(
 
         metrics = {}
         if rank == 0:
+            logger.warning(f"{'-' * 15} Test on {test_data_name} {'-' * 15}")
             for metric in cfg.task.metric:
                 if "-tail" in metric:
                     _metric_name, direction = metric.split("-")
@@ -333,7 +341,7 @@ def test(
                 metrics[metric] = score
         mrr = (1 / all_ranking.float()).mean()
         all_mrr.append(mrr)
-        all_metrics.append(metrics)
+        all_metrics[test_data_name] = metrics
         if rank == 0:
             logger.warning(separator)
     avg_mrr = sum(all_mrr) / len(all_mrr)
@@ -350,13 +358,20 @@ def main(cfg: DictConfig) -> None:
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"Output directory: {output_dir}")
 
-    kg_data_list = utils.build_pretrain_dataset(cfg)
+    datasets = utils.get_multi_dataset(cfg)
+    kg_datasets = {
+        k: v[0] for k, v in datasets.items()
+    }  # Only use the first element (KG) for training
 
     device = utils.get_device()
-    kg_data_list = [g.to(device) for g in kg_data_list]
-    rel_emb = kg_data_list[0].rel_emb
+    kg_data_list = [g.to(device) for g in kg_datasets.values()]
 
-    model = RelUltra(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb.shape[-1])
+    rel_emb_dim = {kg.rel_emb.shape[-1] for kg in kg_data_list}
+    assert (
+        len(rel_emb_dim) == 1
+    ), "All datasets should have the same relation embedding dimension"
+
+    model = SemanticUltra(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb_dim.pop())
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")
@@ -378,15 +393,15 @@ def main(cfg: DictConfig) -> None:
         num_val_edges = cfg.train.fast_test
         if utils.is_main_process():
             logger.warning(f"Fast evaluation on {num_val_edges} samples in validation")
-        short_valid = [copy.deepcopy(vd) for vd in kg_data_list]
-        for graph in short_valid:
+        short_valid = {vn: copy.deepcopy(vd) for vn, vd in kg_datasets.items()}
+        for graph in short_valid.values():
             mask = torch.randperm(graph.target_edge_index.shape[1])[:num_val_edges]
             graph.target_edge_index = graph.target_edge_index[:, mask]
             graph.target_edge_type = graph.target_edge_type[mask]
 
-        valid_data_list = [sv.to(device) for sv in short_valid]
+        valid_data_list = {sn: sv.to(device) for sn, sv in short_valid.items()}
     else:
-        valid_data_list = kg_data_list
+        valid_data_list = {vn: vd.to(device) for vn, vd in kg_datasets.items()}
 
     train_and_validate(
         cfg,
@@ -405,6 +420,8 @@ def main(cfg: DictConfig) -> None:
     test(
         cfg, model, valid_data_list, filtered_data_list=val_filtered_data, device=device
     )
+    utils.synchronize()
+    dist.destroy_process_group()
 
 
 if __name__ == "__main__":

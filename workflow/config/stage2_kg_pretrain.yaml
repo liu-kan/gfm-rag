@@ -8,13 +8,15 @@ defaults:
 seed: 1024
 
 datasets:
-  root: ./data
-  text_emb_model_name: sentence-transformers/all-mpnet-base-v2
+  _target_: deep_graphrag.datasets.KGDataset
+  cfgs:
+    root: ./data
+    text_emb_model_name: sentence-transformers/all-mpnet-base-v2
   data_names:
     - hotpotqa_example
 
 model:
-  _target_: deep_graphrag.ultra.models.RelUltra
+  _target_: deep_graphrag.ultra.models.SemanticUltra
   entity_model_cfg:
     _target_: deep_graphrag.ultra.models.EntityNBFNet
     input_dim: 64
