@@ -1,7 +1,6 @@
 import json
 import pickle
 import re
-from multiprocessing import Pool
 
 import hydra
 import numpy as np
@@ -67,6 +66,11 @@ def link_node_by_colbertv2(
             row["query"]: eval(row["triples"])
             for i, row in queries_named_entities.iterrows()
         }
+    elif "question" in queries_named_entities:
+        queries_named_entities = {
+            row["question"]: eval(row["triples"])
+            for i, row in queries_named_entities.iterrows()
+        }
 
     phrase_searcher = get_searcher(phrases, dataset)
 
@@ -91,33 +95,34 @@ def link_node_by_colbertv2(
     return question_entities
 
 
-def process_doc(args: tuple[int, str, csr_array, np.ndarray]) -> tuple[str, list]:
-    idx, docname, doc_to_phrases_mat, phrases = args
-    non_zero_indices = np.nonzero(doc_to_phrases_mat.toarray()[idx])
-    entities = list(phrases[non_zero_indices])
-    return docname, entities
-
-
 def mapping_doc_to_phrases(
-    doc_to_phrases_mat: csr_array, corpus: dict, phrases: list, num_processes: int = 1
+    dataset: str,
+    doc_to_phrases_mat: csr_array,
+    corpus: dict,
+    phrases: list,
 ) -> dict:
-    doc2entities = {}
+    rows, cols = np.nonzero(doc_to_phrases_mat.toarray())
+    unique_rows = list(range(doc_to_phrases_mat.toarray().shape[0]))
 
-    if num_processes == 1:
-        for idx, docname in tqdm(enumerate(corpus.keys()), total=len(corpus)):
-            doc2entities[docname] = list(
-                phrases[np.nonzero(doc_to_phrases_mat.toarray()[idx])]
-            )
-    else:
-        tasks = [
-            (idx, docname, doc_to_phrases_mat, phrases)
-            for idx, docname in enumerate(corpus.keys())
-        ]
-        with Pool(processes=num_processes) as pool:
-            results = list(
-                tqdm(pool.imap_unordered(process_doc, tasks), total=len(tasks))
-            )
-        doc2entities = {docname: entities for docname, entities in results}
+    if dataset in ["hotpotqa"]:
+        items = list(corpus.keys())
+        doc2entities = {
+            items[row]: phrases[cols[rows == row].tolist()].tolist()
+            for row in unique_rows
+        }
+    elif dataset in ["2wikimultihopqa"]:
+        items = [para["title"] for para in corpus]
+        doc2entities = {
+            items[row]: phrases[cols[rows == row].tolist()].tolist()
+            for row in unique_rows
+        }
+    elif dataset in ["musique"]:
+        items = [para["title"] + "\n" + para["text"] for para in corpus]
+        doc2entities = {
+            items[row]: phrases[cols[rows == row].tolist()].tolist()
+            for row in unique_rows
+        }
+
     return doc2entities
 
 
@@ -129,8 +134,18 @@ def generate_qa_dataset(
         id = sample["_id"] if "_id" in sample else sample["id"]
         answer = sample["answer"]
         question = sample["question"]
-        supporting_facts = sample["supporting_facts"]
-        supporting_items = {item[0] for item in supporting_facts}
+        if dataset in ["hotpotqa", "2wikimultihopqa"]:
+            supporting_facts = sample["supporting_facts"]
+            supporting_items = {item[0] for item in supporting_facts}
+        elif dataset in ["musique"]:
+            supporting_facts = [
+                item for item in sample["paragraphs"] if item["is_supporting"]
+            ]
+            supporting_items = {
+                item["title"] + "\n" + item["paragraph_text"]
+                for item in supporting_facts
+            }
+
         supporting_entities = []
         for item in supporting_items:
             supporting_entities.extend(doc2entities[item])
@@ -159,7 +174,6 @@ def main(cfg: DictConfig) -> None:
     graph_type = cfg.task.create_graph.graph_type  # 'facts_and_sim'
     phrase_type = cfg.task.create_graph.phrase_type  # 'ents_only_lower_preprocess'
     version = cfg.task.create_graph.version
-    num_processes = cfg.num_processes
 
     corpus = json.load(open(f"data/{dataset}/raw/dataset_corpus.json"))
     train_data = json.load(open(f"data/{dataset}/raw/train.json"))
@@ -199,9 +213,7 @@ def main(cfg: DictConfig) -> None:
     doc_to_phrases_mat = docs_to_facts_mat.dot(facts_to_phrases_mat)
     doc_to_phrases_mat[doc_to_phrases_mat.nonzero()] = 1  # entities2documents
 
-    doc2entities = mapping_doc_to_phrases(
-        doc_to_phrases_mat, corpus, phrases, num_processes
-    )
+    doc2entities = mapping_doc_to_phrases(dataset, doc_to_phrases_mat, corpus, phrases)
     json.dump(
         doc2entities,
         open(f"data/{dataset}/processed/stage1/document2entities.json", "w"),

@@ -6,7 +6,6 @@ defaults:
   - _self_
 
 seed: 1024
-num_processes: 10
 
 dataset:
   root: ./data
