@@ -112,9 +112,14 @@ def ans_prediction(
     llm = instantiate(cfg.llm)
     doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2doc)
     test_data = qa_data.raw_test_data
+    id2ent = {v: k for k, v in qa_data.ent2id.items()}
 
     def predict(qa_input: tuple[dict, torch.Tensor]) -> dict | Exception:
         data, retrieval_doc = qa_input
+        retrieved_ent_idx = torch.topk(
+            retrieval_doc["ent_pred"], cfg.test.save_top_k_entity, dim=-1
+        ).indices
+        retrieved_ent = [id2ent[i.item()] for i in retrieved_ent_idx]
         retrieved_docs = doc_retriever(retrieval_doc["doc_pred"], top_k=cfg.test.top_k)
         doc_context = "\n".join(
             [
@@ -146,6 +151,7 @@ def ans_prediction(
                 "question": data["question"],
                 "answer": data["answer"],
                 "response": response,
+                "retrieved_ent": retrieved_ent,
                 "retrieved_docs": retrieved_docs,
             }
 
@@ -191,8 +197,13 @@ def main(cfg: DictConfig) -> None:
 
     retrieval_result = doc_retrieval(cfg, model, qa_data, device=device)
     if utils.is_main_process():
-        torch.save(retrieval_result, os.path.join(output_dir, "retrieval_result.pt"))
-        logger.info("Ranking saved to disk")
+        if cfg.test.save_retrieval:
+            logger.info(
+                f"Ranking saved to disk: {os.path.join(output_dir, 'retrieval_result.pt')}"
+            )
+            torch.save(
+                retrieval_result, os.path.join(output_dir, "retrieval_result.pt")
+            )
         ans_prediction(cfg, output_dir, qa_data, retrieval_result)
 
 

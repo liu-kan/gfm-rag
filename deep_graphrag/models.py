@@ -5,7 +5,7 @@ from torch import nn
 from torch_geometric.data import Data
 
 
-class RelUltra(nn.Module):
+class SemanticUltra(nn.Module):
     def __init__(self, entity_model_cfg: DictConfig, rel_emb_dim: int) -> None:
         # kept that because super Ultra sounds cool
         super().__init__()
@@ -25,7 +25,7 @@ class RelUltra(nn.Module):
         return score
 
 
-class UltraQA(RelUltra):
+class UltraQA(SemanticUltra):
     """Wrap a GNN model for QA."""
 
     def forward(self, graph: Data, batch: torch.Tensor) -> torch.Tensor:

@@ -24,6 +24,7 @@ class QADataset(InMemoryDataset):
         self.name = data_name
         self.text_emb_model_name = text_emb_model_name
         self.kg = KGDataset(root, data_name, text_emb_model_name)[0]
+        self.rel_emb_dim = self.kg.rel_emb.shape[-1]
         super().__init__(root, None, None)
         self.data = torch.load(self.processed_paths[0], weights_only=False)
         self.load_property()

@@ -1,6 +1,8 @@
+import copy
 import logging
 import math
 import os
+from functools import partial
 from itertools import islice
 
 import hydra
@@ -16,8 +18,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from deep_graphrag import utils
-from deep_graphrag.datasets import KGDataset
-from deep_graphrag.models import RelUltra
+from deep_graphrag.models import SemanticUltra
 from deep_graphrag.ultra import tasks
 
 # A logger for this file
@@ -27,13 +28,32 @@ separator = ">" * 30
 line = "-" * 30
 
 
+def multigraph_collator(batch: list, train_graphs: list) -> tuple[Data, torch.Tensor]:
+    probs = torch.tensor([graph.edge_index.shape[1] for graph in train_graphs]).float()
+    probs /= probs.sum()
+    graph_id = torch.multinomial(probs, 1, replacement=False).item()
+
+    graph = train_graphs[graph_id]
+    bs = len(batch)
+    edge_mask = torch.randperm(graph.target_edge_index.shape[1])[:bs]
+
+    colleted_batch = torch.cat(
+        [
+            graph.target_edge_index[:, edge_mask],
+            graph.target_edge_type[edge_mask].unsqueeze(0),
+        ]
+    ).t()
+    return graph, colleted_batch
+
+
 def train_and_validate(
     cfg: DictConfig,
     output_dir: str,
     model: nn.Module,
-    kg_data: Data,
+    kg_data_list: list[Data],
+    valid_data_list: dict[str, Data],
     device: torch.device,
-    filtered_data: Data | None = None,
+    filtered_data_list: list[Data],
     batch_per_epoch: int | None = None,
 ) -> None:
     if cfg.train.num_epoch == 0:
@@ -43,11 +63,17 @@ def train_and_validate(
     rank = utils.get_rank()
 
     train_triplets = torch.cat(
-        [kg_data.target_edge_index, kg_data.target_edge_type.unsqueeze(0)]
-    ).t()
+        [
+            torch.cat([g.target_edge_index, g.target_edge_type.unsqueeze(0)]).t()
+            for g in kg_data_list
+        ]
+    )
     sampler = torch_data.DistributedSampler(train_triplets, world_size, rank)
     train_loader = torch_data.DataLoader(
-        train_triplets, cfg.train.batch_size, sampler=sampler
+        train_triplets,
+        cfg.train.batch_size,
+        sampler=sampler,
+        collate_fn=partial(multigraph_collator, train_graphs=kg_data_list),
     )
 
     batch_per_epoch = batch_per_epoch or len(train_loader)
@@ -85,13 +111,14 @@ def train_and_validate(
                 desc=f"Training Batches: {epoch}",
                 total=batch_per_epoch,
             ):
+                train_graph, batch = batch
                 batch = tasks.negative_sampling(
-                    kg_data,
+                    train_graph,
                     batch,
                     cfg.task.num_negative,
                     strict=cfg.task.strict_negative,
                 )
-                pred = parallel_model(kg_data, batch)
+                pred = parallel_model(train_graph, batch)
                 target = torch.zeros_like(pred)
                 target[:, 0] = 1
                 loss = F.binary_cross_entropy_with_logits(
@@ -126,24 +153,46 @@ def train_and_validate(
                 logger.warning(f"average binary cross entropy: {avg_loss:g}")
 
         epoch = min(cfg.train.num_epoch, i + step)
-        if rank == 0:
-            logger.warning("Save checkpoint to model_epoch_%d.pth" % epoch)
-            state = {"model": model.state_dict(), "optimizer": optimizer.state_dict()}
-            torch.save(state, os.path.join(output_dir, "model_epoch_%d.pth" % epoch))
-        utils.synchronize()
 
+        utils.synchronize()
         if rank == 0:
             logger.warning(separator)
             logger.warning("Evaluate on valid")
-        result = test(cfg, model, kg_data, filtered_data=filtered_data, device=device)
-        if result > best_result:
-            best_result = result
-            best_epoch = epoch
 
+        result = test(
+            cfg,
+            model,
+            valid_data_list,
+            filtered_data_list=filtered_data_list,
+            device=device,
+        )
+        if rank == 0:
+            if result > best_result:
+                best_result = result
+                best_epoch = epoch
+                logger.warning("Save checkpoint to model_best.pth")
+                state = {
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                }
+                torch.save(state, os.path.join(output_dir, "model_best.pth"))
+            if not cfg.train.save_best_only:
+                logger.warning("Save checkpoint to model_epoch_%d.pth" % epoch)
+                state = {
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                }
+                torch.save(
+                    state, os.path.join(output_dir, "model_epoch_%d.pth" % epoch)
+                )
+            logger.warning(f"Best mrr: {best_result:g} at epoch {best_epoch}")
+    utils.synchronize()
     if rank == 0:
-        logger.warning("Load checkpoint from model_epoch_%d.pth" % best_epoch)
+        logger.warning("Load checkpoint from model_best.pth")
     state = torch.load(
-        os.path.join(output_dir, "model_epoch_%d.pth" % best_epoch), map_location=device
+        os.path.join(output_dir, "model_best.pth"),
+        map_location=device,
+        weights_only=False,
     )
     model.load_state_dict(state["model"])
     utils.synchronize()
@@ -153,131 +202,150 @@ def train_and_validate(
 def test(
     cfg: DictConfig,
     model: nn.Module,
-    test_data: Data,
+    test_data_list: dict[str, Data],
     device: torch.device,
-    filtered_data: Data | None = None,
+    filtered_data_list: list[Data],
     return_metrics: bool = False,
 ) -> float | dict:
     world_size = utils.get_world_size()
     rank = utils.get_rank()
 
-    test_triplets = torch.cat(
-        [test_data.target_edge_index, test_data.target_edge_type.unsqueeze(0)]
-    ).t()
-    sampler = torch_data.DistributedSampler(test_triplets, world_size, rank)
-    test_loader = torch_data.DataLoader(
-        test_triplets, cfg.train.batch_size, sampler=sampler
-    )
+    # test_data is a tuple of validation/test datasets
+    # process sequentially
+    all_metrics = {}
+    all_mrr = []
+    for test_data_tuple, filtered_data in zip(
+        test_data_list.items(), filtered_data_list
+    ):
+        test_data_name, test_data = test_data_tuple
+        test_triplets = torch.cat(
+            [test_data.target_edge_index, test_data.target_edge_type.unsqueeze(0)]
+        ).t()
+        sampler = torch_data.DistributedSampler(test_triplets, world_size, rank)
+        test_loader = torch_data.DataLoader(
+            test_triplets, cfg.train.batch_size, sampler=sampler
+        )
 
-    model.eval()
-    rankings = []
-    num_negatives = []
-    tail_rankings, num_tail_negs = (
-        [],
-        [],
-    )  # for explicit tail-only evaluation needed for 5 datasets
-    for batch in tqdm(test_loader):
-        t_batch, h_batch = tasks.all_negative(test_data, batch)
-        t_pred = model(test_data, t_batch)
-        h_pred = model(test_data, h_batch)
+        model.eval()
+        rankings = []
+        num_negatives = []
+        tail_rankings, num_tail_negs = (
+            [],
+            [],
+        )  # for explicit tail-only evaluation needed for 5 datasets
+        for batch in tqdm(test_loader):
+            t_batch, h_batch = tasks.all_negative(test_data, batch)
+            t_pred = model(test_data, t_batch)
+            h_pred = model(test_data, h_batch)
 
-        if filtered_data is None:
-            t_mask, h_mask = tasks.strict_negative_mask(test_data, batch)
-        else:
-            t_mask, h_mask = tasks.strict_negative_mask(filtered_data, batch)
-        pos_h_index, pos_t_index, pos_r_index = batch.t()
-        t_ranking = tasks.compute_ranking(t_pred, pos_t_index, t_mask)
-        h_ranking = tasks.compute_ranking(h_pred, pos_h_index, h_mask)
-        num_t_negative = t_mask.sum(dim=-1)
-        num_h_negative = h_mask.sum(dim=-1)
-
-        rankings += [t_ranking, h_ranking]
-        num_negatives += [num_t_negative, num_h_negative]
-
-        tail_rankings += [t_ranking]
-        num_tail_negs += [num_t_negative]
-
-    ranking = torch.cat(rankings)
-    num_negative = torch.cat(num_negatives)
-    all_size = torch.zeros(world_size, dtype=torch.long, device=device)
-    all_size[rank] = len(ranking)
-
-    # ugly repetitive code for tail-only ranks processing
-    tail_ranking = torch.cat(tail_rankings)
-    num_tail_neg = torch.cat(num_tail_negs)
-    all_size_t = torch.zeros(world_size, dtype=torch.long, device=device)
-    all_size_t[rank] = len(tail_ranking)
-    if world_size > 1:
-        dist.all_reduce(all_size, op=dist.ReduceOp.SUM)
-        dist.all_reduce(all_size_t, op=dist.ReduceOp.SUM)
-
-    # obtaining all ranks
-    cum_size = all_size.cumsum(0)
-    all_ranking = torch.zeros(all_size.sum(), dtype=torch.long, device=device)
-    all_ranking[cum_size[rank] - all_size[rank] : cum_size[rank]] = ranking
-    all_num_negative = torch.zeros(all_size.sum(), dtype=torch.long, device=device)
-    all_num_negative[cum_size[rank] - all_size[rank] : cum_size[rank]] = num_negative
-
-    # the same for tails-only ranks
-    cum_size_t = all_size_t.cumsum(0)
-    all_ranking_t = torch.zeros(all_size_t.sum(), dtype=torch.long, device=device)
-    all_ranking_t[cum_size_t[rank] - all_size_t[rank] : cum_size_t[rank]] = tail_ranking
-    all_num_negative_t = torch.zeros(all_size_t.sum(), dtype=torch.long, device=device)
-    all_num_negative_t[cum_size_t[rank] - all_size_t[rank] : cum_size_t[rank]] = (
-        num_tail_neg
-    )
-    if world_size > 1:
-        dist.all_reduce(all_ranking, op=dist.ReduceOp.SUM)
-        dist.all_reduce(all_num_negative, op=dist.ReduceOp.SUM)
-        dist.all_reduce(all_ranking_t, op=dist.ReduceOp.SUM)
-        dist.all_reduce(all_num_negative_t, op=dist.ReduceOp.SUM)
-
-    metrics = {}
-    if rank == 0:
-        for metric in cfg.task.metric:
-            if "-tail" in metric:
-                _metric_name, direction = metric.split("-")
-                if direction != "tail":
-                    raise ValueError("Only tail metric is supported in this mode")
-                _ranking = all_ranking_t
-                _num_neg = all_num_negative_t
+            if filtered_data is None:
+                t_mask, h_mask = tasks.strict_negative_mask(test_data, batch)
             else:
-                _ranking = all_ranking
-                _num_neg = all_num_negative
-                _metric_name = metric
+                t_mask, h_mask = tasks.strict_negative_mask(filtered_data, batch)
+            pos_h_index, pos_t_index, pos_r_index = batch.t()
+            t_ranking = tasks.compute_ranking(t_pred, pos_t_index, t_mask)
+            h_ranking = tasks.compute_ranking(h_pred, pos_h_index, h_mask)
+            num_t_negative = t_mask.sum(dim=-1)
+            num_h_negative = h_mask.sum(dim=-1)
 
-            if _metric_name == "mr":
-                score = _ranking.float().mean()
-            elif _metric_name == "mrr":
-                score = (1 / _ranking.float()).mean()
-            elif _metric_name.startswith("hits@"):
-                values = _metric_name[5:].split("_")
-                threshold = int(values[0])
-                if len(values) > 1:
-                    num_sample = int(values[1])
-                    # unbiased estimation
-                    fp_rate = (_ranking - 1).float() / _num_neg
-                    score = 0
-                    for i in range(threshold):
-                        # choose i false positive from num_sample - 1 negatives
-                        num_comb = (
-                            math.factorial(num_sample - 1)
-                            / math.factorial(i)
-                            / math.factorial(num_sample - i - 1)
-                        )
-                        score += (
-                            num_comb
-                            * (fp_rate**i)
-                            * ((1 - fp_rate) ** (num_sample - i - 1))
-                        )
-                    score = score.mean()
+            rankings += [t_ranking, h_ranking]
+            num_negatives += [num_t_negative, num_h_negative]
+
+            tail_rankings += [t_ranking]
+            num_tail_negs += [num_t_negative]
+
+        ranking = torch.cat(rankings)
+        num_negative = torch.cat(num_negatives)
+        all_size = torch.zeros(world_size, dtype=torch.long, device=device)
+        all_size[rank] = len(ranking)
+
+        # ugly repetitive code for tail-only ranks processing
+        tail_ranking = torch.cat(tail_rankings)
+        num_tail_neg = torch.cat(num_tail_negs)
+        all_size_t = torch.zeros(world_size, dtype=torch.long, device=device)
+        all_size_t[rank] = len(tail_ranking)
+        if world_size > 1:
+            dist.all_reduce(all_size, op=dist.ReduceOp.SUM)
+            dist.all_reduce(all_size_t, op=dist.ReduceOp.SUM)
+
+        # obtaining all ranks
+        cum_size = all_size.cumsum(0)
+        all_ranking = torch.zeros(all_size.sum(), dtype=torch.long, device=device)
+        all_ranking[cum_size[rank] - all_size[rank] : cum_size[rank]] = ranking
+        all_num_negative = torch.zeros(all_size.sum(), dtype=torch.long, device=device)
+        all_num_negative[cum_size[rank] - all_size[rank] : cum_size[rank]] = (
+            num_negative
+        )
+
+        # the same for tails-only ranks
+        cum_size_t = all_size_t.cumsum(0)
+        all_ranking_t = torch.zeros(all_size_t.sum(), dtype=torch.long, device=device)
+        all_ranking_t[cum_size_t[rank] - all_size_t[rank] : cum_size_t[rank]] = (
+            tail_ranking
+        )
+        all_num_negative_t = torch.zeros(
+            all_size_t.sum(), dtype=torch.long, device=device
+        )
+        all_num_negative_t[cum_size_t[rank] - all_size_t[rank] : cum_size_t[rank]] = (
+            num_tail_neg
+        )
+        if world_size > 1:
+            dist.all_reduce(all_ranking, op=dist.ReduceOp.SUM)
+            dist.all_reduce(all_num_negative, op=dist.ReduceOp.SUM)
+            dist.all_reduce(all_ranking_t, op=dist.ReduceOp.SUM)
+            dist.all_reduce(all_num_negative_t, op=dist.ReduceOp.SUM)
+
+        metrics = {}
+        if rank == 0:
+            logger.warning(f"{'-' * 15} Test on {test_data_name} {'-' * 15}")
+            for metric in cfg.task.metric:
+                if "-tail" in metric:
+                    _metric_name, direction = metric.split("-")
+                    if direction != "tail":
+                        raise ValueError("Only tail metric is supported in this mode")
+                    _ranking = all_ranking_t
+                    _num_neg = all_num_negative_t
                 else:
-                    score = (_ranking <= threshold).float().mean()
-            logger.warning(f"{metric}: {score:g}")
-            metrics[metric] = score
-    mrr = (1 / all_ranking.float()).mean()
+                    _ranking = all_ranking
+                    _num_neg = all_num_negative
+                    _metric_name = metric
 
-    return mrr if not return_metrics else metrics
+                if _metric_name == "mr":
+                    score = _ranking.float().mean()
+                elif _metric_name == "mrr":
+                    score = (1 / _ranking.float()).mean()
+                elif _metric_name.startswith("hits@"):
+                    values = _metric_name[5:].split("_")
+                    threshold = int(values[0])
+                    if len(values) > 1:
+                        num_sample = int(values[1])
+                        # unbiased estimation
+                        fp_rate = (_ranking - 1).float() / _num_neg
+                        score = 0
+                        for i in range(threshold):
+                            # choose i false positive from num_sample - 1 negatives
+                            num_comb = (
+                                math.factorial(num_sample - 1)
+                                / math.factorial(i)
+                                / math.factorial(num_sample - i - 1)
+                            )
+                            score += (
+                                num_comb
+                                * (fp_rate**i)
+                                * ((1 - fp_rate) ** (num_sample - i - 1))
+                            )
+                        score = score.mean()
+                    else:
+                        score = (_ranking <= threshold).float().mean()
+                logger.warning(f"{metric}: {score:g}")
+                metrics[metric] = score
+        mrr = (1 / all_ranking.float()).mean()
+        all_mrr.append(mrr)
+        all_metrics[test_data_name] = metrics
+        if rank == 0:
+            logger.warning(separator)
+    avg_mrr = sum(all_mrr) / len(all_mrr)
+    return avg_mrr if not return_metrics else all_metrics
 
 
 @hydra.main(config_path="config", config_name="stage2_kg_pretrain", version_base=None)
@@ -290,12 +358,20 @@ def main(cfg: DictConfig) -> None:
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"Output directory: {output_dir}")
 
-    kg_data = KGDataset(**cfg.dataset)[0]
-    device = utils.get_device()
-    kg_data = kg_data.to(device)
-    rel_emb = kg_data.rel_emb
+    datasets = utils.get_multi_dataset(cfg)
+    kg_datasets = {
+        k: v[0] for k, v in datasets.items()
+    }  # Only use the first element (KG) for training
 
-    model = RelUltra(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb.shape[-1])
+    device = utils.get_device()
+    kg_data_list = [g.to(device) for g in kg_datasets.values()]
+
+    rel_emb_dim = {kg.rel_emb.shape[-1] for kg in kg_data_list}
+    assert (
+        len(rel_emb_dim) == 1
+    ), "All datasets should have the same relation embedding dimension"
+
+    model = SemanticUltra(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb_dim.pop())
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")
@@ -303,20 +379,37 @@ def main(cfg: DictConfig) -> None:
 
     model = model.to(device)
 
-    val_filtered_data = Data(
-        edge_index=kg_data.target_edge_index,
-        edge_type=kg_data.target_edge_type,
-        num_nodes=kg_data.num_nodes,
-    )
+    val_filtered_data = [
+        Data(
+            edge_index=g.target_edge_index,
+            edge_type=g.target_edge_type,
+            num_nodes=g.num_nodes,
+        ).to(device)
+        for g in kg_data_list
+    ]
 
-    val_filtered_data = val_filtered_data.to(device)
+    # By default, we use the full validation set
+    if "fast_test" in cfg.train:
+        num_val_edges = cfg.train.fast_test
+        if utils.is_main_process():
+            logger.warning(f"Fast evaluation on {num_val_edges} samples in validation")
+        short_valid = {vn: copy.deepcopy(vd) for vn, vd in kg_datasets.items()}
+        for graph in short_valid.values():
+            mask = torch.randperm(graph.target_edge_index.shape[1])[:num_val_edges]
+            graph.target_edge_index = graph.target_edge_index[:, mask]
+            graph.target_edge_type = graph.target_edge_type[mask]
+
+        valid_data_list = {sn: sv.to(device) for sn, sv in short_valid.items()}
+    else:
+        valid_data_list = {vn: vd.to(device) for vn, vd in kg_datasets.items()}
 
     train_and_validate(
         cfg,
         output_dir,
         model,
-        kg_data,
-        filtered_data=val_filtered_data,
+        kg_data_list=kg_data_list,
+        valid_data_list=valid_data_list,
+        filtered_data_list=val_filtered_data,
         device=device,
         batch_per_epoch=cfg.train.batch_per_epoch,
     )
@@ -324,7 +417,11 @@ def main(cfg: DictConfig) -> None:
     if utils.get_rank() == 0:
         logger.warning(separator)
         logger.warning("Evaluate on valid")
-    test(cfg, model, kg_data, filtered_data=val_filtered_data, device=device)
+    test(
+        cfg, model, valid_data_list, filtered_data_list=val_filtered_data, device=device
+    )
+    utils.synchronize()
+    dist.destroy_process_group()
 
 
 if __name__ == "__main__":
