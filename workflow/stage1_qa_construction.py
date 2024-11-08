@@ -127,19 +127,40 @@ def mapping_doc_to_phrases(
 
 
 def generate_qa_dataset(
-    data: dict, doc2entities: dict, question_entities: dict, dataset: str, mode: str
+    data: dict,
+    doc2entities: dict,
+    question_entities: dict,
+    dataset: str,
+    corpus: dict,
+    mode: str,
 ) -> None:
     qa_dataset = []
     for sample in tqdm(data, total=len(data)):
         id = sample["_id"] if "_id" in sample else sample["id"]
         answer = sample["answer"]
         question = sample["question"]
-        if dataset in ["hotpotqa", "2wikimultihopqa"]:
+        if dataset in ["hotpotqa"]:
             supporting_facts = sample["supporting_facts"]
+            supporting_items_paragraphs = [
+                {"id": item[0], "text": " ".join(corpus[item[0]])}
+                for item in supporting_facts
+            ]
+            supporting_items = {item[0] for item in supporting_facts}
+        elif dataset == "2wikimultihopqa":
+            title2id = {para["title"]: idx for idx, para in enumerate(corpus)}
+            supporting_facts = sample["supporting_facts"]
+            supporting_items_paragraphs = [
+                {"id": item[0], "text": corpus[title2id[item[0]]]["text"]}
+                for item in supporting_facts
+            ]
             supporting_items = {item[0] for item in supporting_facts}
         elif dataset in ["musique"]:
             supporting_facts = [
                 item for item in sample["paragraphs"] if item["is_supporting"]
+            ]
+            supporting_items_paragraphs = [
+                {"id": item["title"], "text": item["paragraph_text"]}
+                for item in supporting_facts
             ]
             supporting_items = {
                 item["title"] + "\n" + item["paragraph_text"]
@@ -156,7 +177,7 @@ def generate_qa_dataset(
                 "question": question,
                 "answer": answer,
                 "question_entities": question_entities[question],
-                "supporting_facts": supporting_facts,
+                "supporting_facts": supporting_items_paragraphs,  # change this
                 "supporting_entities": supporting_entities,
             }
         )
@@ -221,10 +242,10 @@ def main(cfg: DictConfig) -> None:
     )
 
     generate_qa_dataset(
-        train_data, doc2entities, question_entities, dataset, mode="train"
+        train_data, doc2entities, question_entities, dataset, corpus, mode="train"
     )
     generate_qa_dataset(
-        test_data, doc2entities, question_entities, dataset, mode="test"
+        test_data, doc2entities, question_entities, dataset, corpus, mode="test"
     )
 
 
