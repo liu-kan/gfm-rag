@@ -74,11 +74,11 @@ class QADataset(InMemoryDataset):
 
     def _process(self) -> None:
         if is_main_process():
-            logger.info("Processing QA dataset at rank %d", get_rank())
+            logger.info(f"Processing QA dataset {self.name} at rank {get_rank()}")
             super()._process()
         else:
             logger.info(
-                f"Rank [{get_rank()}]: Waiting for main process to finish processing QA dataset"
+                f"Rank [{get_rank()}]: Waiting for main process to finish processing QA dataset {self.name}"
             )
         synchronize()
 
