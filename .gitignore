@@ -9,3 +9,4 @@ scripts/*
 tmp/
 .env
 zicheng/
+logs/

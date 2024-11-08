@@ -76,11 +76,11 @@ class KGDataset(InMemoryDataset):
 
     def _process(self) -> None:
         if is_main_process():
-            logger.info("Processing KG dataset at rank %d", get_rank())
+            logger.info(f"Processing KG dataset {self.name} at rank {get_rank()}")
             super()._process()
         else:
             logger.info(
-                f"Rank [{get_rank()}]: Waiting for main process to finish processing KG dataset"
+                f"Rank [{get_rank()}]: Waiting for main process to finish processing KG dataset {self.name}"
             )
         synchronize()
 

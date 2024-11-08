@@ -68,6 +68,10 @@ def train_and_validate(
             for g in kg_data_list
         ]
     )
+    if utils.is_main_process():
+        logger.info(
+            f"Number of training KGs: {len(kg_data_list)} Number of training triplets: {train_triplets.shape[0]}"
+        )
     sampler = torch_data.DistributedSampler(train_triplets, world_size, rank)
     train_loader = torch_data.DataLoader(
         train_triplets,
@@ -392,7 +396,7 @@ def main(cfg: DictConfig) -> None:
     if "fast_test" in cfg.train:
         num_val_edges = cfg.train.fast_test
         if utils.is_main_process():
-            logger.warning(f"Fast evaluation on {num_val_edges} samples in validation")
+            logger.info(f"Fast evaluation on {num_val_edges} samples in validation")
         short_valid = {vn: copy.deepcopy(vd) for vn, vd in kg_datasets.items()}
         for graph in short_valid.values():
             mask = torch.randperm(graph.target_edge_index.shape[1])[:num_val_edges]
