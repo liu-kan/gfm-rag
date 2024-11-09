@@ -138,9 +138,7 @@ class QADataset(InMemoryDataset):
                         entities_to_mask(supporting_entities, num_nodes)
                     )
                     supporting_docs = [
-                        doc2id[doc[0]]
-                        for doc in item["supporting_facts"]
-                        if doc[0] in doc2id
+                        doc2id[doc] for doc in item["supporting_facts"] if doc in doc2id
                     ]
                     supporting_docs_masks.append(
                         entities_to_mask(supporting_docs, n_docs)

@@ -367,6 +367,14 @@ def main(cfg: DictConfig) -> None:
         k: v[0] for k, v in datasets.items()
     }  # Only use the first element (KG) for training
 
+    if utils.is_main_process():
+        for name, g in kg_datasets.items():
+            # Show the number of entities, relations, and triples in the dataset
+            # The number of relations is divided by 2 because the dataset stores both the forward and backward relations
+            logger.info(
+                f"Dataset {name}: #Entities: {g.num_nodes}, #Relations: {g.num_relations // 2}, #Triples: {len(g.target_edge_type)}"
+            )
+
     device = utils.get_device()
     kg_data_list = [g.to(device) for g in kg_datasets.values()]
 

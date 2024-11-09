@@ -59,12 +59,16 @@ class HfCausalModel(BaseLanguageModel):
 
     @torch.inference_mode()
     def generate_sentence(
-        self, llm_input: str, system_input: str = ""
+        self, llm_input: str | list, system_input: str = ""
     ) -> str | Exception:
-        message = []
-        if system_input:
-            message.append({"role": "system", "content": system_input})
-        message.append({"role": "user", "content": llm_input})
+        # If the input is a list, it is assumed that the input is a list of messages
+        if isinstance(llm_input, list):
+            message = llm_input
+        else:
+            message = []
+            if system_input:
+                message.append({"role": "system", "content": system_input})
+            message.append({"role": "user", "content": llm_input})
         try:
             outputs = self.generator(
                 message,

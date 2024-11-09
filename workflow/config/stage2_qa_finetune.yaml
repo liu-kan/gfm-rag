@@ -14,7 +14,7 @@ datasets:
     root: ./data
     text_emb_model_name: sentence-transformers/all-mpnet-base-v2
   data_names:
-    - hotpotqa_example
+    - hotpotqa
 
 model:
   _target_: deep_graphrag.ultra.models.UltraQA
