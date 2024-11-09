@@ -111,13 +111,15 @@ def mapping_doc_to_phrases(
             for row in unique_rows
         }
     elif dataset in ["2wikimultihopqa"]:
-        items = [para["title"] for para in corpus]
+        # items = [para["title"] for para in corpus]
+        items = list(corpus.keys())
         doc2entities = {
             items[row]: phrases[cols[rows == row].tolist()].tolist()
             for row in unique_rows
         }
     elif dataset in ["musique"]:
-        items = [para["title"] + "\n" + para["text"] for para in corpus]
+        # items = [para["title"] + "\n" + para["text"] for para in corpus]
+        items = list(corpus.keys())
         doc2entities = {
             items[row]: phrases[cols[rows == row].tolist()].tolist()
             for row in unique_rows
@@ -139,18 +141,18 @@ def generate_qa_dataset(
         id = sample["_id"] if "_id" in sample else sample["id"]
         answer = sample["answer"]
         question = sample["question"]
-        if dataset in ["hotpotqa"]:
+        if dataset in ["hotpotqa", "2wikimultihopqa"]:
             supporting_facts = sample["supporting_facts"]
             supporting_items_paragraphs = [
                 {"id": item[0], "text": " ".join(corpus[item[0]])}
                 for item in supporting_facts
             ]
             supporting_items = {item[0] for item in supporting_facts}
-        elif dataset == "2wikimultihopqa":
-            title2id = {para["title"]: idx for idx, para in enumerate(corpus)}
+        elif dataset in ["2wikimultihopqa"]:
+            # title2id = {para["title"]: idx for idx, para in enumerate(corpus)}
             supporting_facts = sample["supporting_facts"]
             supporting_items_paragraphs = [
-                {"id": item[0], "text": corpus[title2id[item[0]]]["text"]}
+                {"id": item[0], "text": " ".join(corpus[item[0]])}
                 for item in supporting_facts
             ]
             supporting_items = {item[0] for item in supporting_facts}
@@ -162,10 +164,7 @@ def generate_qa_dataset(
                 {"id": item["title"], "text": item["paragraph_text"]}
                 for item in supporting_facts
             ]
-            supporting_items = {
-                item["title"] + "\n" + item["paragraph_text"]
-                for item in supporting_facts
-            }
+            supporting_items = {item["title"] for item in supporting_facts}
 
         supporting_entities = []
         for item in supporting_items:
