@@ -27,7 +27,6 @@ model:
     layer_norm: yes
 
 task:
-  name: TransductiveInference
   num_negative: 256
   strict_negative: yes
   adversarial_temperature: 1
@@ -43,6 +42,7 @@ train:
   log_interval: 100
   fast_test: 500
   save_best_only: yes
+  save_pretrained: no # Save the model for QA inference
   batch_per_epoch: null
 
 checkpoint: null

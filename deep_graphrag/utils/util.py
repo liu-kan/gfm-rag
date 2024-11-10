@@ -6,6 +6,24 @@ from hydra.utils import get_class
 from omegaconf import DictConfig
 
 
+def save_model_to_pretrained(
+    model: torch.nn.Module, cfg: DictConfig, path: str
+) -> None:
+    os.makedirs(path, exist_ok=True)
+    config = {
+        "architectures": cfg.model._target_,
+        "text_emb_model": cfg.datasets.cfgs.text_emb_model_name,
+        "model_config": {
+            "rel_emb_dim": model.rel_emb_dim,
+            "entity_model_cfg": cfg.model.entity_model_cfg,
+        },
+    }
+
+    with open(os.path.join(path, "config.json"), "w") as f:
+        json.dump(config, f)
+    torch.save({"model": model.state_dict()}, os.path.join(path, "model.pth"))
+
+
 def load_model_from_pretrained(path: str) -> tuple[torch.nn.Module, dict]:
     with open(os.path.join(path, "config.json")) as f:
         config = json.load(f)

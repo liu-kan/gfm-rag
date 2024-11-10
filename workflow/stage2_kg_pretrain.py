@@ -432,6 +432,12 @@ def main(cfg: DictConfig) -> None:
     test(
         cfg, model, valid_data_list, filtered_data_list=val_filtered_data, device=device
     )
+
+    # Save the model into the format for QA inference
+    if utils.is_main_process() and cfg.train.save_pretrained:
+        pre_trained_dir = os.path.join(output_dir, "pretrained")
+        utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
+
     utils.synchronize()
     dist.destroy_process_group()
 
