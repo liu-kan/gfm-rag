@@ -104,21 +104,7 @@ def mapping_doc_to_phrases(
     rows, cols = np.nonzero(doc_to_phrases_mat.toarray())
     unique_rows = list(range(doc_to_phrases_mat.toarray().shape[0]))
 
-    if dataset in ["hotpotqa"]:
-        items = list(corpus.keys())
-        doc2entities = {
-            items[row]: phrases[cols[rows == row].tolist()].tolist()
-            for row in unique_rows
-        }
-    elif dataset in ["2wikimultihopqa"]:
-        # items = [para["title"] for para in corpus]
-        items = list(corpus.keys())
-        doc2entities = {
-            items[row]: phrases[cols[rows == row].tolist()].tolist()
-            for row in unique_rows
-        }
-    elif dataset in ["musique"]:
-        # items = [para["title"] + "\n" + para["text"] for para in corpus]
+    if dataset in ["hotpotqa", "2wikimultihopqa", "musique"]:
         items = list(corpus.keys())
         doc2entities = {
             items[row]: phrases[cols[rows == row].tolist()].tolist()
@@ -133,7 +119,6 @@ def generate_qa_dataset(
     doc2entities: dict,
     question_entities: dict,
     dataset: str,
-    corpus: dict,
     mode: str,
 ) -> None:
     qa_dataset = []
@@ -141,42 +126,20 @@ def generate_qa_dataset(
         id = sample["_id"] if "_id" in sample else sample["id"]
         answer = sample["answer"]
         question = sample["question"]
-        if dataset in ["hotpotqa", "2wikimultihopqa"]:
+        if dataset in ["hotpotqa", "2wikimultihopqa", "musique"]:
             supporting_facts = sample["supporting_facts"]
-            supporting_items_paragraphs = [
-                {"id": item[0], "text": " ".join(corpus[item[0]])}
-                for item in supporting_facts
-            ]
-            supporting_items = {item[0] for item in supporting_facts}
-        elif dataset in ["2wikimultihopqa"]:
-            # title2id = {para["title"]: idx for idx, para in enumerate(corpus)}
-            supporting_facts = sample["supporting_facts"]
-            supporting_items_paragraphs = [
-                {"id": item[0], "text": " ".join(corpus[item[0]])}
-                for item in supporting_facts
-            ]
-            supporting_items = {item[0] for item in supporting_facts}
-        elif dataset in ["musique"]:
-            supporting_facts = [
-                item for item in sample["paragraphs"] if item["is_supporting"]
-            ]
-            supporting_items_paragraphs = [
-                {"id": item["title"], "text": item["paragraph_text"]}
-                for item in supporting_facts
-            ]
-            supporting_items = {item["title"] for item in supporting_facts}
 
-        supporting_entities = []
-        for item in supporting_items:
-            supporting_entities.extend(doc2entities[item])
+            supporting_entities = []
+            for item in list(set(supporting_facts)):
+                supporting_entities.extend(doc2entities[item])
 
         qa_dataset.append(
             {
                 "id": id,
                 "question": question,
                 "answer": answer,
+                "supporting_facts": supporting_facts,
                 "question_entities": question_entities[question],
-                "supporting_facts": supporting_items_paragraphs,  # change this
                 "supporting_entities": supporting_entities,
             }
         )
@@ -241,10 +204,10 @@ def main(cfg: DictConfig) -> None:
     )
 
     generate_qa_dataset(
-        train_data, doc2entities, question_entities, dataset, corpus, mode="train"
+        train_data, doc2entities, question_entities, dataset, mode="train"
     )
     generate_qa_dataset(
-        test_data, doc2entities, question_entities, dataset, corpus, mode="test"
+        test_data, doc2entities, question_entities, dataset, mode="test"
     )
 
 
