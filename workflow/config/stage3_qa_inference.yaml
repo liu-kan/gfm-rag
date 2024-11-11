@@ -10,7 +10,7 @@ seed: 1024
 
 dataset:
   root: ./data
-  data_name: hotpotqa_example
+  data_name: hotpotqa
 
 llm:
   _target_: deep_graphrag.llms.ChatGPT

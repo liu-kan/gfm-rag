@@ -123,7 +123,7 @@ def ans_prediction(
         retrieved_docs = doc_retriever(retrieval_doc["doc_pred"], top_k=cfg.test.top_k)
         doc_context = "\n".join(
             [
-                DOC_PROMPT.format(title=doc["title"], content=" ".join(doc["content"]))
+                DOC_PROMPT.format(title=doc["title"], content=doc["content"])
                 for doc in retrieved_docs
             ]
         )
