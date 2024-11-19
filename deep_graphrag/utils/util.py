@@ -3,7 +3,7 @@ import os
 
 import torch
 from hydra.utils import get_class
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 
 def save_model_to_pretrained(
@@ -15,7 +15,7 @@ def save_model_to_pretrained(
         "text_emb_model": cfg.datasets.cfgs.text_emb_model_name,
         "model_config": {
             "rel_emb_dim": model.rel_emb_dim,
-            "entity_model_cfg": cfg.model.entity_model_cfg,
+            "entity_model_cfg": OmegaConf.to_container(cfg.model.entity_model_cfg),
         },
     }
 

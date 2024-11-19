@@ -9,7 +9,7 @@ class SemanticUltra(nn.Module):
     def __init__(self, entity_model_cfg: DictConfig, rel_emb_dim: int) -> None:
         # kept that because super Ultra sounds cool
         super().__init__()
-        self.rel_meb_dim = rel_emb_dim
+        self.rel_emb_dim = rel_emb_dim
         self.rel_mlp = nn.Linear(rel_emb_dim, entity_model_cfg["input_dim"])
         self.entity_model = instantiate(entity_model_cfg)
 
