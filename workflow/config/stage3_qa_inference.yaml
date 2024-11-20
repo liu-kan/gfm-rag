@@ -4,7 +4,7 @@ hydra:
 
 defaults:
   - _self_
-  - doc_ranker: topk_ranker
+  - doc_ranker: idf_topk_ranker
 
 seed: 1024
 

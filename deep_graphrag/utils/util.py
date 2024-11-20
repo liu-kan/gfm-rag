@@ -20,7 +20,7 @@ def save_model_to_pretrained(
     }
 
     with open(os.path.join(path, "config.json"), "w") as f:
-        json.dump(config, f)
+        json.dump(config, f, indent=4)
     torch.save({"model": model.state_dict()}, os.path.join(path, "model.pth"))
 
 
