@@ -16,7 +16,7 @@ datasets:
     - hotpotqa
 
 model:
-  _target_: deep_graphrag.ultra.models.SemanticUltra
+  _target_: deep_graphrag.models.SemanticUltra
   entity_model_cfg:
     _target_: deep_graphrag.ultra.models.EntityNBFNet
     input_dim: 64

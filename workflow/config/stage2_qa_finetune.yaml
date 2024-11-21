@@ -17,7 +17,8 @@ datasets:
     - hotpotqa
 
 model:
-  _target_: deep_graphrag.ultra.models.UltraQA
+  _target_: deep_graphrag.models.UltraQA
+  init_entities_weight: True
   entity_model_cfg:
     _target_: deep_graphrag.ultra.models.QueryNBFNet
     input_dim: 64

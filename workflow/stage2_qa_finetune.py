@@ -92,13 +92,17 @@ def train_and_validate(
             for data_name in shuffled_data_name_list:
                 train_loader = train_dataloader_dict[data_name]
                 graph = train_datasets[data_name]["graph"]
+                ent2docs = train_datasets[data_name]["ent2docs"]
+                entities_weight = None
+                if cfg.model.init_entities_weight:
+                    entities_weight = utils.get_entities_weight(ent2docs)
                 for batch in tqdm(
                     islice(train_loader, batch_per_epoch),
                     desc=f"Training Batches: {epoch}",
                     total=batch_per_epoch,
                 ):
                     batch = query_utils.cuda(batch, device=device)
-                    pred = parallel_model(graph, batch)
+                    pred = parallel_model(graph, batch, entities_weight=entities_weight)
                     target = batch[2]  # supporting_entities_mask
                     loss = F.binary_cross_entropy_with_logits(
                         pred, target, reduction="none"
@@ -220,9 +224,13 @@ def test(
             ent2doc=ent2docs, **doc_ranker_args
         )
 
+        entities_weight = None
+        if cfg.model.init_entities_weight:
+            entities_weight = utils.get_entities_weight(ent2docs)
+
         for batch in tqdm(test_loader):
             batch = query_utils.cuda(batch, device=device)
-            ent_pred = model(graph, batch)
+            ent_pred = model(graph, batch, entities_weight=entities_weight)
             doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
             target_entities_mask = batch[2]  # supporting_entities_mask
             target_docs_mask = batch[3]  # supporting_docs_mask

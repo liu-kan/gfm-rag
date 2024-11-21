@@ -41,9 +41,7 @@ class IDFWeightedRanker(BaseDocRanker):
 
     def __init__(self, ent2doc: torch.Tensor) -> None:
         super().__init__(ent2doc)
-        self.idf_weight = torch.log(
-            ent2doc.shape[1] / (ent2doc.to_dense().sum(dim=-1) + 1)
-        )
+        self.idf_weight = 1 / ent2doc.to_dense().sum(dim=-1)
 
     def __call__(self, ent_pred: torch.Tensor) -> torch.Tensor:
         """
@@ -56,7 +54,7 @@ class IDFWeightedRanker(BaseDocRanker):
             torch.Tensor: Document ranks, shape (batch_size, n_docs)
         """
         doc_pred = torch.sparse.mm(
-            ent_pred.softmax(dim=-1) * self.idf_weight.unsqueeze(0), self.ent2doc
+            ent_pred * self.idf_weight.unsqueeze(0), self.ent2doc
         )
         return doc_pred
 
@@ -87,11 +85,7 @@ class IDFWeightedTopKRanker(BaseDocRanker):
     def __init__(self, ent2doc: torch.Tensor, top_k: int) -> None:
         super().__init__(ent2doc)
         self.top_k = top_k
-        self.idf_weight = torch.log(
-            ent2doc.shape[1] / (ent2doc.to_dense().sum(dim=-1) + 1)
-        )
-        # Set zero occurence to ent2doc.to_dense().sum(dim=-1) == 0
-        self.idf_weight[ent2doc.to_dense().sum(dim=-1) == 0] = 0
+        self.idf_weight = 1 / ent2doc.to_dense().sum(dim=-1)
 
     def __call__(self, ent_pred: torch.Tensor) -> torch.Tensor:
         """
