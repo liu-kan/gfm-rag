@@ -26,7 +26,7 @@ class KGDataset(InMemoryDataset):
         **kwargs: str,
     ) -> None:
         self.name = data_name
-        self.emb_model_name = text_emb_model_name
+        self.text_emb_model_name = text_emb_model_name
         super().__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
@@ -123,7 +123,7 @@ class KGDataset(InMemoryDataset):
 
         # Generate relation embeddings
         logger.info("Generating relation embeddings")
-        text_emb_model = SentenceTransformer(self.emb_model_name)
+        text_emb_model = SentenceTransformer(self.text_emb_model_name)
         rel_emb = text_emb_model.encode(
             list(rel2id.keys()),
             device="cuda" if torch.cuda.is_available() else "cpu",
@@ -160,7 +160,10 @@ class KGDataset(InMemoryDataset):
 
     @property
     def processed_dir(self) -> str:
-        return os.path.join(str(self.root), str(self.name), "processed", "stage2")
+        emb_model_name_string = self.text_emb_model_name.replace("/", "_")
+        return os.path.join(
+            str(self.root), str(self.name), "processed", "stage2", emb_model_name_string
+        )
 
     @property
     def processed_file_names(self) -> str:

@@ -42,7 +42,10 @@ class QADataset(InMemoryDataset):
 
     @property
     def processed_dir(self) -> str:
-        return os.path.join(str(self.root), str(self.name), "processed", "stage2")
+        emb_model_name_string = self.text_emb_model_name.replace("/", "_")
+        return os.path.join(
+            str(self.root), str(self.name), "processed", "stage2", emb_model_name_string
+        )
 
     @property
     def processed_file_names(self) -> str:
