@@ -28,19 +28,23 @@ class SemanticUltra(nn.Module):
 class UltraQA(SemanticUltra):
     """Wrap a GNN model for QA."""
 
+    def __init__(self, entity_model_cfg: DictConfig, rel_emb_dim: int) -> None:
+        # kept that because super Ultra sounds cool
+        super().__init__(entity_model_cfg, rel_emb_dim)
+        self.question_mlp = nn.Linear(self.rel_emb_dim, entity_model_cfg["input_dim"])
+
     def forward(self, graph: Data, batch: torch.Tensor) -> torch.Tensor:
         question_emb = batch[0]
         question_entities_mask = batch[1]
 
-        question_embedding = self.rel_mlp(
-            question_emb
-        )  # TODO: Use separate mlp for question?
+        question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
         batch_size = question_embedding.size(0)
         relation_representations = (
             self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
         )
 
         # initialize the input with the fuzzy set and question embs
+        # TODO: question_entities_mask weighted by frequency as HippoRAG
         input = torch.einsum(
             "bn, bd -> bnd", question_entities_mask, question_embedding
         )

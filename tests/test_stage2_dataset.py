@@ -16,7 +16,7 @@ def test_kg_dataset() -> None:
 def test_qa_dataset() -> None:
     dataset = QADataset(
         root="data",
-        data_name="hotpotqa_example",
+        data_name="hotpotqa",
         text_emb_model_name="sentence-transformers/all-mpnet-base-v2",
     )
     train_data, test_data = dataset._data
