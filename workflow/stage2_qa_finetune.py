@@ -329,7 +329,7 @@ def main(cfg: DictConfig) -> None:
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")
-        model.load_state_dict(state["model"])
+        model.load_state_dict(state["model"], strict=False)
 
     model = model.to(device)
     train_and_validate(
