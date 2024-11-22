@@ -223,11 +223,11 @@ class EntityNBFNet(BaseNBFNet):
         for layer in self.layers:
             layer.relation = relation_representations
 
-        if self.training:
+        # if self.training:
             # Edge dropout in the training mode
             # here we want to remove immediate edges (head, relation, tail) from the edge_index and edge_types
             # to make NBFNet iteration learn non-trivial paths
-            data = self.remove_easy_edges(data, h_index, t_index, r_index)
+            # data = self.remove_easy_edges(data, h_index, t_index, r_index)
 
         shape = h_index.shape
         # turn all triples in a batch into a tail prediction mode
