@@ -21,7 +21,7 @@ repos:
     rev: v1.12.1
     hooks:
     -   id: mypy
-        args: [--ignore-missing-imports, --install-types, --non-interactive, --disallow-untyped-defs]
+        args: [--ignore-missing-imports, --install-types, --non-interactive, --disallow-untyped-defs, --no-namespace-packages]
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.0
     hooks:

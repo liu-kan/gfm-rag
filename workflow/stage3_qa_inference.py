@@ -85,7 +85,7 @@ def doc_retrieval(
         batch = query_utils.cuda(batch, device=device)
         ent_pred = model(graph, batch)
         doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
-        idx = batch[4]
+        idx = batch["sample_id"]
         all_predictions.extend(
             {"id": i, "ent_pred": e, "doc_pred": d}
             for i, e, d in zip(idx.cpu(), ent_pred.cpu(), doc_pred.cpu())

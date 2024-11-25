@@ -103,7 +103,9 @@ def train_and_validate(
                 ):
                     batch = query_utils.cuda(batch, device=device)
                     pred = parallel_model(graph, batch, entities_weight=entities_weight)
-                    target = batch[2]  # supporting_entities_mask
+                    target = batch[
+                        "supporting_entities_masks"
+                    ]  # supporting_entities_mask
                     loss = F.binary_cross_entropy_with_logits(
                         pred, target, reduction="none"
                     )
@@ -151,10 +153,14 @@ def train_and_validate(
         epoch = min(cfg.train.num_epoch, i + step)
         utils.synchronize()
 
-        if rank == 0:
-            logger.warning(separator)
-            logger.warning("Evaluate on valid")
-        result = test(cfg, model, valid_datasets, device=device)
+        if cfg.train.do_eval:
+            if rank == 0:
+                logger.warning(separator)
+                logger.warning("Evaluate on valid")
+            result = test(cfg, model, valid_datasets, device=device)
+        else:
+            result = float("inf")
+            best_result = float("-inf")
         if rank == 0:
             if result > best_result:
                 best_result = result
@@ -232,8 +238,10 @@ def test(
             batch = query_utils.cuda(batch, device=device)
             ent_pred = model(graph, batch, entities_weight=entities_weight)
             doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
-            target_entities_mask = batch[2]  # supporting_entities_mask
-            target_docs_mask = batch[3]  # supporting_docs_mask
+            target_entities_mask = batch[
+                "supporting_entities_masks"
+            ]  # supporting_entities_mask
+            target_docs_mask = batch["supporting_docs_masks"]  # supporting_docs_mask
             target_entities = target_entities_mask.bool()
             target_docs = target_docs_mask.bool()
             ent_ranking, target_ent_ranking = utils.batch_evaluate(
@@ -342,10 +350,11 @@ def main(cfg: DictConfig) -> None:
         batch_per_epoch=cfg.train.batch_per_epoch,
     )
 
-    if utils.get_rank() == 0:
-        logger.warning(separator)
-        logger.warning("Evaluate on valid")
-    test(cfg, model, valid_datasets, device=device)
+    if cfg.train.do_eval:
+        if utils.get_rank() == 0:
+            logger.warning(separator)
+            logger.warning("Evaluate on valid")
+        test(cfg, model, valid_datasets, device=device)
 
     # Save the model into the format for QA inference
     if (

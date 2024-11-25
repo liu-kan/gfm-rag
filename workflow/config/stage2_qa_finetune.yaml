@@ -45,6 +45,6 @@ train:
   batch_per_epoch: null
   save_best_only: yes
   save_pretrained: yes # Save the model for QA inference
-  train_test_split: [0.8, 0.2]
+  do_eval: yes
 
 checkpoint: null

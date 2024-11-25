@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+import datasets
 import torch
 from sentence_transformers import SentenceTransformer
 from torch.utils import data as torch_data
@@ -65,10 +66,16 @@ class QADataset(InMemoryDataset):
             self.doc = json.load(fin)
         with open(os.path.join(self.raw_dir, "document2entities.json")) as fin:
             self.doc2entities = json.load(fin)
-        with open(os.path.join(self.raw_dir, "train.json")) as fin:
-            self.raw_train_data = json.load(fin)
-        with open(os.path.join(self.raw_dir, "test.json")) as fin:
-            self.raw_test_data = json.load(fin)
+        if os.path.exists(os.path.join(self.raw_dir, "train.json")):
+            with open(os.path.join(self.raw_dir, "train.json")) as fin:
+                self.raw_train_data = json.load(fin)
+        else:
+            self.raw_train_data = []
+        if os.path.exists(os.path.join(self.raw_dir, "test.json")):
+            with open(os.path.join(self.raw_dir, "test.json")) as fin:
+                self.raw_test_data = json.load(fin)
+        else:
+            self.raw_test_data = []
 
         self.ent2docs = torch.load(
             os.path.join(self.processed_dir, "ent2doc.pt"), weights_only=False
@@ -113,6 +120,9 @@ class QADataset(InMemoryDataset):
         num_samples = []
 
         for path in self.raw_paths:
+            if not os.path.exists(path):
+                num_samples.append(0)
+                continue  # Skip if the file does not exist
             with open(path) as fin:
                 data = json.load(fin)
                 num_samples.append(len(data))
@@ -161,13 +171,15 @@ class QADataset(InMemoryDataset):
         supporting_docs_masks = torch.stack(supporting_docs_masks)
         sample_id = torch.tensor(sample_id, dtype=torch.long)
 
-        dataset = torch_data.TensorDataset(
-            question_embeddings,
-            question_entities_masks,
-            supporting_entities_masks,
-            supporting_docs_masks,
-            sample_id,
-        )
+        dataset = datasets.Dataset.from_dict(
+            {
+                "question_embeddings": question_embeddings,
+                "question_entities_masks": question_entities_masks,
+                "supporting_entities_masks": supporting_entities_masks,
+                "supporting_docs_masks": supporting_docs_masks,
+                "sample_id": sample_id,
+            }
+        ).with_format("torch")
         offset = 0
         splits = []
         for num_sample in num_samples:

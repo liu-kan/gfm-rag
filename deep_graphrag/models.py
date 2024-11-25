@@ -48,8 +48,8 @@ class UltraQA(SemanticUltra):
         batch: torch.Tensor,
         entities_weight: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        question_emb = batch[0]
-        question_entities_mask = batch[1]
+        question_emb = batch["question_embeddings"]
+        question_entities_mask = batch["question_entities_masks"]
 
         question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
         batch_size = question_embedding.size(0)
