@@ -276,20 +276,19 @@ def test(
         doc_pred, doc_target = utils.gather_results(
             doc_pred, doc_target, rank, world_size, device
         )
-
+        ent_metrics = utils.evaluate(ent_pred, ent_target, cfg.task.metric)
         metrics = {}
         if rank == 0:
-            ent_metrics = utils.evaluate(ent_pred, ent_target, cfg.task.metric)
             doc_metrics = utils.evaluate(doc_pred, doc_target, cfg.task.metric)
             for key, value in ent_metrics.items():
                 metrics[f"ent_{key}"] = value
             for key, value in doc_metrics.items():
                 metrics[f"doc_{key}"] = value
-            metrics["mrr"] = (1 / ent_pred[0].float()).mean().item()
+            metrics["mrr"] = ent_metrics["mrr"]
             logger.warning(f"{'-' * 15} Test on {data_name} {'-' * 15}")
             query_utils.print_metrics(metrics, logger)
         else:
-            metrics["mrr"] = (1 / ent_pred[0].float()).mean().item()
+            metrics["mrr"] = ent_metrics["mrr"]
         all_metrics[data_name] = metrics
         all_mrr.append(metrics["mrr"])
     utils.synchronize()

@@ -45,4 +45,7 @@ def get_multi_dataset(cfg: DictConfig) -> dict:
 
 
 def get_entities_weight(ent2docs: torch.Tensor) -> torch.Tensor:
-    return 1 / ent2docs.to_dense().sum(dim=-1)
+    weights = 1 / ent2docs.to_dense().sum(dim=-1)
+    # Masked zero weights
+    weights[ent2docs.to_dense().sum(dim=-1) == 0] = 0
+    return weights
