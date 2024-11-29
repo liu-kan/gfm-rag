@@ -96,67 +96,63 @@ def train_and_validate(
     else:
         parallel_model = model
 
-    step = math.ceil(cfg.train.num_epoch / 10)
     best_result = float("-inf")
     best_epoch = -1
 
     batch_id = 0
-    for i in range(0, cfg.train.num_epoch, step):
+    for i in range(0, cfg.train.num_epoch):
+        epoch = i + 1
         parallel_model.train()
-        for epoch in range(i, min(cfg.train.num_epoch, i + step)):
-            if utils.get_rank() == 0:
+
+        if utils.get_rank() == 0:
+            logger.warning(separator)
+            logger.warning("Epoch %d begin" % epoch)
+
+        losses = []
+        sampler.set_epoch(epoch)
+        for batch in tqdm(
+            islice(train_loader, batch_per_epoch),
+            desc=f"Training Batches: {epoch}",
+            total=batch_per_epoch,
+        ):
+            train_graph, batch = batch
+            batch = tasks.negative_sampling(
+                train_graph,
+                batch,
+                cfg.task.num_negative,
+                strict=cfg.task.strict_negative,
+            )
+            pred = parallel_model(train_graph, batch)
+            target = torch.zeros_like(pred)
+            target[:, 0] = 1
+            loss = F.binary_cross_entropy_with_logits(pred, target, reduction="none")
+            neg_weight = torch.ones_like(pred)
+            if cfg.task.adversarial_temperature > 0:
+                with torch.no_grad():
+                    neg_weight[:, 1:] = F.softmax(
+                        pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1
+                    )
+            else:
+                neg_weight[:, 1:] = 1 / cfg.task.num_negative
+            loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
+            loss = loss.mean()
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+
+            if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
                 logger.warning(separator)
-                logger.warning("Epoch %d begin" % epoch)
+                logger.warning(f"binary cross entropy: {loss:g}")
+            losses.append(loss.item())
+            batch_id += 1
 
-            losses = []
-            sampler.set_epoch(epoch)
-            for batch in tqdm(
-                islice(train_loader, batch_per_epoch),
-                desc=f"Training Batches: {epoch}",
-                total=batch_per_epoch,
-            ):
-                train_graph, batch = batch
-                batch = tasks.negative_sampling(
-                    train_graph,
-                    batch,
-                    cfg.task.num_negative,
-                    strict=cfg.task.strict_negative,
-                )
-                pred = parallel_model(train_graph, batch)
-                target = torch.zeros_like(pred)
-                target[:, 0] = 1
-                loss = F.binary_cross_entropy_with_logits(
-                    pred, target, reduction="none"
-                )
-                neg_weight = torch.ones_like(pred)
-                if cfg.task.adversarial_temperature > 0:
-                    with torch.no_grad():
-                        neg_weight[:, 1:] = F.softmax(
-                            pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1
-                        )
-                else:
-                    neg_weight[:, 1:] = 1 / cfg.task.num_negative
-                loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
-                loss = loss.mean()
-
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
-
-                if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
-                    logger.warning(separator)
-                    logger.warning(f"binary cross entropy: {loss:g}")
-                losses.append(loss.item())
-                batch_id += 1
-
-            if utils.get_rank() == 0:
-                avg_loss = sum(losses) / len(losses)
-                logger.warning(separator)
-                logger.warning("Epoch %d end" % epoch)
-                logger.warning(line)
-                logger.warning(f"average binary cross entropy: {avg_loss:g}")
-
-        epoch = min(cfg.train.num_epoch, i + step)
+        if utils.get_rank() == 0:
+            avg_loss = sum(losses) / len(losses)
+            logger.warning(separator)
+            logger.warning("Epoch %d end" % epoch)
+            logger.warning(line)
+            logger.warning(f"average binary cross entropy: {avg_loss:g}")
 
         utils.synchronize()
         if rank == 0:

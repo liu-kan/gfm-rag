@@ -1,5 +1,4 @@
 import logging
-import math
 import os
 from itertools import islice
 
@@ -69,88 +68,83 @@ def train_and_validate(
     else:
         parallel_model = model
 
-    step = math.ceil(cfg.train.num_epoch / 10)
     best_result = float("-inf")
     best_epoch = -1
 
     batch_id = 0
-    for i in range(0, cfg.train.num_epoch, step):
+    for i in range(0, cfg.train.num_epoch):
+        epoch = i + 1
         parallel_model.train()
-        for epoch in range(i, min(cfg.train.num_epoch, i + step)):
-            if utils.get_rank() == 0:
-                logger.warning(separator)
-                logger.warning("Epoch %d begin" % epoch)
 
-            losses = []
+        if utils.get_rank() == 0:
+            logger.warning(separator)
+            logger.warning("Epoch %d begin" % epoch)
 
-            for dataloader in train_dataloader_dict.values():
-                dataloader.sampler.set_epoch(epoch)
-            # np.random.seed(epoch)  # TODO: should we use the same dataloader for all processes?
-            shuffled_data_name_list = np.random.permutation(
-                data_name_list
-            )  # Shuffle the dataloaders
-            for data_name in shuffled_data_name_list:
-                train_loader = train_dataloader_dict[data_name]
-                graph = train_datasets[data_name]["graph"]
-                ent2docs = train_datasets[data_name]["ent2docs"]
-                entities_weight = None
-                if cfg.model.init_entities_weight:
-                    entities_weight = utils.get_entities_weight(ent2docs)
-                for batch in tqdm(
-                    islice(train_loader, batch_per_epoch),
-                    desc=f"Training Batches: {epoch}",
-                    total=batch_per_epoch,
-                ):
-                    batch = query_utils.cuda(batch, device=device)
-                    pred = parallel_model(graph, batch, entities_weight=entities_weight)
-                    target = batch[
-                        "supporting_entities_masks"
-                    ]  # supporting_entities_mask
-                    loss = F.binary_cross_entropy_with_logits(
-                        pred, target, reduction="none"
-                    )
-                    is_positive = target > 0.5
-                    is_negative = target <= 0.5
-                    num_positive = is_positive.sum(dim=-1)
-                    num_negative = is_negative.sum(dim=-1)
+        losses = []
 
-                    neg_weight = torch.zeros_like(pred)
-                    neg_weight[is_positive] = (
-                        1 / num_positive.float()
-                    ).repeat_interleave(num_positive)
+        for dataloader in train_dataloader_dict.values():
+            dataloader.sampler.set_epoch(epoch)
+        # np.random.seed(epoch)  # TODO: should we use the same dataloader for all processes?
+        shuffled_data_name_list = np.random.permutation(
+            data_name_list
+        )  # Shuffle the dataloaders
+        for data_name in shuffled_data_name_list:
+            train_loader = train_dataloader_dict[data_name]
+            graph = train_datasets[data_name]["graph"]
+            ent2docs = train_datasets[data_name]["ent2docs"]
+            entities_weight = None
+            if cfg.model.init_entities_weight:
+                entities_weight = utils.get_entities_weight(ent2docs)
+            for batch in tqdm(
+                islice(train_loader, batch_per_epoch),
+                desc=f"Training Batches: {epoch}",
+                total=batch_per_epoch,
+            ):
+                batch = query_utils.cuda(batch, device=device)
+                pred = parallel_model(graph, batch, entities_weight=entities_weight)
+                target = batch["supporting_entities_masks"]  # supporting_entities_mask
+                loss = F.binary_cross_entropy_with_logits(
+                    pred, target, reduction="none"
+                )
+                is_positive = target > 0.5
+                is_negative = target <= 0.5
+                num_positive = is_positive.sum(dim=-1)
+                num_negative = is_negative.sum(dim=-1)
 
-                    if cfg.task.adversarial_temperature > 0:
-                        with torch.no_grad():
-                            logit = pred[is_negative] / cfg.task.adversarial_temperature
-                            neg_weight[is_negative] = variadic_softmax(
-                                logit, num_negative
-                            )
-                            # neg_weight[:, 1:] = F.softmax(pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1)
-                    else:
-                        neg_weight[is_negative] = (
-                            1 / num_negative.float()
-                        ).repeat_interleave(num_negative)
-                    loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
-                    loss = loss.mean()
+                neg_weight = torch.zeros_like(pred)
+                neg_weight[is_positive] = (1 / num_positive.float()).repeat_interleave(
+                    num_positive
+                )
 
-                    loss.backward()
-                    optimizer.step()
-                    optimizer.zero_grad()
+                if cfg.task.adversarial_temperature > 0:
+                    with torch.no_grad():
+                        logit = pred[is_negative] / cfg.task.adversarial_temperature
+                        neg_weight[is_negative] = variadic_softmax(logit, num_negative)
+                        # neg_weight[:, 1:] = F.softmax(pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1)
+                else:
+                    neg_weight[is_negative] = (
+                        1 / num_negative.float()
+                    ).repeat_interleave(num_negative)
+                loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
+                loss = loss.mean()
 
-                    if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
-                        logger.warning(separator)
-                        logger.warning(f"binary cross entropy: {loss:g}")
-                    losses.append(loss.item())
-                    batch_id += 1
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
 
-            if utils.get_rank() == 0:
-                avg_loss = sum(losses) / len(losses)
-                logger.warning(separator)
-                logger.warning("Epoch %d end" % epoch)
-                logger.warning(line)
-                logger.warning(f"average binary cross entropy: {avg_loss:g}")
+                if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
+                    logger.warning(separator)
+                    logger.warning(f"binary cross entropy: {loss:g}")
+                losses.append(loss.item())
+                batch_id += 1
 
-        epoch = min(cfg.train.num_epoch, i + step)
+        if utils.get_rank() == 0:
+            avg_loss = sum(losses) / len(losses)
+            logger.warning(separator)
+            logger.warning("Epoch %d end" % epoch)
+            logger.warning(line)
+            logger.warning(f"average binary cross entropy: {avg_loss:g}")
+
         utils.synchronize()
 
         if cfg.train.do_eval:
