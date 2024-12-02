@@ -434,9 +434,7 @@ def main(cfg: DictConfig) -> None:
         pre_trained_dir = os.path.join(output_dir, "pretrained")
         utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
 
-    if utils.get_world_size() > 1:
-        utils.synchronize()
-        dist.destroy_process_group()
+    utils.synchronize()
 
 
 if __name__ == "__main__":

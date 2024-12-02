@@ -1,2 +1,2 @@
 _target_: deep_graphrag.doc_rankers.IDFWeightedTopKRanker
-top_k: 10
+top_k: 20

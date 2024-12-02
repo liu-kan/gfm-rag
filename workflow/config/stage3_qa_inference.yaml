@@ -10,7 +10,7 @@ seed: 1024
 
 dataset:
   root: ./data
-  data_name: hotpotqa
+  data_name: hotpotqa_test
 
 llm:
   _target_: deep_graphrag.llms.ChatGPT
@@ -18,7 +18,7 @@ llm:
   retry: 5
 
 graph_retriever:
-  model_path: save_models/qa_ultra_epoch_20/
+  model_path: save_models/qa_ultra_train_1000/
 
 test:
   retrieval_batch_size: 8

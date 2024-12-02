@@ -8,7 +8,6 @@ import torch
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import get_class
 from omegaconf import DictConfig, OmegaConf
-from torch import distributed as dist
 from torch import nn
 from torch.nn import functional as F  # noqa:N812
 from torch.utils import data as torch_data
@@ -358,9 +357,7 @@ def main(cfg: DictConfig) -> None:
         pre_trained_dir = os.path.join(output_dir, "pretrained")
         utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
 
-    if utils.get_world_size() > 1:
-        utils.synchronize()
-        dist.destroy_process_group()
+    utils.synchronize()
 
 
 if __name__ == "__main__":
