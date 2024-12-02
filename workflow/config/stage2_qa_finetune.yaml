@@ -13,8 +13,12 @@ datasets:
   cfgs:
     root: ./data
     text_emb_model_name: sentence-transformers/all-mpnet-base-v2
-  data_names:
+  train_names:
     - hotpotqa
+  valid_names:
+    - hotpotqa_test
+    - musique_test
+    - 2wikimultihopqa_test
 
 model:
   _target_: deep_graphrag.models.UltraQA

@@ -316,16 +316,20 @@ def main(cfg: DictConfig) -> None:
         train_data, valid_data = qa_data._data
         graph = qa_data.kg.to(device)
         ent2docs = qa_data.ent2docs.to(device)
-        train_datasets[data_name] = {
-            "data": train_data,
-            "graph": graph,
-            "ent2docs": ent2docs,
-        }
-        valid_datasets[data_name] = {
-            "data": valid_data,
-            "graph": graph,
-            "ent2docs": ent2docs,
-        }
+        if data_name in cfg.datasets.train_names:
+            train_datasets[data_name] = {
+                "data": train_data,
+                "graph": graph,
+                "ent2docs": ent2docs,
+            }
+        elif data_name in cfg.datasets.valid_names:
+            valid_datasets[data_name] = {
+                "data": valid_data,
+                "graph": graph,
+                "ent2docs": ent2docs,
+            }
+        else:
+            raise ValueError(f"Unknown data name: {data_name}")
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")

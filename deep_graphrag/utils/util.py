@@ -35,7 +35,9 @@ def get_multi_dataset(cfg: DictConfig) -> dict:
     """
     Return the joint KG datasets
     """
-    data_name_list = cfg.datasets.data_names
+    data_name_list = set(
+        cfg.datasets.train_names + cfg.datasets.valid_names
+    )  # Remove duplicates in the list
     dataset_cls = get_class(cfg.datasets._target_)
     dataset_list = {}
     for data_name in data_name_list:
