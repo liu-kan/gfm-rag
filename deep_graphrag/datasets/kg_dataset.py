@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from collections.abc import Callable
 
 import torch
 from sentence_transformers import SentenceTransformer
@@ -21,13 +20,11 @@ class KGDataset(InMemoryDataset):
         root: str,
         data_name: str,
         text_emb_model_name: str,
-        transform: Callable | None = None,
-        pre_transform: Callable | None = build_relation_graph,
         **kwargs: str,
     ) -> None:
         self.name = data_name
         self.text_emb_model_name = text_emb_model_name
-        super().__init__(root, transform, pre_transform)
+        super().__init__(root, None, None)
         self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
     @property
@@ -142,8 +139,7 @@ class KGDataset(InMemoryDataset):
         )
 
         # build graphs of relations
-        if self.pre_transform is not None:
-            kg_data = self.pre_transform(kg_data)
+        kg_data = build_relation_graph(kg_data)
 
         torch.save((self.collate([kg_data])), self.processed_paths[0])
 
