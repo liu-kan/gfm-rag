@@ -71,3 +71,18 @@ python workflow/stage3_qa_inference.py
 # Multi-GPU retrieval
 torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py
 ```
+
+hotpotqa
+```bash
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=hotpotqa_test qa_prompt=hotpotqa test.evaluator._target_=deep_graphrag.evaluation.hotpot_qa_evaluator.HotpotQAEvaluator
+```
+
+musique
+```bash
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=musique_test qa_prompt=musique test.evaluator._target_=deep_graphrag.evaluation.MusiqueEvaluator
+```
+
+2Wikimultihopqa
+```bash
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa test.evaluator._target_=deep_graphrag.evaluation.TwoWikiQAEvaluator
+```

@@ -5,6 +5,7 @@ hydra:
 defaults:
   - _self_
   - doc_ranker: idf_topk_ranker
+  - qa_prompt: hotpotqa
 
 seed: 1024
 
@@ -23,10 +24,10 @@ graph_retriever:
 test:
   retrieval_batch_size: 8
   top_k: 5
-  save_top_k_entity: 10
   save_retrieval: False
-  metric: [em, f1, precision, recall]
+  save_top_k_entity: 10
   evaluator:
-    _target_: deep_graphrag.evaluation.hotpot_qa_evaluator.HotpotQAEvaluator
+    _target_: deep_graphrag.evaluation.HotpotQAEvaluator
   n_threads: 5
-  prompt_mode: "one-shot"
+  retrieved_result_path: null
+  prediction_result_path: null
