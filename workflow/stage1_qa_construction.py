@@ -40,7 +40,7 @@ def get_searcher(
             root=colbert_config["root"],
         )
         indexer = Indexer(checkpoint=checkpoint_path, config=config)
-        indexer.index(name=index_name, collection=phrases, overwrite="reuse")
+        indexer.index(name=index_name, collection=phrases, overwrite=True)
 
     with Run().context(
         RunConfig(nranks=1, experiment=exp_name, root=colbert_config["root"])
@@ -104,7 +104,17 @@ def mapping_doc_to_phrases(
     rows, cols = np.nonzero(doc_to_phrases_mat.toarray())
     unique_rows = list(range(doc_to_phrases_mat.toarray().shape[0]))
 
-    if dataset in ["hotpotqa", "2wikimultihopqa", "musique"]:
+    if dataset in [
+        "hotpotqa",
+        "2wikimultihopqa",
+        "musique",
+        "hotpotqa_train",
+        "2wikimultihopqa_train",
+        "musique_train",
+        "hotpotqa_train2",
+        "2wikimultihopqa_train2",
+        "musique_train2",
+    ]:
         items = list(corpus.keys())
         doc2entities = {
             items[row]: phrases[cols[rows == row].tolist()].tolist()
@@ -112,6 +122,35 @@ def mapping_doc_to_phrases(
         }
 
     return doc2entities
+
+
+def mapping_doc_to_triples(
+    dataset: str,
+    docs_to_facts_mat: csr_array,
+    corpus: dict,
+    lose_fact: list,
+) -> dict:
+    rows, cols = np.nonzero(docs_to_facts_mat.toarray())
+    unique_rows = list(range(docs_to_facts_mat.toarray().shape[0]))
+
+    if dataset in [
+        "hotpotqa",
+        "2wikimultihopqa",
+        "musique",
+        "hotpotqa_train",
+        "2wikimultihopqa_train",
+        "musique_train",
+        "hotpotqa_train2",
+        "2wikimultihopqa_train2",
+        "musique_train2",
+    ]:
+        items = list(corpus.keys())
+        doc2triples = {
+            items[row]: lose_fact[cols[rows == row].tolist()].tolist()
+            for row in unique_rows
+        }
+
+    return doc2triples
 
 
 def generate_qa_dataset(
@@ -126,23 +165,47 @@ def generate_qa_dataset(
         id = sample["_id"] if "_id" in sample else sample["id"]
         answer = sample["answer"]
         question = sample["question"]
-        if dataset in ["hotpotqa", "2wikimultihopqa", "musique"]:
+
+        if dataset in [
+            "hotpotqa",
+            "2wikimultihopqa",
+            "musique",
+            "hotpotqa_train",
+            "2wikimultihopqa_train",
+            "musique_train",
+            "hotpotqa_train2",
+            "2wikimultihopqa_train2",
+            "musique_train2",
+        ]:
             supporting_facts = sample["supporting_facts"]
 
             supporting_entities = []
             for item in list(set(supporting_facts)):
                 supporting_entities.extend(doc2entities[item])
 
-        qa_dataset.append(
-            {
-                "id": id,
-                "question": question,
-                "answer": answer,
-                "supporting_facts": supporting_facts,
-                "question_entities": question_entities[question],
-                "supporting_entities": supporting_entities,
-            }
-        )
+        if dataset in ["musique", "musique_train", "musique_train2"]:
+            qa_dataset.append(
+                {
+                    "id": id,
+                    "question": question,
+                    "answer": answer,
+                    "answer_aliases": sample["answer_aliases"],
+                    "supporting_facts": supporting_facts,
+                    "question_entities": question_entities[question],
+                    "supporting_entities": supporting_entities,
+                }
+            )
+        else:
+            qa_dataset.append(
+                {
+                    "id": id,
+                    "question": question,
+                    "answer": answer,
+                    "supporting_facts": supporting_facts,
+                    "question_entities": question_entities[question],
+                    "supporting_entities": supporting_entities,
+                }
+            )
     dataset_qa_path = f"data/{dataset}/processed/stage1/{mode}.json"
     json.dump(qa_dataset, open(dataset_qa_path, "w"), indent="\t")
 
@@ -159,8 +222,11 @@ def main(cfg: DictConfig) -> None:
     version = cfg.task.create_graph.version
 
     corpus = json.load(open(f"data/{dataset}/raw/dataset_corpus.json"))
-    train_data = json.load(open(f"data/{dataset}/raw/train.json"))
-    test_data = json.load(open(f"data/{dataset}/raw/test.json"))
+    if "train" not in dataset:
+        train_data = json.load(open(f"data/{dataset}/raw/train.json"))
+        test_data = json.load(open(f"data/{dataset}/raw/test.json"))
+    else:
+        train_data = json.load(open(f"data/{dataset}/raw/train.json"))
 
     # all the entities
     kb_node_phrase_to_id = pickle.load(
@@ -193,6 +259,17 @@ def main(cfg: DictConfig) -> None:
             "rb",
         )
     )  # (num facts, num phrases)
+
+    lose_fact = json.load(open(f"data/{dataset}/tmp/{dataset}_documents_triplets.json"))
+    lose_fact = np.array(lose_fact)
+
+    doc2triples = mapping_doc_to_triples(dataset, docs_to_facts_mat, corpus, lose_fact)
+    json.dump(
+        doc2triples,
+        open(f"data/{dataset}/processed/stage1/document2triples.json", "w"),
+        indent="\t",
+    )
+
     doc_to_phrases_mat = docs_to_facts_mat.dot(facts_to_phrases_mat)
     doc_to_phrases_mat[doc_to_phrases_mat.nonzero()] = 1  # entities2documents
 
@@ -203,12 +280,17 @@ def main(cfg: DictConfig) -> None:
         indent="\t",
     )
 
-    generate_qa_dataset(
-        train_data, doc2entities, question_entities, dataset, mode="train"
-    )
-    generate_qa_dataset(
-        test_data, doc2entities, question_entities, dataset, mode="test"
-    )
+    if "train" not in dataset:
+        generate_qa_dataset(
+            train_data, doc2entities, question_entities, dataset, mode="train"
+        )
+        generate_qa_dataset(
+            test_data, doc2entities, question_entities, dataset, mode="test"
+        )
+    else:
+        generate_qa_dataset(
+            train_data, doc2entities, question_entities, dataset, mode="train"
+        )
 
 
 if __name__ == "__main__":

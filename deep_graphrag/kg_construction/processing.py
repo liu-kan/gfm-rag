@@ -44,6 +44,8 @@ def mean_pooling_embedding_with_normalization(
 
 
 def processing_phrases(phrase):
+    if isinstance(phrase, int):
+        return str(phrase)
     return re.sub("[^A-Za-z0-9 ]", " ", phrase.lower()).strip()
 
 

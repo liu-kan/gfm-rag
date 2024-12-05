@@ -2,6 +2,7 @@ import hydra
 from omegaconf import DictConfig
 
 from deep_graphrag.kg_construction.create_graph import create_graph
+from deep_graphrag.kg_construction.create_graph_merge import create_graph_merge
 from deep_graphrag.kg_construction.named_entity_extraction_parallel import (
     named_entity_extraction_parallel,
 )
@@ -33,6 +34,16 @@ def main(cfg: DictConfig) -> None:
     named_entity_extraction_parallel(model_name, llm, dataset, num_processes)
     create_graph(
         dataset,
+        extraction_type,
+        extraction_model,
+        retriever_name,
+        processed_retriever_name,
+        threshold,
+        create_graph_flag,
+        cosine_sim_edges,
+    )
+    create_graph_merge(
+        dataset[:-1],
         extraction_type,
         extraction_model,
         retriever_name,

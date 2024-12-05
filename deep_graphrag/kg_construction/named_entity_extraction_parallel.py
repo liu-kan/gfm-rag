@@ -103,7 +103,11 @@ def query_extraction(args):
     try:
         queries_df = pd.read_json(f"data/{dataset}/raw/dataset.json")
 
-        if "hotpotqa" in dataset or dataset in ["custom", "demo"]:
+        if (
+            "hotpotqa" in dataset
+            or "2wikimultihopqa" in dataset
+            or dataset in ["custom", "demo"]
+        ):
             queries_df = queries_df[["question"]]
             queries_df["0"] = queries_df["question"]
             queries_df["query"] = queries_df["question"]
@@ -166,7 +170,11 @@ def named_entity_extraction_parallel(
 
         queries_df = pd.concat([queries_df_train, queries_df_test], ignore_index=True)
 
-        if "hotpotqa" in dataset or dataset in ["custom", "demo"]:
+        if (
+            "hotpotqa" in dataset
+            or "2wikimultihopqa" in dataset
+            or dataset in ["custom", "demo"]
+        ):
             queries_df = queries_df[["question"]]
             queries_df["0"] = queries_df["question"]
             queries_df["query"] = queries_df["question"]
@@ -211,8 +219,60 @@ def named_entity_extraction_parallel(
             print("Passage NER saved to", output_file)
         else:
             print("Passage NER already saved to", output_file)
-    except Exception as e:
-        print("No queries will be processed for later retrieval.", e)
+    except Exception:
+        # print("No queries will be processed for later retrieval.", e)
+        queries_df = pd.read_json(f"data/{dataset}/raw/train.json")
+
+        if (
+            "hotpotqa" in dataset
+            or "2wikimultihopqa" in dataset
+            or "musique" in dataset
+            or dataset in ["custom", "demo"]
+        ):
+            queries_df = queries_df[["question"]]
+            queries_df["0"] = queries_df["question"]
+            queries_df["query"] = queries_df["question"]
+            query_name = "query"
+        else:
+            query_name = "question"
+
+        try:
+            output_df = pd.read_csv(output_file, sep="\t")
+        except Exception:
+            output_df = []
+
+        if len(queries_df) != len(output_df):
+            queries = queries_df[query_name].values
+
+            # for multi-processing split
+            num_processes = num_processes
+            splits = np.array_split(range(len(queries)), num_processes)
+
+            data_splits = []
+            for split in splits:
+                data_splits.append([queries[i] for i in split])
+
+            if num_processes == 1:
+                outputs = [run_ner_on_texts(llm, model_name, data_splits[0])]
+            else:
+                partial_func = partial(run_ner_on_texts, llm, model_name)
+                with Pool(processes=num_processes) as pool:
+                    outputs = pool.map(partial_func, data_splits)
+
+            chatgpt_total_tokens = 0
+            query_triples = []
+
+            for output in outputs:
+                query_triples.extend(output[0])
+                chatgpt_total_tokens += output[1]
+
+            0.002 * chatgpt_total_tokens / 1000
+
+            queries_df["triples"] = query_triples
+            queries_df.to_csv(output_file, sep="\t")
+            print("Passage NER saved to", output_file)
+        else:
+            print("Passage NER already saved to", output_file)
 
 
 if __name__ == "__main__":

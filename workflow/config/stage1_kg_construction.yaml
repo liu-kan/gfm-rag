@@ -6,10 +6,11 @@ defaults:
   - _self_
 
 seed: 1024
+num_processes: 30
 
 dataset:
   root: ./data
-  data_name: demo
+  data_name: hotpotqa
 
 task:
   name: DatasetConstruction

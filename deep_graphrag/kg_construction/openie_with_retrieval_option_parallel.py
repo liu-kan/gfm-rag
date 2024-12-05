@@ -112,7 +112,7 @@ def openie_post_ner_extract(
 
     except Exception as e:
         print("OpenIE exception", e)
-        return "", 0
+        return "{}", 0
 
     return response_content, total_tokens
 
@@ -136,7 +136,15 @@ def extract_openie_from_triples(
                 doc_entities, total_ner_tokens = named_entity_recognition(
                     passage, client
                 )
-                doc_entities = list(np.unique(doc_entities))
+                try:
+                    doc_entities = list(np.unique(doc_entities))
+                except Exception as e:
+                    from itertools import chain
+
+                    print(e)
+                    doc_entities = list(
+                        np.unique(list(chain.from_iterable(doc_entities)))
+                    )
                 chatgpt_total_tokens += total_ner_tokens
                 ents_by_doc.append(doc_entities)
 
@@ -165,8 +173,15 @@ def openie_parallel(
     run_ner: bool = True,
 ) -> None:
     corpus = json.load(open(f"data/{dataset}/raw/dataset_corpus.json"))
+    # corpus_ = {key: corpus[key] for key in list(corpus.keys())[:20]}
+    # corpus = corpus_
 
-    if "hotpotqa" in dataset or dataset in ["custom", "demo"]:
+    if (
+        "hotpotqa" in dataset
+        or "2wikimultihopqa" in dataset
+        or "musique" in dataset  # format before OpenIE
+        or dataset in ["custom", "demo"]
+    ):
         keys = list(corpus.keys())
         retrieval_corpus = [
             {"idx": i, "passage": key + "\n" + "".join(corpus[key])}

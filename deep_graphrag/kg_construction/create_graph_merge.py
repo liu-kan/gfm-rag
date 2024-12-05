@@ -12,13 +12,13 @@ import pandas as pd
 from scipy.sparse import csr_array
 from tqdm import tqdm
 
-from .colbertv2_knn import colbertv2_knn
+from .colbertv2_knn_merge import colbertv2_knn
 from .processing import processing_phrases
 
 os.environ["TOKENIZERS_PARALLELISM"] = "FALSE"
 
 
-def create_graph(
+def create_graph_merge(
     dataset: str,
     extraction_type: str,
     extraction_model: str,
@@ -47,7 +47,26 @@ def create_graph(
         )
     )
 
-    extracted_triples = extracted_file["docs"]
+    # train
+    possible_files = glob(
+        f"data/{dataset}2/tmp/openie_{dataset}2_results_{extraction_type}_{extraction_model}_*.json"
+    )
+
+    max_samples_train = np.max(
+        [
+            int(file.split(f"{extraction_model}_")[1].split(".json")[0])
+            for file in possible_files
+        ]
+    )
+    extracted_file_train = json.load(
+        open(
+            f"data/{dataset}2/tmp/openie_{dataset}2_results_{extraction_type}_{extraction_model}_{max_samples_train}.json"
+        )
+    )
+
+    extracted_triples = (
+        extracted_file["docs"] + extracted_file_train["docs"]
+    )  # original + train (2000)
     if extraction_model != "gpt-3.5-turbo-1106":
         extraction_type = extraction_type + "_" + extraction_model
     phrase_type = (
@@ -136,8 +155,14 @@ def create_graph(
     queries_full = pd.read_csv(
         f"data/{dataset}/tmp/{dataset}_queries.named_entity_output.tsv", sep="\t"
     )
+    queries_full_train = pd.read_csv(
+        f"data/{dataset}2/tmp/{dataset}2_queries.named_entity_output.tsv", sep="\t"
+    )
+    queries_full = pd.concat([queries_full, queries_full_train], axis=0)
     if "hotpotqa" in dataset or "2wikimultihopqa" in dataset or "musique" in dataset:
-        queries = json.load(open(f"data/{dataset}/raw/train.json"))  # dataset.json
+        queries = json.load(open(f"data/{dataset}/raw/train.json"))  # dataset.
+        queries_train = json.load(open(f"data/{dataset}2/raw/train.json"))
+        queries = queries + queries_train
         questions = [q["question"] for q in queries]
         queries_full = (
             queries_full.set_index("question", drop=False)
@@ -170,20 +195,20 @@ def create_graph(
     kb["type"] = "query"
     kb2["type"] = "kb"
     kb_full = pd.concat([kb, kb2])
-    kb_full.to_csv(f"data/{dataset}/tmp/kb_to_kb.tsv", sep="\t")
+    kb_full.to_csv(f"data/{dataset}/tmp_merge/kb_to_kb.tsv", sep="\t")
 
     rel_kb = pd.DataFrame(unique_relations, columns=["strings"])
     rel_kb2 = copy.deepcopy(rel_kb)
     rel_kb["type"] = "query"
     rel_kb2["type"] = "kb"
     rel_kb_full = pd.concat([rel_kb, rel_kb2])
-    rel_kb_full.to_csv(f"data/{dataset}/tmp/rel_kb_to_kb.tsv", sep="\t")
+    rel_kb_full.to_csv(f"data/{dataset}/tmp_merge/rel_kb_to_kb.tsv", sep="\t")
 
     query_df = pd.DataFrame(q_phrases, columns=["strings"])
     query_df["type"] = "query"
     kb["type"] = "kb"
     kb_query = pd.concat([kb, query_df])
-    kb_query.to_csv(f"data/{dataset}/tmp/query_to_kb.tsv", sep="\t")
+    kb_query.to_csv(f"data/{dataset}/tmp_merge/query_to_kb.tsv", sep="\t")
 
     colbertv2_knn(dataset, "kb_to_kb.tsv")
     colbertv2_knn(dataset, "query_to_kb.tsv")
@@ -209,7 +234,7 @@ def create_graph(
         json.dump(
             lose_facts,
             open(
-                f"data/{dataset}/tmp/{dataset}_documents_triplets.json",
+                f"data/{dataset}/tmp_merge/{dataset}_documents_triplets.json",
                 "w",
             ),
             indent="\t",
@@ -218,21 +243,21 @@ def create_graph(
         json.dump(
             passage_json,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_passage_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_passage_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
                 "w",
             ),
         )
         json.dump(
             node_json,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_nodes_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_nodes_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
                 "w",
             ),
         )
         json.dump(
             fact_json,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_clean_facts_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_clean_facts_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
                 "w",
             ),
         )
@@ -240,14 +265,14 @@ def create_graph(
         pickle.dump(
             kb_phrase_dict,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_phrase_dict_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_phrase_dict_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
         pickle.dump(
             lose_fact_dict,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_fact_dict_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_fact_dict_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
@@ -312,14 +337,14 @@ def create_graph(
         pickle.dump(
             docs_to_facts,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_doc_to_facts_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_doc_to_facts_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
         pickle.dump(
             facts_to_phrases,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_facts_to_phrases_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_facts_to_phrases_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
@@ -348,14 +373,14 @@ def create_graph(
         pickle.dump(
             docs_to_facts_mat,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_doc_to_facts_csr_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_doc_to_facts_csr_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
         pickle.dump(
             facts_to_phrases_mat,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_facts_to_phrases_csr_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_facts_to_phrases_csr_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
@@ -363,7 +388,7 @@ def create_graph(
         pickle.dump(
             graph,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_fact_doc_edges_{phrase_type}_{extraction_type}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_fact_doc_edges_{phrase_type}_{extraction_type}.{version}.subset.p",
                 "wb",
             ),
         )
@@ -375,7 +400,7 @@ def create_graph(
             if "colbert" in retriever_name:
                 kb_similarity = pickle.load(
                     open(
-                        f"data/{dataset}/tmp/lm_vectors/colbert/nearest_neighbor_kb_to_kb.p",
+                        f"data/{dataset}/tmp_merge/lm_vectors/colbert/nearest_neighbor_kb_to_kb.p",
                         "rb",
                     )
                 )
@@ -424,7 +449,7 @@ def create_graph(
             pickle.dump(
                 synonym_candidates,
                 open(
-                    f"data/{dataset}/tmp/{dataset}_similarity_edges_mean_{threshold}_thresh_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p",
+                    f"data/{dataset}/tmp_merge/{dataset}_similarity_edges_mean_{threshold}_thresh_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p",
                     "wb",
                 ),
             )
@@ -434,7 +459,7 @@ def create_graph(
         pickle.dump(
             relations,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_relation_dict_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_relation_dict_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p",
                 "wb",
             ),
         )
@@ -471,7 +496,7 @@ def create_graph(
             pickle.dump(
                 graph_plus,
                 open(
-                    f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_mean_{threshold}_thresh_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p",
+                    f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_mean_{threshold}_thresh_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p",
                     "wb",
                 ),
             )
@@ -479,7 +504,7 @@ def create_graph(
             pickle.dump(
                 graph_plus,
                 open(
-                    f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_mean_{threshold}_thresh_{phrase_type}_{extraction_type}_sim_max_{similarity_max}_{processed_retriever_name}.{version}.subset.p",
+                    f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_mean_{threshold}_thresh_{phrase_type}_{extraction_type}_sim_max_{similarity_max}_{processed_retriever_name}.{version}.subset.p",
                     "wb",
                 ),
             )
@@ -487,7 +512,7 @@ def create_graph(
         json.dump(
             graph_json,
             open(
-                f"data/{dataset}/tmp/{dataset}_{graph_type}_graph_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
+                f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_chatgpt_openIE.{phrase_type}_{extraction_type}.{version}.subset.json",
                 "w",
             ),
         )
@@ -495,13 +520,13 @@ def create_graph(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str)
-    parser.add_argument("--model_name", type=str)
-    parser.add_argument("--extraction_model", type=str)
-    parser.add_argument("--threshold", type=float)
-    parser.add_argument("--create_graph", action="store_true")
-    parser.add_argument("--extraction_type", type=str)
-    parser.add_argument("--cosine_sim_edges", action="store_true")
+    parser.add_argument("--dataset", type=str, default="hotpotqa")
+    parser.add_argument("--model_name", type=str, default="colbertv2")
+    parser.add_argument("--extraction_model", type=str, default="gpt-3.5-turbo-1106")
+    parser.add_argument("--threshold", type=float, default=0.8)
+    parser.add_argument("--create_graph", default=True)
+    parser.add_argument("--extraction_type", type=str, default="ner")
+    parser.add_argument("--cosine_sim_edges", default=True)
 
     args = parser.parse_args()
     dataset = args.dataset
@@ -513,7 +538,7 @@ if __name__ == "__main__":
     extraction_type = args.extraction_type
     cosine_sim_edges = args.cosine_sim_edges
 
-    create_graph(
+    create_graph_merge(
         dataset,
         extraction_type,
         extraction_model,

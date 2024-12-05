@@ -1,13 +1,14 @@
-import json
 import os
+import pickle
 import re
-from glob import glob
 
 import hydra
 from omegaconf import DictConfig
 
 
 def processing_phrases(phrase: str) -> str:
+    if isinstance(phrase, int):
+        return str(phrase)  # deal with the int values
     return re.sub("[^A-Za-z0-9 ]", " ", phrase.lower()).strip()
 
 
@@ -17,18 +18,11 @@ def directory_exists(path: str) -> None:
         os.makedirs(dir)
 
 
-def construct_kgc_dataset(extracted_triples: dict, save_path: str) -> None:
+def construct_kgc_dataset(triplets: dict, save_path: str) -> None:
+    extracted_triples = [[h, r, t] for (h, t), r in triplets.items()]
     with open(save_path, "w") as f:
-        for sample in extracted_triples:
-            triples = sample["extracted_triples"]
-            for lst in triples:  # TODO: judge whether len(lst) == 3
-                try:
-                    lst = [processing_phrases(t) for t in lst]
-                    if len(lst) == 3 and "" not in lst:
-                        f.write(",".join(lst) + "\n")
-                except Exception as e:
-                    print(e)
-                    print(lst)
+        for triple in extracted_triples:
+            f.write(",".join(triple) + "\n")
 
 
 @hydra.main(
@@ -37,18 +31,21 @@ def construct_kgc_dataset(extracted_triples: dict, save_path: str) -> None:
 def main(cfg: DictConfig) -> None:
     dataset = cfg.dataset.data_name
     extraction_type = cfg.task.openie_cfg.type
-    model_name = cfg.task.openie_cfg.llm
 
-    # corpus ner results
-    possible_files = glob(
-        f"data/{dataset}/tmp/openie_{dataset}_results_{extraction_type}_{model_name}_*.json"
-    )
-    extracted_file = json.load(open(possible_files[0]))
-    extracted_triples = extracted_file["docs"]
-    save_path = f"data/{dataset}/processed/stage1/kg.txt"
+    graph_type = cfg.task.create_graph.graph_type
+    phrase_type = cfg.task.create_graph.phrase_type
+    version = cfg.task.create_graph.version
+    retriever_name = cfg.task.create_graph.smodel
+    processed_retriever_name = retriever_name.replace("/", "_").replace(".", "")
+
+    file_path = f"data/{dataset}/tmp_merge/{dataset}_{graph_type}_graph_relation_dict_{phrase_type}_{extraction_type}_{processed_retriever_name}.{version}.subset.p"
+
+    triplets = pickle.load(open(file_path, "rb"))
+
+    save_path = f"data/{dataset}/processed/stage1/kg_merge.txt"  # _merge
 
     directory_exists(save_path)
-    construct_kgc_dataset(extracted_triples, save_path)
+    construct_kgc_dataset(triplets, save_path)
 
 
 if __name__ == "__main__":
