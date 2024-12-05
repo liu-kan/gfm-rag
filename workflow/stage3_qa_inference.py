@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from deep_graphrag import utils
 from deep_graphrag.datasets import QADataset
-from deep_graphrag.qa_prompt_builder import QAPromptBuilder
+from deep_graphrag.prompt_builder import QAPromptBuilder
 from deep_graphrag.ultra import query_utils
 
 # A logger for this file
