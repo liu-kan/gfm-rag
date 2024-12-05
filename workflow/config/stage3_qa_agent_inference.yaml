@@ -5,6 +5,7 @@ hydra:
 defaults:
   - _self_
   - doc_ranker: idf_topk_ranker
+  - agent_prompt: hotpotqa_ircot
   - qa_prompt: hotpotqa
   - ner_model: llm_ner_model
   - el_model: colbert_el_model
@@ -25,5 +26,5 @@ graph_retriever:
   model_path: save_models/qa_ultra_train_1000/
 
 test:
-  top_k: 5
+  top_k: 10
   max_steps: 2

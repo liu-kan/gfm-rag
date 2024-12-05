@@ -23,7 +23,7 @@ class DocumentRetriever:
             {
                 "title": self.id2doc[doc.item()],
                 "content": self.docs[self.id2doc[doc.item()]],
-                "scors": doc_ranking[doc].item(),
+                "score": doc_ranking[doc].item(),
                 "norm_score": norm_doc_scors[doc].item(),
             }
             for doc in top_k_docs
