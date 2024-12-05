@@ -12,6 +12,11 @@ poetry install
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
 ```
 
+Install faiss-gpu if you want to use Colbert for entity linking.
+```bash
+conda install -c pytorch -c nvidia faiss-gpu=1.9.0
+```
+
 ### For development
 Install pre-commit hooks
 ```bash
