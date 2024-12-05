@@ -1,2 +1,0 @@
-_target_: deep_graphrag.doc_rankers.TFIDFWeightedTopKRanker
-top_k: 30
