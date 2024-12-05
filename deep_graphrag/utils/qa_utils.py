@@ -18,13 +18,20 @@ class DocumentRetriever:
 
     def __call__(self, doc_ranking: torch.Tensor, top_k: int = 1) -> list:
         top_k_docs = doc_ranking.topk(top_k).indices
+        norm_doc_scors = mini_max_scale(doc_ranking)
         return [
             {
                 "title": self.id2doc[doc.item()],
                 "content": self.docs[self.id2doc[doc.item()]],
+                "scors": doc_ranking[doc].item(),
+                "norm_score": norm_doc_scors[doc].item(),
             }
             for doc in top_k_docs
         ]
+
+
+def mini_max_scale(tensor):
+    return (tensor - tensor.min()) / (tensor.max() - tensor.min())
 
 
 def entities_to_mask(entities, num_nodes):

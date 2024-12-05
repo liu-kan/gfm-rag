@@ -9,7 +9,9 @@ class QAPromptBuilder:
         self.question_prompt = self.cfg.question_prompt
         self.examples = self.cfg.examples
 
-    def build_input_prompt(self, question: str, retrieved_docs: list) -> list:
+    def build_input_prompt(
+        self, question: str, retrieved_docs: list, thoughts: list | None = None
+    ) -> list:
         prompt = [
             {"role": "system", "content": self.system_prompt},
         ]
@@ -22,6 +24,8 @@ class QAPromptBuilder:
         )
 
         question = self.question_prompt.format(question=question)
+        if thoughts is not None:
+            question += " ".join(thoughts)
 
         if len(self.examples) > 0:
             for example in self.examples:

@@ -37,7 +37,7 @@ class DPRELModel(BaseELModel):
             self.entity_embeddings = torch.load(cache_file)
         else:
             self.entity_embeddings = self.model.encode(
-                entity_list,
+                [self.query_instruct + q for q in entity_list],
                 device="cuda" if torch.cuda.is_available() else "cpu",
                 convert_to_tensor=True,
                 show_progress_bar=True,

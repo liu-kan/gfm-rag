@@ -137,8 +137,10 @@ def main(cfg: DictConfig) -> None:
         logger.info(f"Current working directory: {os.getcwd()}")
         logger.info(f"Output directory: {output_dir}")
 
-    model, config = utils.load_model_from_pretrained(cfg.graph_retriever.model_path)
-    qa_data = QADataset(text_emb_model_name=config["text_emb_model"], **cfg.dataset)
+    model, model_config = utils.load_model_from_pretrained(
+        cfg.graph_retriever.model_path
+    )
+    qa_data = QADataset(**cfg.dataset, **model_config["dataset_config"])
     device = utils.get_device()
     model = model.to(device)
 
@@ -166,9 +168,7 @@ def main(cfg: DictConfig) -> None:
             output_path = ans_prediction(cfg, output_dir, qa_data, retrieval_result)
 
         # Evaluation
-        evaluator = get_class(cfg.test.evaluator["_target_"])(
-            prediction_file=output_path
-        )
+        evaluator = get_class(cfg.qa_evaluator["_target_"])(prediction_file=output_path)
         metrics = evaluator.evaluate()
         query_utils.print_metrics(metrics, logger)
         return metrics

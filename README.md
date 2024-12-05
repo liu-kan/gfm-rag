@@ -79,15 +79,15 @@ torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py
 
 hotpotqa
 ```bash
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=hotpotqa_test qa_prompt=hotpotqa test.evaluator._target_=deep_graphrag.evaluation.hotpot_qa_evaluator.HotpotQAEvaluator
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=hotpotqa_test qa_prompt=hotpotqa qa_evaluator=hotpotqa
 ```
 
 musique
 ```bash
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=musique_test qa_prompt=musique test.evaluator._target_=deep_graphrag.evaluation.MusiqueEvaluator
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=musique_test qa_prompt=musique qa_evaluator=musique
 ```
 
 2Wikimultihopqa
 ```bash
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa test.evaluator._target_=deep_graphrag.evaluation.TwoWikiQAEvaluator
+torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa
 ```

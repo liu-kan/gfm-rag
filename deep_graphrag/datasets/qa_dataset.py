@@ -21,10 +21,22 @@ class QADataset(InMemoryDataset):
         root: str,
         data_name: str,
         text_emb_model_name: str,
+        normalize: bool = False,
+        query_instruct: str = "",
+        model_kwargs: dict | None = None,
     ):
         self.name = data_name
         self.text_emb_model_name = text_emb_model_name
-        self.kg = KGDataset(root, data_name, text_emb_model_name)[0]
+        self.normalize = normalize
+        self.query_instruct = query_instruct
+        self.model_kwargs = model_kwargs
+        self.kg = KGDataset(
+            root,
+            data_name,
+            text_emb_model_name,
+            normalize=normalize,
+            model_kwargs=model_kwargs,
+        )[0]
         self.rel_emb_dim = self.kg.rel_emb.shape[-1]
         super().__init__(root, None, None)
         self.data = torch.load(self.processed_paths[0], weights_only=False)
@@ -45,7 +57,13 @@ class QADataset(InMemoryDataset):
     def processed_dir(self) -> str:
         emb_model_name_string = self.text_emb_model_name.replace("/", "_")
         return os.path.join(
-            str(self.root), str(self.name), "processed", "stage2", emb_model_name_string
+            str(self.root),
+            str(self.name),
+            "processed",
+            "stage2",
+            f"{emb_model_name_string}_normalized"
+            if self.normalize
+            else emb_model_name_string,
         )
 
     @property
@@ -159,10 +177,15 @@ class QADataset(InMemoryDataset):
 
         # Generate question embeddings
         logger.info("Generating question embeddings")
-        text_emb_model = SentenceTransformer(self.text_emb_model_name)
+        text_emb_model = SentenceTransformer(
+            self.text_emb_model_name,
+            trust_remote_code=True,
+            model_kwargs=self.model_kwargs,
+        )
         question_embeddings = text_emb_model.encode(
-            questions,
+            [self.query_instruct + q for q in questions],
             device="cuda" if torch.cuda.is_available() else "cpu",
+            normalize_embeddings=self.normalize,
             show_progress_bar=True,
             convert_to_tensor=True,
         ).cpu()

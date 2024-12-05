@@ -1,11 +1,13 @@
 hydra:
   run:
-    dir: outputs/qa_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: outputs/qa_agent_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 defaults:
   - _self_
   - doc_ranker: idf_topk_ranker
   - qa_prompt: hotpotqa
+  - ner_model: llm_ner_model
+  - el_model: colbert_el_model
   - qa_evaluator: hotpotqa
 
 seed: 1024
@@ -23,10 +25,5 @@ graph_retriever:
   model_path: save_models/qa_ultra_train_1000/
 
 test:
-  retrieval_batch_size: 8
   top_k: 5
-  save_retrieval: False
-  save_top_k_entity: 10
-  n_threads: 5
-  retrieved_result_path: null
-  prediction_result_path: null
+  max_steps: 2
