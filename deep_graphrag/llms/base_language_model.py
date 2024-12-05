@@ -22,7 +22,7 @@ class BaseLanguageModel(ABC):
 
     @abstractmethod
     def generate_sentence(
-        self, llm_input: str, system_input: str = ""
+        self, llm_input: str | list, system_input: str = ""
     ) -> str | Exception:
         """
         Generate sentence by using a LM
