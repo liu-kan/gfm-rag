@@ -28,3 +28,4 @@ graph_retriever:
 test:
   top_k: 10
   max_steps: 2
+  max_test_samples: -1 # -1 for all

@@ -9,6 +9,7 @@ from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
 from deep_graphrag import DeepGraphRAG
+from deep_graphrag.evaluation import RetrievalEvaluator
 from deep_graphrag.llms import BaseLanguageModel
 from deep_graphrag.prompt_builder import QAPromptBuilder
 from deep_graphrag.ultra import query_utils
@@ -90,20 +91,24 @@ def main(cfg: DictConfig) -> None:
     agent_prompt_builder = QAPromptBuilder(cfg.agent_prompt)
     qa_prompt_builder = QAPromptBuilder(cfg.qa_prompt)
     test_data = graphrag_retriever.qa_data.raw_test_data
-    max_samples = 10
+    max_samples = (
+        cfg.test.max_test_samples if cfg.test.max_test_samples > 0 else len(test_data)
+    )
     with open(os.path.join(output_dir, "prediction.jsonl"), "w") as f:
-        total = 0
-        for sample in tqdm(test_data):
+        for i in tqdm(range(max_samples)):
+            sample = test_data[i]
+            if i >= max_samples:
+                break
             query = sample["question"]
             result = agent_reasoning(
                 cfg, graphrag_retriever, llm, agent_prompt_builder, query
             )
             retrieved_docs = result["retrieved_docs"]
-            response = result["response"]
-            if "So the answer is:" not in result["response"]:
-                retrieved_docs = result["retrieved_docs"]
-                message = qa_prompt_builder.build_input_prompt(query, retrieved_docs)
-                response = llm.generate_sentence(message)
+
+            # Generate QA response
+            retrieved_docs = result["retrieved_docs"]
+            message = qa_prompt_builder.build_input_prompt(query, retrieved_docs)
+            qa_response = llm.generate_sentence(message)
 
             result = {
                 "id": sample["id"],
@@ -112,19 +117,24 @@ def main(cfg: DictConfig) -> None:
                 "answer_aliases": sample.get(
                     "answer_aliases", []
                 ),  # Some datasets have answer aliases
-                "response": response,
+                "supporting_facts": sample["supporting_facts"],
+                "response": qa_response,
                 "retrieved_docs": retrieved_docs,
+                "logs": result["logs"],
             }
             f.write(json.dumps(result) + "\n")
             f.flush()
-            total += 1
-            if total >= max_samples:
-                break
+
     result_path = os.path.join(output_dir, "prediction.jsonl")
     # Evaluation
     evaluator = get_class(cfg.qa_evaluator["_target_"])(prediction_file=result_path)
     metrics = evaluator.evaluate()
     query_utils.print_metrics(metrics, logger)
+
+    # Eval retrieval results
+    retrieval_evaluator = RetrievalEvaluator(prediction_file=result_path)
+    retrieval_metrics = retrieval_evaluator.evaluate()
+    query_utils.print_metrics(retrieval_metrics, logger)
 
 
 if __name__ == "__main__":
