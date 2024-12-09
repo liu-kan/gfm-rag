@@ -4,6 +4,7 @@ import os
 
 import datasets
 import torch
+from omegaconf import DictConfig
 from sentence_transformers import SentenceTransformer
 from torch.utils import data as torch_data
 from torch_geometric.data import InMemoryDataset
@@ -20,23 +21,15 @@ class QADataset(InMemoryDataset):
         self,
         root: str,
         data_name: str,
-        text_emb_model_name: str,
-        normalize: bool = False,
-        query_instruct: str = "",
-        model_kwargs: dict | None = None,
+        text_emb_cfgs: DictConfig,
     ):
         self.name = data_name
-        self.text_emb_model_name = text_emb_model_name
-        self.normalize = normalize
-        self.query_instruct = query_instruct
-        self.model_kwargs = model_kwargs
-        self.kg = KGDataset(
-            root,
-            data_name,
-            text_emb_model_name,
-            normalize=normalize,
-            model_kwargs=model_kwargs,
-        )[0]
+        self.text_emb_model_name = text_emb_cfgs["text_emb_model_name"]
+        self.normalize = text_emb_cfgs["normalize"]
+        self.batch_size = text_emb_cfgs["batch_size"]
+        self.query_instruct = text_emb_cfgs["query_instruct"]
+        self.model_kwargs = text_emb_cfgs["model_kwargs"]
+        self.kg = KGDataset(root, data_name, text_emb_cfgs)[0]
         self.rel_emb_dim = self.kg.rel_emb.shape[-1]
         super().__init__(root, None, None)
         self.data = torch.load(self.processed_paths[0], weights_only=False)
@@ -183,9 +176,11 @@ class QADataset(InMemoryDataset):
             model_kwargs=self.model_kwargs,
         )
         question_embeddings = text_emb_model.encode(
-            [self.query_instruct + q for q in questions],
+            questions,
             device="cuda" if torch.cuda.is_available() else "cpu",
             normalize_embeddings=self.normalize,
+            batch_size=self.batch_size,
+            prompt=self.query_instruct,
             show_progress_bar=True,
             convert_to_tensor=True,
         ).cpu()

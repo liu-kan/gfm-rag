@@ -140,7 +140,7 @@ def main(cfg: DictConfig) -> None:
     model, model_config = utils.load_model_from_pretrained(
         cfg.graph_retriever.model_path
     )
-    qa_data = QADataset(**cfg.dataset, **model_config["dataset_config"])
+    qa_data = QADataset(**cfg.dataset, text_emb_cfgs=model_config["text_emb_config"])
     device = utils.get_device()
     model = model.to(device)
 

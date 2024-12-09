@@ -5,6 +5,7 @@ hydra:
 defaults:
   - _self_
   - doc_ranker: idf_topk_ranker
+  - text_emb_model: mpnet
 
 seed: 1024
 
@@ -12,7 +13,7 @@ datasets:
   _target_: deep_graphrag.datasets.QADataset
   cfgs:
     root: ./data
-    text_emb_model_name: sentence-transformers/all-mpnet-base-v2
+    text_emb_cfgs: ${text_emb_model}
   train_names:
     - hotpotqa
   valid_names:

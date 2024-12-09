@@ -4,6 +4,7 @@ hydra:
 
 defaults:
   - _self_
+  - text_emb_model: mpnet
 
 seed: 1024
 
@@ -11,7 +12,7 @@ datasets:
   _target_: deep_graphrag.datasets.KGDataset
   cfgs:
     root: ./data
-    text_emb_model_name: sentence-transformers/all-mpnet-base-v2
+    text_emb_cfgs: ${text_emb_model}
   data_names:
     - hotpotqa
 

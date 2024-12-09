@@ -3,6 +3,7 @@ import logging
 import os
 
 import torch
+from omegaconf import DictConfig
 from sentence_transformers import SentenceTransformer
 from torch_geometric.data import Data, InMemoryDataset
 
@@ -19,15 +20,14 @@ class KGDataset(InMemoryDataset):
         self,
         root: str,
         data_name: str,
-        text_emb_model_name: str,
-        normalize: bool = False,
-        model_kwargs: dict | None = None,
+        text_emb_cfgs: DictConfig,
         **kwargs: str,
     ) -> None:
         self.name = data_name
-        self.text_emb_model_name = text_emb_model_name
-        self.normalize = normalize
-        self.model_kwargs = model_kwargs
+        self.text_emb_model_name = text_emb_cfgs["text_emb_model_name"]
+        self.normalize = text_emb_cfgs["normalize"]
+        self.batch_size = text_emb_cfgs["batch_size"]
+        self.model_kwargs = text_emb_cfgs["model_kwargs"]
         super().__init__(root, None, None)
         self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
@@ -133,6 +133,7 @@ class KGDataset(InMemoryDataset):
             list(rel2id.keys()),
             device="cuda" if torch.cuda.is_available() else "cpu",
             normalize_embeddings=self.normalize,
+            batch_size=self.batch_size,
             show_progress_bar=True,
             convert_to_tensor=True,
         ).cpu()

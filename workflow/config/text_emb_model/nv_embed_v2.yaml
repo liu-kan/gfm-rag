@@ -1,0 +1,6 @@
+text_emb_model_name: nvidia/NV-Embed-v2
+normalize: True
+batch_size: 32
+query_instruct: "Instruct: Given a question, retrieve passages that answer the question\nQuery: "
+model_kwargs:
+  torch_dtype: bfloat16

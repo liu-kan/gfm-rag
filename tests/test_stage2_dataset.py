@@ -3,10 +3,21 @@ from deep_graphrag.datasets.qa_dataset import QADataset
 
 
 def test_kg_dataset() -> None:
+    from omegaconf import OmegaConf
+
+    text_emb_cfgs = OmegaConf.create(
+        {
+            "text_emb_model_name": "sentence-transformers/all-mpnet-base-v2",
+            "normalize": False,
+            "batch_size": 32,
+            "query_instruct": "",
+            "model_kwargs": None,
+        }
+    )
     dataset = KGDataset(
         root="data",
-        data_name="hotpotqa_example",
-        text_emb_model_name="sentence-transformers/all-mpnet-base-v2",
+        data_name="hotpotqa",
+        text_emb_cfgs=text_emb_cfgs,
     )
     kg = dataset[0]
     assert kg.num_nodes == 82157
@@ -14,10 +25,21 @@ def test_kg_dataset() -> None:
 
 
 def test_qa_dataset() -> None:
+    from omegaconf import OmegaConf
+
+    text_emb_cfgs = OmegaConf.create(
+        {
+            "text_emb_model_name": "sentence-transformers/all-mpnet-base-v2",
+            "normalize": False,
+            "batch_size": 32,
+            "query_instruct": "",
+            "model_kwargs": None,
+        }
+    )
     dataset = QADataset(
         root="data",
         data_name="hotpotqa",
-        text_emb_model_name="sentence-transformers/all-mpnet-base-v2",
+        text_emb_cfgs=text_emb_cfgs,
     )
     train_data, test_data = dataset._data
     assert len(train_data) == 800
