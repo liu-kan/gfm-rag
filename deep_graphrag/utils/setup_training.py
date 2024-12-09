@@ -1,3 +1,4 @@
+import datetime
 import os
 from typing import Any
 
@@ -60,10 +61,12 @@ def setup_for_distributed(is_master: bool) -> None:
     __builtin__.print = print
 
 
-def init_distributed_mode() -> None:
+def init_distributed_mode(timeout: float | datetime.timedelta | None = None) -> None:
     world_size = get_world_size()
     if world_size > 1 and not dist.is_initialized():
         torch.cuda.set_device(get_local_rank())
-        dist.init_process_group("nccl", init_method="env://")
+        if isinstance(timeout, float):
+            timeout = datetime.timedelta(minutes=timeout)
+        dist.init_process_group("nccl", init_method="env://", timeout=timeout)
         synchronize()
         setup_for_distributed(get_rank() == 0)

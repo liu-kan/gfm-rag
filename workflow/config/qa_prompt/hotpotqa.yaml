@@ -2,7 +2,7 @@ system_prompt: 'As an advanced reading comprehension assistant, your task is to 
 doc_prompt: "Wikipedia Title: {title}\n{content}\n"
 question_prompt: "Question: {question}\nThought: "
 examples:
-  - input: |
+  - input: |-
       Wikipedia Title: Milk and Honey (album)
       Milk and Honey is an album by John Lennon and Yoko Ono released in 1984. Following the compilation "The John Lennon Collection", it is Lennon's eighth and final studio album, and the first posthumous release of new Lennon music, having been recorded in the last months of his life during and following the sessions for their 1980 album "Double Fantasy". It was assembled by Yoko Ono in association with the Geffen label.
 
@@ -20,6 +20,6 @@ examples:
 
       Question: Nobody Loves You was written by John Lennon and released on what album that was issued by Apple Records, and was written, recorded, and released during his 18 month separation from Yoko Ono?
       Thought:
-    response: |
+    response: |-
       The album issued by Apple Records, and written, recorded, and released during John Lennon's 18 month separation from Yoko Ono is Walls and Bridges. Nobody Loves You was written by John Lennon on Walls and Bridges album.
       Answer: Walls and Bridges.

@@ -1,15 +1,17 @@
+import hashlib
 import json
 import logging
 import os
 
 import datasets
 import torch
-from omegaconf import DictConfig
-from sentence_transformers import SentenceTransformer
+from hydra.utils import instantiate
+from omegaconf import DictConfig, OmegaConf
 from torch.utils import data as torch_data
 from torch_geometric.data import InMemoryDataset
 
 from deep_graphrag.datasets.kg_dataset import KGDataset
+from deep_graphrag.text_emb_models import BaseTextEmbModel
 from deep_graphrag.utils import get_rank, is_main_process, synchronize
 from deep_graphrag.utils.qa_utils import entities_to_mask
 
@@ -21,15 +23,17 @@ class QADataset(InMemoryDataset):
         self,
         root: str,
         data_name: str,
-        text_emb_cfgs: DictConfig,
+        text_emb_model_cfgs: DictConfig,
     ):
         self.name = data_name
-        self.text_emb_model_name = text_emb_cfgs["text_emb_model_name"]
-        self.normalize = text_emb_cfgs["normalize"]
-        self.batch_size = text_emb_cfgs["batch_size"]
-        self.query_instruct = text_emb_cfgs["query_instruct"]
-        self.model_kwargs = text_emb_cfgs["model_kwargs"]
-        self.kg = KGDataset(root, data_name, text_emb_cfgs)[0]
+        self.text_emb_model_cfgs = text_emb_model_cfgs
+        # Get fingerprint of the model configuration
+        self.fingerprint = hashlib.md5(
+            json.dumps(
+                OmegaConf.to_container(text_emb_model_cfgs, resolve=True)
+            ).encode()
+        ).hexdigest()
+        self.kg = KGDataset(root, data_name, text_emb_model_cfgs)[0]
         self.rel_emb_dim = self.kg.rel_emb.shape[-1]
         super().__init__(root, None, None)
         self.data = torch.load(self.processed_paths[0], weights_only=False)
@@ -48,15 +52,12 @@ class QADataset(InMemoryDataset):
 
     @property
     def processed_dir(self) -> str:
-        emb_model_name_string = self.text_emb_model_name.replace("/", "_")
         return os.path.join(
             str(self.root),
             str(self.name),
             "processed",
             "stage2",
-            f"{emb_model_name_string}_normalized"
-            if self.normalize
-            else emb_model_name_string,
+            self.fingerprint,
         )
 
     @property
@@ -170,19 +171,10 @@ class QADataset(InMemoryDataset):
 
         # Generate question embeddings
         logger.info("Generating question embeddings")
-        text_emb_model = SentenceTransformer(
-            self.text_emb_model_name,
-            trust_remote_code=True,
-            model_kwargs=self.model_kwargs,
-        )
+        text_emb_model: BaseTextEmbModel = instantiate(self.text_emb_model_cfgs)
         question_embeddings = text_emb_model.encode(
             questions,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-            normalize_embeddings=self.normalize,
-            batch_size=self.batch_size,
-            prompt=self.query_instruct,
-            show_progress_bar=True,
-            convert_to_tensor=True,
+            is_query=True,
         ).cpu()
         question_entities_masks = torch.stack(question_entities_masks)
         supporting_entities_masks = torch.stack(supporting_entities_masks)
@@ -205,3 +197,7 @@ class QADataset(InMemoryDataset):
             splits.append(split)
             offset += num_sample
         torch.save(splits, self.processed_paths[0])
+
+        # Save text embeddings model configuration
+        with open(self.processed_dir + "/text_emb_model_cfgs.json", "w") as f:
+            json.dump(OmegaConf.to_container(self.text_emb_model_cfgs), f, indent=4)

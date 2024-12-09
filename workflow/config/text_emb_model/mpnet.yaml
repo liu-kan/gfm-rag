@@ -1,5 +1,7 @@
+_target_: deep_graphrag.text_emb_models.BaseTextEmbModel
 text_emb_model_name: sentence-transformers/all-mpnet-base-v2
 normalize: False
 batch_size: 32
 query_instruct: ""
+passage_instruct: ""
 model_kwargs: null

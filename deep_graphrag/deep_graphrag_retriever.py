@@ -1,7 +1,6 @@
 import torch
 from hydra.utils import get_class, instantiate
-from omegaconf import DictConfig
-from sentence_transformers import SentenceTransformer
+from omegaconf import DictConfig, OmegaConf
 
 from deep_graphrag import utils
 from deep_graphrag.datasets import QADataset
@@ -9,6 +8,7 @@ from deep_graphrag.doc_rankers import BaseDocRanker
 from deep_graphrag.kg_construction.entity_linking_model import BaseELModel
 from deep_graphrag.kg_construction.ner_model import BaseNERModel
 from deep_graphrag.models import UltraQA
+from deep_graphrag.text_emb_models import BaseTextEmbModel
 from deep_graphrag.ultra import query_utils
 from deep_graphrag.utils.qa_utils import entities_to_mask
 
@@ -17,7 +17,7 @@ class DeepGraphRAG:
     def __init__(
         self,
         qa_data: QADataset,
-        text_emb_model: SentenceTransformer,
+        text_emb_model: BaseTextEmbModel,
         ner_model: BaseNERModel,
         el_model: BaseELModel,
         graph_retriever: UltraQA,
@@ -88,9 +88,7 @@ class DeepGraphRAG:
         )  # 1 x num_nodes
         question_embedding = self.text_emb_model.encode(
             [query],
-            convert_to_tensor=True,
-            device=self.device,
-            normalize_embeddings=self.qa_data.normalize,
+            is_query=True,
         )
         graph_retriever_input = {
             "question_embeddings": question_embedding,
@@ -105,7 +103,8 @@ class DeepGraphRAG:
         )
         graph_retriever.eval()
         qa_data = QADataset(
-            **cfg.dataset, text_emb_cfgs=model_config["text_emb_config"]
+            **cfg.dataset,
+            text_emb_model_cfgs=OmegaConf.create(model_config["text_emb_model_config"]),
         )
         device = utils.get_device()
         graph_retriever = graph_retriever.to(device)
@@ -127,10 +126,8 @@ class DeepGraphRAG:
         )
         doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2doc)
 
-        text_emb_model = SentenceTransformer(
-            qa_data.text_emb_model_name,
-            trust_remote_code=True,
-            model_kwargs=qa_data.model_kwargs,
+        text_emb_model = instantiate(
+            OmegaConf.create(model_config["text_emb_model_config"])
         )
 
         return DeepGraphRAG(

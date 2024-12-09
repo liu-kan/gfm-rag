@@ -12,7 +12,7 @@ datasets:
   _target_: deep_graphrag.datasets.KGDataset
   cfgs:
     root: ./data
-    text_emb_cfgs: ${text_emb_model}
+    text_emb_model_cfgs: ${text_emb_model}
   data_names:
     - hotpotqa
 
@@ -45,5 +45,6 @@ train:
   save_best_only: yes
   save_pretrained: no # Save the model for QA inference
   batch_per_epoch: null
+  timeout: 60 # timeout minutes for multi-gpu training
 
 checkpoint: null

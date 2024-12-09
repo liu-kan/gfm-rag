@@ -17,7 +17,7 @@ def test_kg_dataset() -> None:
     dataset = KGDataset(
         root="data",
         data_name="hotpotqa",
-        text_emb_cfgs=text_emb_cfgs,
+        text_emb_model_cfgs=text_emb_cfgs,
     )
     kg = dataset[0]
     assert kg.num_nodes == 82157
@@ -39,7 +39,7 @@ def test_qa_dataset() -> None:
     dataset = QADataset(
         root="data",
         data_name="hotpotqa",
-        text_emb_cfgs=text_emb_cfgs,
+        text_emb_model_cfgs=text_emb_cfgs,
     )
     train_data, test_data = dataset._data
     assert len(train_data) == 800

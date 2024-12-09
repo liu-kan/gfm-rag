@@ -2,7 +2,7 @@ system_prompt: You serve as an intelligent assistant, adept at facilitating user
 doc_prompt: "Wikipedia Title: {title}\n{content}\n"
 question_prompt: "Question: {question}\nThought: "
 examples:
-  - input: |
+  - input: |-
       Wikipedia Title: The Last Horse
       The Last Horse (Spanish:El último caballo) is a 1950 Spanish comedy film directed by Edgar Neville starring Fernando Fernán Gómez.
 
@@ -20,6 +20,6 @@ examples:
 
       Question: When was Neville A. Stanton's employer founded?
       Thought:
-    response: |
+    response: |-
       The employer of Neville A. Stanton is University of Southampton. The University of Southampton was founded in 1862.
       Answer: 1862.

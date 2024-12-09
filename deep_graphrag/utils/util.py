@@ -13,7 +13,9 @@ def save_model_to_pretrained(
     model_config = OmegaConf.to_container(cfg.model)
     model_config["rel_emb_dim"] = model.rel_emb_dim
     config = {
-        "text_emb_config": OmegaConf.to_container(cfg.datasets.cfgs.text_emb_cfgs),
+        "text_emb_model_config": OmegaConf.to_container(
+            cfg.datasets.cfgs.text_emb_model_cfgs
+        ),
         "model_config": model_config,
     }
 
