@@ -379,7 +379,7 @@ def main(cfg: DictConfig) -> None:
         len(rel_emb_dim) == 1
     ), "All datasets should have the same relation embedding dimension"
 
-    model = SemanticUltra(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb_dim.pop())
+    model = SemanticUltra(rel_emb_dim=rel_emb_dim.pop(), **cfg.model)
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")

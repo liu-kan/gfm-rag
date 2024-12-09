@@ -307,7 +307,7 @@ def main(cfg: DictConfig) -> None:
         len(rel_emb_dim) == 1
     ), "All datasets should have the same relation embedding dimension"
 
-    model = UltraQA(cfg.model.entity_model_cfg, rel_emb_dim=rel_emb_dim.pop())
+    model = UltraQA(rel_emb_dim=rel_emb_dim.pop(), **cfg.model)
 
     train_datasets = {}
     valid_datasets = {}
