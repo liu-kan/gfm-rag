@@ -41,8 +41,9 @@ class IDFWeightedRanker(BaseDocRanker):
 
     def __init__(self, ent2doc: torch.Tensor) -> None:
         super().__init__(ent2doc)
-        self.idf_weight = 1 / ent2doc.to_dense().sum(dim=-1)
-        self.idf_weight[ent2doc.to_dense().sum(dim=-1) == 0] = 0
+        frequency = torch.sparse.sum(ent2doc, dim=-1).to_dense()
+        self.idf_weight = 1 / frequency
+        self.idf_weight[frequency == 0] = 0
 
     def __call__(self, ent_pred: torch.Tensor) -> torch.Tensor:
         """
@@ -86,8 +87,9 @@ class IDFWeightedTopKRanker(BaseDocRanker):
     def __init__(self, ent2doc: torch.Tensor, top_k: int) -> None:
         super().__init__(ent2doc)
         self.top_k = top_k
-        self.idf_weight = 1 / ent2doc.to_dense().sum(dim=-1)
-        self.idf_weight[ent2doc.to_dense().sum(dim=-1) == 0] = 0
+        frequency = torch.sparse.sum(ent2doc, dim=-1).to_dense()
+        self.idf_weight = 1 / frequency
+        self.idf_weight[frequency == 0] = 0
 
     def __call__(self, ent_pred: torch.Tensor) -> torch.Tensor:
         """

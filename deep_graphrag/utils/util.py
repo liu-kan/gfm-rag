@@ -51,7 +51,8 @@ def get_multi_dataset(cfg: DictConfig) -> dict:
 
 
 def get_entities_weight(ent2docs: torch.Tensor) -> torch.Tensor:
-    weights = 1 / ent2docs.to_dense().sum(dim=-1)
+    frequency = torch.sparse.sum(ent2docs, dim=-1).to_dense()
+    weights = 1 / frequency
     # Masked zero weights
-    weights[ent2docs.to_dense().sum(dim=-1) == 0] = 0
+    weights[frequency == 0] = 0
     return weights
