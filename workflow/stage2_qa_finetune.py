@@ -15,7 +15,6 @@ from tqdm import tqdm
 
 from deep_graphrag import utils
 from deep_graphrag.ultra import query_utils
-from deep_graphrag.ultra.variadic import variadic_softmax
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -58,6 +57,21 @@ def train_and_validate(
     logger.warning(line)
     logger.warning(f"Number of parameters: {num_params}")
 
+    # Initialize Losses
+    loss_fn_list = []
+    has_doc_loss = False
+    for loss_cfg in cfg.task.losses:
+        loss_fn = instantiate(loss_cfg.loss)
+        if loss_cfg.cfg.is_doc_loss:
+            has_doc_loss = True
+        loss_fn_list.append(
+            {
+                "name": loss_cfg.name,
+                "loss_fn": loss_fn,
+                **loss_cfg.cfg,
+            }
+        )
+
     if world_size > 1:
         parallel_model = nn.parallel.DistributedDataParallel(model, device_ids=[device])
     else:
@@ -75,7 +89,8 @@ def train_and_validate(
             logger.warning(separator)
             logger.warning("Epoch %d begin" % epoch)
 
-        losses = []
+        losses: dict[str, list] = {loss_dict["name"]: [] for loss_dict in loss_fn_list}
+        losses["loss"] = []
 
         for dataloader in train_dataloader_dict.values():
             dataloader.sampler.set_epoch(epoch)
@@ -98,47 +113,45 @@ def train_and_validate(
                 batch = query_utils.cuda(batch, device=device)
                 pred = parallel_model(graph, batch, entities_weight=entities_weight)
                 target = batch["supporting_entities_masks"]  # supporting_entities_mask
-                loss = F.binary_cross_entropy_with_logits(
-                    pred, target, reduction="none"
-                )
-                is_positive = target > 0.5
-                is_negative = target <= 0.5
-                num_positive = is_positive.sum(dim=-1)
-                num_negative = is_negative.sum(dim=-1)
 
-                neg_weight = torch.zeros_like(pred)
-                neg_weight[is_positive] = (1 / num_positive.float()).repeat_interleave(
-                    num_positive
-                )
+                if has_doc_loss:
+                    doc_pred = torch.sparse.mm(pred, ent2docs)
+                    doc_target = batch["supporting_docs_masks"]  # supporting_docs_mask
 
-                if cfg.task.adversarial_temperature > 0:
-                    with torch.no_grad():
-                        logit = pred[is_negative] / cfg.task.adversarial_temperature
-                        neg_weight[is_negative] = variadic_softmax(logit, num_negative)
-                        # neg_weight[:, 1:] = F.softmax(pred[:, 1:] / cfg.task.adversarial_temperature, dim=-1)
-                else:
-                    neg_weight[is_negative] = (
-                        1 / num_negative.float()
-                    ).repeat_interleave(num_negative)
-                loss = (loss * neg_weight).sum(dim=-1) / neg_weight.sum(dim=-1)
-                loss = loss.mean()
+                loss = 0
+                tmp_losses = {}
+                for loss_dict in loss_fn_list:
+                    loss_fn = loss_dict["loss_fn"]
+                    weight = loss_dict["weight"]
+                    if loss_dict["is_doc_loss"]:
+                        single_loss = loss_fn(doc_pred, doc_target)
+                    else:
+                        single_loss = loss_fn(pred, target)
+                    tmp_losses[loss_dict["name"]] = single_loss.item()
+                    loss += weight * single_loss
+                tmp_losses["loss"] = loss.item()  # type: ignore
 
-                loss.backward()
+                loss.backward()  # type: ignore
                 optimizer.step()
                 optimizer.zero_grad()
 
+                for loss_log in tmp_losses:
+                    losses[loss_log].append(tmp_losses[loss_log])
+
                 if utils.get_rank() == 0 and batch_id % cfg.train.log_interval == 0:
                     logger.warning(separator)
-                    logger.warning(f"binary cross entropy: {loss:g}")
-                losses.append(loss.item())
+                    for loss_log in tmp_losses:
+                        logger.warning(f"{loss_log}: {tmp_losses[loss_log]:g}")
                 batch_id += 1
 
         if utils.get_rank() == 0:
-            avg_loss = sum(losses) / len(losses)
             logger.warning(separator)
             logger.warning("Epoch %d end" % epoch)
             logger.warning(line)
-            logger.warning(f"average binary cross entropy: {avg_loss:g}")
+            for loss_log in losses:
+                logger.warning(
+                    f"Avg: {loss_log}: {sum(losses[loss_log]) / len(losses[loss_log]):g}"
+                )
 
         utils.synchronize()
 
