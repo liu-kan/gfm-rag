@@ -6,10 +6,10 @@ class BaseTextEmbModel:
     def __init__(
         self,
         text_emb_model_name: str,
-        normalize: bool,
-        batch_size: int,
-        query_instruct: str = "",
-        passage_instruct: str = "",
+        normalize: bool = False,
+        batch_size: int = 32,
+        query_instruct: str | None = None,
+        passage_instruct: str | None = None,
         model_kwargs: dict | None = None,
     ) -> None:
         self.text_emb_model_name = text_emb_model_name

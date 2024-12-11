@@ -3,5 +3,5 @@ text_emb_model_name: Alibaba-NLP/gte-Qwen2-1.5B-instruct
 normalize: False
 batch_size: 32
 query_instruct: "Instruct: Given a question, retrieve entities that can help answer the question\nQuery: "
-passage_instruct: ""
+passage_instruct: null
 model_kwargs: null
