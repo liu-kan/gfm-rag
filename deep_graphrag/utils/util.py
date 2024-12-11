@@ -2,7 +2,7 @@ import json
 import os
 
 import torch
-from hydra.utils import get_class
+from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, OmegaConf
 
 
@@ -27,7 +27,7 @@ def save_model_to_pretrained(
 def load_model_from_pretrained(path: str) -> tuple[torch.nn.Module, dict]:
     with open(os.path.join(path, "config.json")) as f:
         config = json.load(f)
-    model = get_class(config["model_config"]["_target_"])(**config["model_config"])
+    model = instantiate(config["model_config"])
     state = torch.load(os.path.join(path, "model.pth"), map_location="cpu")
     model.load_state_dict(state["model"])
     return model, config

@@ -1,21 +1,21 @@
 from typing import Any
 
 import torch
-from hydra.utils import instantiate
-from omegaconf import DictConfig
 from torch import nn
 from torch_geometric.data import Data
+
+from deep_graphrag.ultra.models import EntityNBFNet
 
 
 class SemanticUltra(nn.Module):
     def __init__(
-        self, entity_model_cfg: DictConfig, rel_emb_dim: int, *args: Any, **kwargs: Any
+        self, entity_model: EntityNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
     ) -> None:
         # kept that because super Ultra sounds cool
         super().__init__()
         self.rel_emb_dim = rel_emb_dim
-        self.rel_mlp = nn.Linear(rel_emb_dim, entity_model_cfg["input_dim"])
-        self.entity_model = instantiate(entity_model_cfg)
+        self.entity_model = entity_model
+        self.rel_mlp = nn.Linear(rel_emb_dim, self.entity_model.dims[0])
 
     def forward(self, data: Data, batch: torch.Tensor) -> torch.Tensor:
         # batch shape: (bs, 1+num_negs, 3)
@@ -36,11 +36,11 @@ class UltraQA(SemanticUltra):
     """Wrap the GNN model for QA."""
 
     def __init__(
-        self, entity_model_cfg: DictConfig, rel_emb_dim: int, *args: Any, **kwargs: Any
+        self, entity_model: EntityNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
     ) -> None:
         # kept that because super Ultra sounds cool
-        super().__init__(entity_model_cfg, rel_emb_dim)
-        self.question_mlp = nn.Linear(self.rel_emb_dim, entity_model_cfg["input_dim"])
+        super().__init__(entity_model, rel_emb_dim)
+        self.question_mlp = nn.Linear(self.rel_emb_dim, self.entity_model.dims[0])
 
     def forward(
         self,

@@ -24,6 +24,12 @@ llm:
 
 graph_retriever:
   model_path: save_models/qa_ultra_train_1000/
+  doc_ranker: ${doc_ranker}
+  ner_model: ${ner_model}
+  el_model: ${el_model}
+  qa_evaluator: ${qa_evaluator}
+  init_entities_weight: True
+
 
 test:
   top_k: 10

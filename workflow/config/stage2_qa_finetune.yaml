@@ -23,8 +23,7 @@ datasets:
 
 model:
   _target_: deep_graphrag.models.UltraQA
-  init_entities_weight: True
-  entity_model_cfg:
+  entity_model:
     _target_: deep_graphrag.ultra.models.QueryNBFNet
     input_dim: 64
     hidden_dims: [64, 64, 64, 64, 64, 64]
@@ -52,5 +51,6 @@ train:
   save_pretrained: yes # Save the model for QA inference
   do_eval: yes
   timeout: 60 # timeout minutes for multi-gpu training
+  init_entities_weight: True
 
 checkpoint: null

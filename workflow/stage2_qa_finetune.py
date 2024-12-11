@@ -6,7 +6,7 @@ import hydra
 import numpy as np
 import torch
 from hydra.core.hydra_config import HydraConfig
-from hydra.utils import get_class
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.nn import functional as F  # noqa:N812
@@ -14,7 +14,6 @@ from torch.utils import data as torch_data
 from tqdm import tqdm
 
 from deep_graphrag import utils
-from deep_graphrag.models import UltraQA
 from deep_graphrag.ultra import query_utils
 from deep_graphrag.ultra.variadic import variadic_softmax
 
@@ -53,10 +52,7 @@ def train_and_validate(
 
     batch_per_epoch = batch_per_epoch or len(train_loader)
 
-    optimizer = get_class(cfg.optimizer["_target_"])(
-        model.parameters(),
-        **{k: v for k, v in cfg.optimizer.items() if k != "_target_"},
-    )
+    optimizer = instantiate(cfg.optimizer, model.parameters())
 
     num_params = sum(p.numel() for p in model.parameters())
     logger.warning(line)
@@ -92,7 +88,7 @@ def train_and_validate(
             graph = train_datasets[data_name]["graph"]
             ent2docs = train_datasets[data_name]["ent2docs"]
             entities_weight = None
-            if cfg.model.init_entities_weight:
+            if cfg.train.init_entities_weight:
                 entities_weight = utils.get_entities_weight(ent2docs)
             for batch in tqdm(
                 islice(train_loader, batch_per_epoch),
@@ -216,15 +212,13 @@ def test(
         doc_targets = []
 
         # Create doc retriever
-        doc_ranker_args = {
-            key: value for key, value in cfg.doc_ranker.items() if key != "_target_"
-        }
-        doc_ranker = get_class(cfg.doc_ranker._target_)(
-            ent2doc=ent2docs, **doc_ranker_args
+        doc_ranker = instantiate(
+            cfg.doc_ranker,
+            ent2doc=ent2docs,
         )
 
         entities_weight = None
-        if cfg.model.init_entities_weight:
+        if cfg.train.init_entities_weight:
             entities_weight = utils.get_entities_weight(ent2docs)
 
         for batch in tqdm(test_loader):
@@ -307,7 +301,7 @@ def main(cfg: DictConfig) -> None:
         len(rel_emb_dim) == 1
     ), "All datasets should have the same relation embedding dimension"
 
-    model = UltraQA(rel_emb_dim=rel_emb_dim.pop(), **cfg.model)
+    model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
 
     train_datasets = {}
     valid_datasets = {}

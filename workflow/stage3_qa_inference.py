@@ -6,7 +6,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 import hydra
 import torch
 from hydra.core.hydra_config import HydraConfig
-from hydra.utils import get_class, instantiate
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.utils import data as torch_data
@@ -43,16 +43,18 @@ def doc_retrieval(
     )
 
     # Create doc retriever
-    doc_ranker_args = {
-        key: value for key, value in cfg.doc_ranker.items() if key != "_target_"
-    }
-    doc_ranker = get_class(cfg.doc_ranker._target_)(ent2doc=ent2docs, **doc_ranker_args)
+    doc_ranker = instantiate(cfg.doc_ranker, ent2doc=ent2docs)
+
+    if cfg.test.init_entities_weight:
+        entities_weight = utils.get_entities_weight(ent2docs)
+    else:
+        entities_weight = None
 
     model.eval()
     all_predictions: list[dict] = []
     for batch in tqdm(test_loader):
         batch = query_utils.cuda(batch, device=device)
-        ent_pred = model(graph, batch)
+        ent_pred = model(graph, batch, entities_weight=entities_weight)
         doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
         idx = batch["sample_id"]
         all_predictions.extend(
@@ -171,7 +173,7 @@ def main(cfg: DictConfig) -> None:
             output_path = ans_prediction(cfg, output_dir, qa_data, retrieval_result)
 
         # Evaluation
-        evaluator = get_class(cfg.qa_evaluator["_target_"])(prediction_file=output_path)
+        evaluator = instantiate(cfg.qa_evaluator, prediction_file=output_path)
         metrics = evaluator.evaluate()
         query_utils.print_metrics(metrics, logger)
         return metrics

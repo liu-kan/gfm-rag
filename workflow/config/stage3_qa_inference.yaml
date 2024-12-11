@@ -30,3 +30,4 @@ test:
   n_threads: 5
   retrieved_result_path: null
   prediction_result_path: null
+  init_entities_weight: True

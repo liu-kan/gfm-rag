@@ -1,5 +1,5 @@
 import torch
-from hydra.utils import get_class, instantiate
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from deep_graphrag import utils
@@ -23,6 +23,7 @@ class DeepGraphRAG:
         graph_retriever: UltraQA,
         doc_ranker: BaseDocRanker,
         doc_retriever: utils.DocumentRetriever,
+        entities_weight: torch.Tensor | None,
         device: torch.device,
     ) -> None:
         self.qa_data = qa_data
@@ -35,6 +36,7 @@ class DeepGraphRAG:
         self.doc_retriever = doc_retriever
         self.device = device
         self.num_nodes = self.graph.num_nodes
+        self.entities_weight = entities_weight
 
     @torch.no_grad()
     def retrieve(self, query: str, top_k: int) -> list[dict]:
@@ -56,7 +58,9 @@ class DeepGraphRAG:
         )
 
         # Graph retriever forward pass
-        ent_pred = self.graph_retriever(self.graph, graph_retriever_input)
+        ent_pred = self.graph_retriever(
+            self.graph, graph_retriever_input, entities_weight=self.entities_weight
+        )
         doc_pred = self.doc_ranker(ent_pred)[0]  # Ent2docs mapping, batch size is 1
 
         # Retrieve the supporting documents
@@ -112,23 +116,22 @@ class DeepGraphRAG:
         qa_data.kg = qa_data.kg.to(device)
         ent2docs = qa_data.ent2docs.to(device)
 
-        ner_model = instantiate(cfg.ner_model)
-        el_model = instantiate(cfg.el_model)
+        ner_model = instantiate(cfg.graph_retriever.ner_model)
+        el_model = instantiate(cfg.graph_retriever.el_model)
 
         el_model.index(list(qa_data.ent2id.keys()))
 
         # Create doc ranker
-        doc_ranker_args = {
-            key: value for key, value in cfg.doc_ranker.items() if key != "_target_"
-        }
-        doc_ranker = get_class(cfg.doc_ranker._target_)(
-            ent2doc=ent2docs, **doc_ranker_args
-        )
+        doc_ranker = instantiate(cfg.graph_retriever.doc_ranker, ent2doc=ent2docs)
         doc_retriever = utils.DocumentRetriever(qa_data.doc, qa_data.id2doc)
 
         text_emb_model = instantiate(
             OmegaConf.create(model_config["text_emb_model_config"])
         )
+
+        entities_weight = None
+        if cfg.graph_retriever.init_entities_weight:
+            entities_weight = utils.get_entities_weight(ent2docs)
 
         return DeepGraphRAG(
             qa_data=qa_data,
@@ -138,5 +141,6 @@ class DeepGraphRAG:
             graph_retriever=graph_retriever,
             doc_ranker=doc_ranker,
             doc_retriever=doc_retriever,
+            entities_weight=entities_weight,
             device=device,
         )

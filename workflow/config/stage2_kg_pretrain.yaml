@@ -18,7 +18,7 @@ datasets:
 
 model:
   _target_: deep_graphrag.models.SemanticUltra
-  entity_model_cfg:
+  entity_model:
     _target_: deep_graphrag.ultra.models.EntityNBFNet
     input_dim: 64
     hidden_dims: [64, 64, 64, 64, 64, 64]

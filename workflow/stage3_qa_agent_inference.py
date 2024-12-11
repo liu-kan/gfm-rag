@@ -4,7 +4,7 @@ import os
 
 import hydra
 from hydra.core.hydra_config import HydraConfig
-from hydra.utils import get_class, instantiate
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
@@ -127,7 +127,7 @@ def main(cfg: DictConfig) -> None:
 
     result_path = os.path.join(output_dir, "prediction.jsonl")
     # Evaluation
-    evaluator = get_class(cfg.qa_evaluator["_target_"])(prediction_file=result_path)
+    evaluator = instantiate(cfg.qa_evaluator, prediction_file=result_path)
     metrics = evaluator.evaluate()
     query_utils.print_metrics(metrics, logger)
 

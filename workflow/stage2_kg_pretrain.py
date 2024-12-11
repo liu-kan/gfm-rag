@@ -8,7 +8,7 @@ from itertools import islice
 import hydra
 import torch
 from hydra.core.hydra_config import HydraConfig
-from hydra.utils import get_class
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch import distributed as dist
 from torch import nn
@@ -18,7 +18,6 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from deep_graphrag import utils
-from deep_graphrag.models import SemanticUltra
 from deep_graphrag.ultra import tasks
 
 # A logger for this file
@@ -82,10 +81,7 @@ def train_and_validate(
 
     batch_per_epoch = batch_per_epoch or len(train_loader)
 
-    optimizer = get_class(cfg.optimizer["_target_"])(
-        model.parameters(),
-        **{k: v for k, v in cfg.optimizer.items() if k != "_target_"},
-    )
+    optimizer = instantiate(cfg.optimizer, model.parameters())
 
     num_params = sum(p.numel() for p in model.parameters())
     logger.warning(line)
@@ -379,7 +375,7 @@ def main(cfg: DictConfig) -> None:
         len(rel_emb_dim) == 1
     ), "All datasets should have the same relation embedding dimension"
 
-    model = SemanticUltra(rel_emb_dim=rel_emb_dim.pop(), **cfg.model)
+    model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")
