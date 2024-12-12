@@ -42,7 +42,13 @@ task:
         _target_: deep_graphrag.losses.BCELoss
         adversarial_temperature: 0.2
       cfg:
-        weight: 1.0
+        weight: 0.3
+        is_doc_loss: False
+    - name: ent_pcr_loss
+      loss:
+        _target_: deep_graphrag.losses.ListCELoss
+      cfg:
+        weight: 0.7
         is_doc_loss: False
 
 
