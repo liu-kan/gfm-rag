@@ -2,11 +2,15 @@ import hashlib
 import json
 import logging
 import os
+import os.path as osp
+import sys
+import warnings
 
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Data, InMemoryDataset
+from torch_geometric.data.dataset import _repr, files_exist, makedirs
 
 from deep_graphrag.text_emb_models import BaseTextEmbModel
 from deep_graphrag.ultra.tasks import build_relation_graph
@@ -23,9 +27,11 @@ class KGDataset(InMemoryDataset):
         root: str,
         data_name: str,
         text_emb_model_cfgs: DictConfig,
+        force_rebuild: bool = False,
         **kwargs: str,
     ) -> None:
         self.name = data_name
+        self.force_rebuild = force_rebuild
         # Get fingerprint of the model configuration
         self.fingerprint = hashlib.md5(
             json.dumps(
@@ -33,7 +39,6 @@ class KGDataset(InMemoryDataset):
             ).encode()
         ).hexdigest()
         self.text_emb_model_cfgs = text_emb_model_cfgs
-
         super().__init__(root, None, None)
         self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
@@ -84,6 +89,44 @@ class KGDataset(InMemoryDataset):
     def _process(self) -> None:
         if is_main_process():
             logger.info(f"Processing KG dataset {self.name} at rank {get_rank()}")
+            f = osp.join(self.processed_dir, "pre_transform.pt")
+            if osp.exists(f) and torch.load(f) != _repr(self.pre_transform):
+                warnings.warn(  # noqa:B028
+                    f"The `pre_transform` argument differs from the one used in "
+                    f"the pre-processed version of this dataset. If you want to "
+                    f"make use of another pre-processing technique, make sure to "
+                    f"delete '{self.processed_dir}' first",
+                    stacklevel=1,
+                )
+
+            f = osp.join(self.processed_dir, "pre_filter.pt")
+            if osp.exists(f) and torch.load(f) != _repr(self.pre_filter):
+                warnings.warn(
+                    "The `pre_filter` argument differs from the one used in "
+                    "the pre-processed version of this dataset. If you want to "
+                    "make use of another pre-fitering technique, make sure to "
+                    "delete '{self.processed_dir}' first",
+                    stacklevel=1,
+                )
+
+            if not self.force_rebuild and files_exist(
+                self.processed_paths
+            ):  # pragma: no cover
+                return
+
+            if self.log and "pytest" not in sys.modules:
+                print("Processing...", file=sys.stderr)
+
+            makedirs(self.processed_dir)
+            self.process()
+
+            path = osp.join(self.processed_dir, "pre_transform.pt")
+            torch.save(_repr(self.pre_transform), path)
+            path = osp.join(self.processed_dir, "pre_filter.pt")
+            torch.save(_repr(self.pre_filter), path)
+
+            if self.log and "pytest" not in sys.modules:
+                print("Done!", file=sys.stderr)
             super()._process()
         else:
             logger.info(

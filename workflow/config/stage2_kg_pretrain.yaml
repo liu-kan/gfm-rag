@@ -12,6 +12,7 @@ datasets:
   _target_: deep_graphrag.datasets.KGDataset
   cfgs:
     root: ./data
+    force_rebuild: False
     text_emb_model_cfgs: ${text_emb_model}
   data_names:
     - hotpotqa

@@ -13,6 +13,7 @@ datasets:
   _target_: deep_graphrag.datasets.QADataset
   cfgs:
     root: ./data
+    force_rebuild: False
     text_emb_model_cfgs: ${text_emb_model}
   train_names:
     - hotpotqa
