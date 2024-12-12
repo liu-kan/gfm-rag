@@ -68,7 +68,7 @@ def agent_reasoning(
                 retrieved_docs_dict[doc["title"]] = doc
         # Sort the retrieved docs by score
         retrieved_docs = sorted(
-            retrieved_docs_dict.values(), key=lambda x: x["score"], reverse=True
+            retrieved_docs_dict.values(), key=lambda x: x["norm_score"], reverse=True
         )
         # Only keep the top k
         retrieved_docs = retrieved_docs[: cfg.test.top_k]
