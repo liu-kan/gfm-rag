@@ -94,16 +94,28 @@ def main(cfg: DictConfig) -> None:
     max_samples = (
         cfg.test.max_test_samples if cfg.test.max_test_samples > 0 else len(test_data)
     )
+    processed_data = {}
+    if cfg.test.resume:
+        logger.info(f"Resuming from previous prediction {cfg.test.resume}")
+        try:
+            with open(cfg.test.resume) as f:
+                for line in f:
+                    result = json.loads(line)
+                    processed_data[result["id"]] = result
+        except Exception as e:
+            logger.error(f"Could not resume from previous prediction {e}")
     with open(os.path.join(output_dir, "prediction.jsonl"), "w") as f:
         for i in tqdm(range(max_samples)):
             sample = test_data[i]
             if i >= max_samples:
                 break
             query = sample["question"]
-            result = agent_reasoning(
-                cfg, graphrag_retriever, llm, agent_prompt_builder, query
-            )
-            retrieved_docs = result["retrieved_docs"]
+            if sample["id"] in processed_data:
+                result = processed_data[sample["id"]]
+            else:
+                result = agent_reasoning(
+                    cfg, graphrag_retriever, llm, agent_prompt_builder, query
+                )
 
             # Generate QA response
             retrieved_docs = result["retrieved_docs"]
