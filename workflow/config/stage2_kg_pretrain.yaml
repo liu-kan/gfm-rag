@@ -14,8 +14,9 @@ datasets:
     root: ./data
     force_rebuild: False
     text_emb_model_cfgs: ${text_emb_model}
-  data_names:
+  train_names:
     - hotpotqa
+  valid_names: []
 
 model:
   _target_: deep_graphrag.models.SemanticUltra
