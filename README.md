@@ -93,22 +93,22 @@ torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=mu
 ```bash
 torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py dataset.data_name=2wikimultihopqa_test qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa
 ```
-#### Multi Step QA Reasoning
+#### Multi Step IRCOT QA Reasoning
 ```bash
-python workflow/stage3_qa_agent_inference.py
+python workflow/stage3_qa_ircot_inference.py
 ```
 
 hotpotqa
 ```bash
-python workflow/stage3_qa_agent_inference.py qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot dataset.data_name=hotpotqa_test test.max_steps=2
+python workflow/stage3_qa_ircot_inference.py qa_prompt=hotpotqa qa_evaluator=hotpotqa agent_prompt=hotpotqa_ircot dataset.data_name=hotpotqa_test test.max_steps=2
 ```
 
 musique
 ```bash
-python workflow/stage3_qa_agent_inference.py qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot dataset.data_name=musique_test test.max_steps=4
+python workflow/stage3_qa_ircot_inference.py qa_prompt=musique qa_evaluator=musique agent_prompt=musique_ircot dataset.data_name=musique_test test.max_steps=4
 ```
 
 2Wikimultihopqa
 ```bash
-python workflow/stage3_qa_agent_inference.py qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
+python workflow/stage3_qa_ircot_inference.py qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
 ```
