@@ -44,7 +44,7 @@ train:
   num_epoch: 10
   log_interval: 100
   fast_test: 500
-  save_best_only: yes
+  save_best_only: no
   save_pretrained: no # Save the model for QA inference
   batch_per_epoch: null
   timeout: 60 # timeout minutes for multi-gpu training

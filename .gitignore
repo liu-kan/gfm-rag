@@ -9,5 +9,6 @@ scripts/*
 tmp/
 .env
 zicheng/
+data_full
 logs/
 *.ipynb
