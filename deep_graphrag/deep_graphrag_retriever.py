@@ -93,6 +93,7 @@ class DeepGraphRAG:
         question_embedding = self.text_emb_model.encode(
             [query],
             is_query=True,
+            show_progress_bar=False,
         )
         graph_retriever_input = {
             "question_embeddings": question_embedding,

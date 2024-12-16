@@ -1,3 +1,5 @@
+from typing import Any
+
 import torch
 
 from .base_model import BaseTextEmbModel
@@ -31,5 +33,5 @@ class NVEmbedV2(BaseTextEmbModel):
         ]
         return input_examples
 
-    def encode(self, text: list[str], is_query: bool = False) -> torch.Tensor:
-        return super().encode(self.add_eos(text), is_query)
+    def encode(self, text: list[str], *args: Any, **kwargs: Any) -> torch.Tensor:
+        return super().encode(self.add_eos(text), *args, **kwargs)
