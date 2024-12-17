@@ -329,7 +329,7 @@ def main(cfg: DictConfig) -> None:
                 "graph": graph,
                 "ent2docs": ent2docs,
             }
-        elif data_name in cfg.datasets.valid_names:
+        if data_name in cfg.datasets.valid_names:
             valid_datasets[data_name] = {
                 "data": valid_data,
                 "graph": graph,
