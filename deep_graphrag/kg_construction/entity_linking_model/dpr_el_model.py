@@ -102,7 +102,6 @@ class NVEmbedV2ELModel(DPRELModel):
         ]
         return input_examples
 
-
     def __call__(self, ner_entity_list: list, *args: Any, **kwargs: Any) -> dict:
         ner_entity_list = self.add_eos(ner_entity_list)
         return super().__call__(ner_entity_list, *args, **kwargs)
