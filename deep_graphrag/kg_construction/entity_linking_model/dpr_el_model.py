@@ -55,7 +55,7 @@ class DPRELModel(BaseELModel):
             if self.use_cache:
                 torch.save(self.entity_embeddings, cache_file)
 
-    def __call__(self, ner_entity_list: list) -> list:
+    def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         ner_entity_embeddings = self.model.encode(
             ner_entity_list,
             device="cuda" if torch.cuda.is_available() else "cpu",
@@ -65,10 +65,21 @@ class DPRELModel(BaseELModel):
             batch_size=self.batch_size,
         )
         scores = ner_entity_embeddings @ self.entity_embeddings.T
-        linked_entity_list = []
+        linked_entity_dict: dict[str, list] = {}
         for i in range(len(ner_entity_list)):
-            linked_entity_list.append(self.entity_list[scores[i].argmax().item()])
-        return linked_entity_list
+            linked_entity_dict[ner_entity_list[i]] = []
+            sorted_scores, sorted_indices = torch.sort(scores[i], descending=True)
+            max_score = sorted_scores[0].item()
+
+            for score, top_k_index in zip(sorted_scores[:topk], sorted_indices[:topk]):
+                linked_entity_dict[ner_entity_list[i]].append(
+                    {
+                        "entity": self.entity_list[top_k_index],
+                        "score": score.item(),
+                        "norm_score": score.item() / max_score,
+                    }
+                )
+        return linked_entity_dict
 
 
 class NVEmbedV2ELModel(DPRELModel):
@@ -91,6 +102,7 @@ class NVEmbedV2ELModel(DPRELModel):
         ]
         return input_examples
 
-    def __call__(self, ner_entity_list: list) -> list:
+
+    def __call__(self, ner_entity_list: list, *args: Any, **kwargs: Any) -> dict:
         ner_entity_list = self.add_eos(ner_entity_list)
-        return super().__call__(ner_entity_list)
+        return super().__call__(ner_entity_list, *args, **kwargs)

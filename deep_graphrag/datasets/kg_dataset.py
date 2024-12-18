@@ -12,6 +12,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.data.dataset import _repr, files_exist, makedirs
 
+from deep_graphrag.kg_construction.utils import KG_DELIMITER
 from deep_graphrag.text_emb_models import BaseTextEmbModel
 from deep_graphrag.ultra.tasks import build_relation_graph
 from deep_graphrag.utils import get_rank, is_main_process, synchronize
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class KGDataset(InMemoryDataset):
-    delimiter = ","
+    delimiter = KG_DELIMITER
 
     def __init__(
         self,

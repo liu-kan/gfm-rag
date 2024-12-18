@@ -1,16 +1,13 @@
 import hashlib
 import os
-import re
 
 from colbert import Indexer, Searcher
 from colbert.data import Queries
 from colbert.infra import ColBERTConfig, Run, RunConfig
 
+from deep_graphrag.kg_construction.utils import processing_phrases
+
 from .base_model import BaseELModel
-
-
-def processing_phrases(phrase: str) -> str:
-    return re.sub("[^A-Za-z0-9 ]", " ", phrase.lower()).strip()
 
 
 class ColbertELModel(BaseELModel):
@@ -64,15 +61,22 @@ class ColbertELModel(BaseELModel):
             )
         self.phrase_searcher = phrase_searcher
 
-    def __call__(self, ner_entity_list: list) -> list:
+    def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         """
         Link entities in the given text to the knowledge graph.
 
         Args:
             ner_entity_list (list): list of named entities
+            topk (int): number of linked entities to return
 
         Returns:
-            list: list of linked entities in the knowledge graph
+            dict: dict of linked entities in the knowledge graph
+                key (str): named entity
+                value (list[dict]): list of linked entities
+                    entity: linked entity
+                    score: score of the entity
+                    norm_score: normalized score of the entity
+
         """
 
         try:
@@ -81,14 +85,27 @@ class ColbertELModel(BaseELModel):
             raise AttributeError("Index the entities first using index method") from e
 
         ner_entity_list = [processing_phrases(p) for p in ner_entity_list]
-        phrase_ids = []
-        for query in ner_entity_list:
-            queries = Queries(path=None, data={0: query})
-            ranking = self.phrase_searcher.search_all(queries, k=1)
+        query_data: dict[int, str] = {
+            i: query for i, query in enumerate(ner_entity_list)
+        }
 
-            for phrase_id, _rank, _score in ranking.data[0]:
-                phrase_ids.append(phrase_id)
+        queries = Queries(path=None, data=query_data)
+        ranking = self.phrase_searcher.search_all(queries, k=topk)
 
-        linked_entity_list = [self.entity_list[phrase_id] for phrase_id in phrase_ids]
+        linked_entity_dict: dict[str, list] = {}
+        for i in range(len(queries)):
+            query = queries[i]
+            rank = ranking.data[i]
+            linked_entity_dict[query] = []
+            max_score = rank[0][2]
 
-        return linked_entity_list
+            for phrase_id, _rank, score in rank:
+                linked_entity_dict[query].append(
+                    {
+                        "entity": self.entity_list[phrase_id],
+                        "score": score,
+                        "norm_score": score / max_score,
+                    }
+                )
+
+        return linked_entity_dict

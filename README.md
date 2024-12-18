@@ -12,11 +12,6 @@ poetry install
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
 ```
 
-Install faiss-gpu if you want to use Colbert for entity linking.
-```bash
-conda install -c pytorch -c nvidia faiss-gpu=1.9.0
-```
-
 ### For development
 Install pre-commit hooks
 ```bash
@@ -26,21 +21,11 @@ pre-commit install
 
 ## Workflow
 
-### Stage1: KG Construction
-Construct KG for corpus and query
+### Stage1: Index Dataset
+1. Create KG index for corpus.
+2. Prepare QA dataset for training and evaluation (Optional)
 ```bash
-python workflow/stage1_process_construction.py
-```
-
-Construct dataset for kgc task
-```bash
-python workflow/stage1_kg_construction.py
-```
-
-Construct dataset for qa reasoning task (Option)
-```bash
-
-python workflow/stage1_qa_construction.py
+python workflow/stage1_index_dataset.py
 ```
 
 

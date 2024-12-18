@@ -15,14 +15,14 @@ def test_colbert_el_model() -> None:
     el_model = instantiate(cfg)
     ner_entity_list = ["south chicago community hospital", "july 13 14  1966"]
     with open(
-        "data/hotpotqa_test/processed/stage2/sentence-transformers_all-mpnet-base-v2/ent2id.json"
+        "data_full/GPT-4o-mini/hotpotqa/processed/stage2/2929736454cf0fb4808976f0986c6230/ent2id.json"
     ) as fin:
         ent2id = json.load(fin)
     entity_list = list(ent2id.keys())
     el_model.index(entity_list)
-    linked_entity_list = el_model(ner_entity_list)
-    print(linked_entity_list)
-    assert isinstance(linked_entity_list, list)
+    linked_entity_dict = el_model(ner_entity_list, topk=2)
+    print(linked_entity_dict)
+    assert isinstance(linked_entity_dict, dict)
 
 
 def test_dpr_el_model() -> None:
@@ -44,14 +44,14 @@ def test_dpr_el_model() -> None:
     el_model = instantiate(cfg)
     ner_entity_list = ["south chicago community hospital", "july 13 14  1966"]
     with open(
-        "data/hotpotqa_test/processed/stage2/sentence-transformers_all-mpnet-base-v2/ent2id.json"
+        "data_full/GPT-4o-mini/hotpotqa/processed/stage2/2929736454cf0fb4808976f0986c6230/ent2id.json"
     ) as fin:
         ent2id = json.load(fin)
     entity_list = list(ent2id.keys())
     el_model.index(entity_list)
-    linked_entity_list = el_model(ner_entity_list)
+    linked_entity_list = el_model(ner_entity_list, topk=2)
     print(linked_entity_list)
-    assert isinstance(linked_entity_list, list)
+    assert isinstance(linked_entity_list, dict)
 
 
 if __name__ == "__main__":

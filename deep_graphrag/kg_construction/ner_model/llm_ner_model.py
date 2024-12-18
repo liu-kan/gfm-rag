@@ -1,6 +1,5 @@
 # Adapt from: https://github.com/OSU-NLP-Group/HippoRAG/blob/main/src/named_entity_extraction_parallel.py
 import logging
-import re
 from typing import Literal
 
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
@@ -9,11 +8,15 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from deep_graphrag.kg_construction.langchain_util import init_langchain_model
-from deep_graphrag.kg_construction.processing import extract_json_dict
+from deep_graphrag.kg_construction.utils import extract_json_dict, processing_phrases
 
 from .base_model import BaseNERModel
 
 logger = logging.getLogger(__name__)
+# Disable OpenAI and httpx logging
+# Configure logging level for specific loggers by name
+logging.getLogger("openai").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
 
 query_prompt_one_shot_input = """Please extract all named entities that are important for solving the questions below.
 Place the named entities in json format.
@@ -31,18 +34,16 @@ Question: {}
 """
 
 
-def processing_phrases(phrase: str) -> str:
-    return re.sub("[^A-Za-z0-9 ]", " ", phrase.lower()).strip()
-
-
 class LLMNERModel(BaseNERModel):
     def __init__(
         self,
         llm_api: Literal["openai", "together", "ollama", "llama.cpp"] = "openai",
         model_name: str = "gpt-4o-mini",
+        max_tokens: int = 1024,
     ):
         self.llm_api = llm_api
         self.model_name = model_name
+        self.max_tokens = max_tokens
 
         self.client = init_langchain_model(llm_api, model_name)
 
@@ -62,7 +63,7 @@ class LLMNERModel(BaseNERModel):
             chat_completion = self.client.invoke(
                 query_ner_messages.to_messages(),
                 temperature=0,
-                max_tokens=300,
+                max_tokens=self.max_tokens,
                 stop=["\n\n"],
                 response_format={"type": "json_object"},
             )
@@ -79,7 +80,7 @@ class LLMNERModel(BaseNERModel):
             chat_completion = self.client.invoke(
                 query_ner_messages.to_messages(),
                 temperature=0,
-                max_tokens=300,
+                max_tokens=self.max_tokens,
                 stop=["\n\n"],
             )
             response_content = chat_completion.content

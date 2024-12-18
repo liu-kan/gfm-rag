@@ -6,7 +6,7 @@ data/*/tmp/
 checkpoints/
 data/*
 scripts/*
-tmp/
+tmp
 .env
 zicheng/
 data_full

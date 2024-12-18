@@ -81,11 +81,11 @@ class DeepGraphRAG:
 
         # Prepare input for deep graph retriever
         mentioned_entities = self.ner_model(query)
-        linked_entities = self.el_model(mentioned_entities)
+        linked_entities = self.el_model(mentioned_entities, topk=1)
         entity_ids = [
-            self.qa_data.ent2id[ent]
-            for ent in linked_entities
-            if ent in self.qa_data.ent2id
+            self.qa_data.ent2id[ent[0]["entity"]]
+            for ent in linked_entities.values()
+            if ent[0]["entity"] in self.qa_data.ent2id
         ]
         question_entities_masks = (
             entities_to_mask(entity_ids, self.num_nodes).unsqueeze(0).to(self.device)
