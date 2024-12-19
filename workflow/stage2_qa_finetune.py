@@ -109,6 +109,7 @@ def train_and_validate(
                 islice(train_loader, batch_per_epoch),
                 desc=f"Training Batches: {epoch}",
                 total=batch_per_epoch,
+                disable=not utils.is_main_process(),
             ):
                 batch = query_utils.cuda(batch, device=device)
                 pred = parallel_model(graph, batch, entities_weight=entities_weight)
@@ -234,7 +235,11 @@ def test(
         if cfg.train.init_entities_weight:
             entities_weight = utils.get_entities_weight(ent2docs)
 
-        for batch in tqdm(test_loader):
+        for batch in tqdm(
+            test_loader,
+            desc=f"Testing {data_name}",
+            disable=not utils.is_main_process(),
+        ):
             batch = query_utils.cuda(batch, device=device)
             ent_pred = model(graph, batch, entities_weight=entities_weight)
             doc_pred = doc_ranker(ent_pred)  # Ent2docs mapping
@@ -320,6 +325,9 @@ def main(cfg: DictConfig) -> None:
     valid_datasets = {}
 
     for data_name, qa_data in qa_datasets.items():
+        if data_name not in cfg.datasets.train_names + cfg.datasets.valid_names:
+            raise ValueError(f"Unknown data name: {data_name}")
+
         train_data, valid_data = qa_data._data
         graph = qa_data.kg.to(device)
         ent2docs = qa_data.ent2docs.to(device)
@@ -335,8 +343,6 @@ def main(cfg: DictConfig) -> None:
                 "graph": graph,
                 "ent2docs": ent2docs,
             }
-        else:
-            raise ValueError(f"Unknown data name: {data_name}")
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
         state = torch.load(cfg.checkpoint, map_location="cpu")
