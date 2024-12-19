@@ -289,7 +289,6 @@ class KGConstructor(BaseKGConstructor):
         logger.info("Creating Graph from OpenIE results")
 
         if self.cosine_sim_edges:
-            logger.info("Augmenting graph from similarity")
             self.augment_graph(
                 graph, kb_phrase_dict=kb_phrase_dict
             )  # combine raw graph with synonyms edges
@@ -329,10 +328,11 @@ class KGConstructor(BaseKGConstructor):
         processed_phrases = [processing_phrases(p) for p in unique_phrases]
 
         self.el_model.index(processed_phrases)
-        number_of_phrases = len(processed_phrases)
 
-        sim_neighbors = self.el_model(processed_phrases, topk=number_of_phrases)
+        logger.info("Finding similar entities")
+        sim_neighbors = self.el_model(processed_phrases, topk=self.max_sim_neighbors)
 
+        logger.info("Adding synonymy edges")
         for phrase, neighbors in tqdm(sim_neighbors.items()):
             synonyms = []  # [(phrase_id, score)]
             if len(re.sub("[^A-Za-z0-9]", "", phrase)) > 2:

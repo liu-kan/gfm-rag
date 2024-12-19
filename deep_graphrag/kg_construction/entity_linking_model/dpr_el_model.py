@@ -65,13 +65,16 @@ class DPRELModel(BaseELModel):
             batch_size=self.batch_size,
         )
         scores = ner_entity_embeddings @ self.entity_embeddings.T
+        top_k_scores, top_k_values = torch.topk(scores, topk, dim=-1)
         linked_entity_dict: dict[str, list] = {}
         for i in range(len(ner_entity_list)):
             linked_entity_dict[ner_entity_list[i]] = []
-            sorted_scores, sorted_indices = torch.sort(scores[i], descending=True)
-            max_score = sorted_scores[0].item()
 
-            for score, top_k_index in zip(sorted_scores[:topk], sorted_indices[:topk]):
+            sorted_score = top_k_scores[i]
+            sorted_indices = top_k_values[i]
+            max_score = sorted_score[0].item()
+
+            for score, top_k_index in zip(sorted_score, sorted_indices):
                 linked_entity_dict[ner_entity_list[i]].append(
                     {
                         "entity": self.entity_list[top_k_index],
