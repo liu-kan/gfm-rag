@@ -63,6 +63,7 @@ class KGConstructor(BaseKGConstructor):
         cosine_sim_edges: bool = True,
         threshold: float = 0.8,
         max_sim_neighbors: int = 100,
+        add_title: bool = True,
         force: bool = False,
     ) -> None:
         self.open_ie_model = open_ie_model
@@ -72,6 +73,7 @@ class KGConstructor(BaseKGConstructor):
         self.cosine_sim_edges = cosine_sim_edges
         self.threshold = threshold
         self.max_sim_neighbors = max_sim_neighbors
+        self.add_title = add_title
         self.force = force
         self.data_name = None
 
@@ -109,6 +111,7 @@ class KGConstructor(BaseKGConstructor):
             cosine_sim_edges=cfg.cosine_sim_edges,
             threshold=cfg.threshold,
             max_sim_neighbors=cfg.max_sim_neighbors,
+            add_title=cfg.add_title,
             force=cfg.force,
         )
 
@@ -155,7 +158,11 @@ class KGConstructor(BaseKGConstructor):
         # Read data corpus
         with open(os.path.join(raw_path, "dataset_corpus.json")) as f:
             corpus = json.load(f)
-        passge_to_title = {corpus[title]: title for title in corpus.keys()}
+            if self.add_title:
+                corpus = {
+                    title: title + "\n" + passage for title, passage in corpus.items()
+                }
+        passage_to_title = {corpus[title]: title for title in corpus.keys()}
 
         logger.info(f"Numbers of passages: {len(corpus)}")
 
@@ -185,7 +192,7 @@ class KGConstructor(BaseKGConstructor):
                         desc="Perform OpenIE",
                     ):
                         if isinstance(result, dict):
-                            passage_title = passge_to_title[result["passage"]]
+                            passage_title = passage_to_title[result["passage"]]
                             result["title"] = passage_title
                             f.write(json.dumps(result) + "\n")
                             f.flush()

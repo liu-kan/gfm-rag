@@ -22,6 +22,7 @@ kg_constructor:
   cosine_sim_edges: True
   threshold: 0.8
   max_sim_neighbors: 100
+  add_title: True
   force: False
 
 qa_constructor:
