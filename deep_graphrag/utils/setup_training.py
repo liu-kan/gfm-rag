@@ -32,6 +32,11 @@ def get_world_size() -> int:
     return 1
 
 
+def cleanup() -> None:
+    if get_world_size() > 1:
+        dist.destroy_process_group()
+
+
 def synchronize() -> None:
     if get_world_size() > 1:
         dist.barrier()

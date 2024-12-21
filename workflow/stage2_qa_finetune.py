@@ -375,6 +375,7 @@ def main(cfg: DictConfig) -> None:
         utils.save_model_to_pretrained(model, cfg, pre_trained_dir)
 
     utils.synchronize()
+    utils.cleanup()
 
 
 if __name__ == "__main__":
