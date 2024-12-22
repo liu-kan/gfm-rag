@@ -1,5 +1,6 @@
 import hashlib
 import os
+import shutil
 
 from colbert import Indexer, Searcher
 from colbert.data import Queries
@@ -17,6 +18,7 @@ class ColbertELModel(BaseELModel):
         root: str = "tmp",
         doc_index_name: str = "nbits_2",
         phrase_index_name: str = "nbits_2",
+        force: bool = False,
     ) -> None:
         if not os.path.exists(checkpint_path):
             raise FileNotFoundError(
@@ -26,12 +28,15 @@ class ColbertELModel(BaseELModel):
         self.root = root
         self.doc_index_name = doc_index_name
         self.phrase_index_name = phrase_index_name
+        self.force = force
 
     def index(self, entity_list: list) -> None:
         self.entity_list = entity_list
         # Get md5 fingerprint of the whole given entity list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
         exp_name = f"Entity_index_{fingerprint}"
+        if os.path.exists(f"{self.root}/colbert/{fingerprint}") and self.force:
+            shutil.rmtree(f"{self.root}/colbert/{fingerprint}")
         colbert_config = {
             "root": f"{self.root}/colbert/{fingerprint}",
             "doc_index_name": self.doc_index_name,
