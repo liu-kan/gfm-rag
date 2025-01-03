@@ -117,23 +117,23 @@ def main(cfg: DictConfig) -> None:
                     cfg, graphrag_retriever, llm, agent_prompt_builder, query
                 )
 
-            # Generate QA response
-            retrieved_docs = result["retrieved_docs"]
-            message = qa_prompt_builder.build_input_prompt(query, retrieved_docs)
-            qa_response = llm.generate_sentence(message)
+                # Generate QA response
+                retrieved_docs = result["retrieved_docs"]
+                message = qa_prompt_builder.build_input_prompt(query, retrieved_docs)
+                qa_response = llm.generate_sentence(message)
 
-            result = {
-                "id": sample["id"],
-                "question": sample["question"],
-                "answer": sample["answer"],
-                "answer_aliases": sample.get(
-                    "answer_aliases", []
-                ),  # Some datasets have answer aliases
-                "supporting_facts": sample["supporting_facts"],
-                "response": qa_response,
-                "retrieved_docs": retrieved_docs,
-                "logs": result["logs"],
-            }
+                result = {
+                    "id": sample["id"],
+                    "question": sample["question"],
+                    "answer": sample["answer"],
+                    "answer_aliases": sample.get(
+                        "answer_aliases", []
+                    ),  # Some datasets have answer aliases
+                    "supporting_facts": sample["supporting_facts"],
+                    "response": qa_response,
+                    "retrieved_docs": retrieved_docs,
+                    "logs": result["logs"],
+                }
             f.write(json.dumps(result) + "\n")
             f.flush()
 

@@ -1,3 +1,5 @@
+import logging
+
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -11,6 +13,8 @@ from deep_graphrag.models import UltraQA
 from deep_graphrag.text_emb_models import BaseTextEmbModel
 from deep_graphrag.ultra import query_utils
 from deep_graphrag.utils.qa_utils import entities_to_mask
+
+logger = logging.getLogger(__name__)
 
 
 class DeepGraphRAG:
@@ -81,6 +85,11 @@ class DeepGraphRAG:
 
         # Prepare input for deep graph retriever
         mentioned_entities = self.ner_model(query)
+        if len(mentioned_entities) == 0:
+            logger.warning(
+                "No mentioned entities found in the query. Use the query as is for entity linking."
+            )
+            mentioned_entities = [query]
         linked_entities = self.el_model(mentioned_entities, topk=1)
         entity_ids = [
             self.qa_data.ent2id[ent[0]["entity"]]

@@ -28,7 +28,7 @@ langchain-openai = "^0.2.11"
 langchain-together = "^0.2.0"
 langchain-community = "^0.3.9"
 colbert-ai = "^0.2.21"
-llama-cpp-python = "0.3.2"
+llama-cpp-python = "^0.3.2"
 faiss-gpu-cu12 = "^1.9.0.post1"
 
 
