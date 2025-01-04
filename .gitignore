@@ -12,3 +12,4 @@ zicheng/
 data_full
 logs/
 *.ipynb
+dist/*
