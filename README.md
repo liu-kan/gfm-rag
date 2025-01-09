@@ -97,3 +97,8 @@ python workflow/stage3_qa_ircot_inference.py qa_prompt=musique qa_evaluator=musi
 ```bash
 python workflow/stage3_qa_ircot_inference.py qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
 ```
+
+### Visualize Paths
+```bash
+python workflow/experiments/visualize_path.py dataset.data_name=hotpotqa_test
+```

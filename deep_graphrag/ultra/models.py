@@ -4,7 +4,7 @@ from torch import nn
 
 from . import layers
 from .base_nbfnet import BaseNBFNet
-
+from torch import autograd
 
 class Ultra(nn.Module):
     def __init__(self, rel_model_cfg, entity_model_cfg):
@@ -327,3 +327,29 @@ class QueryNBFNet(EntityNBFNet):
         )  # (num_nodes, batch_size, feature_dim）
         score = self.mlp(output["node_feature"]).squeeze(-1)  # (bs, num_nodes)
         return score
+
+    def visualize(self, data, sample, node_features, relation_representations, query):
+        for layer in self.layers:
+            layer.relation = relation_representations
+
+        output = self.bellmanford(
+            data, node_features, query, separate_grad=True
+        )  # (num_nodes, batch_size, feature_dim）
+        node_feature = output["node_feature"]
+        edge_weights = output["edge_weights"]
+        question_entities_mask = sample["question_entities_masks"]
+        target_entities_mask = sample["supporting_entities_masks"]
+        query_entities_index = question_entities_mask.nonzero(as_tuple=True)[1]
+        target_entities_index = target_entities_mask.nonzero(as_tuple=True)[1]
+
+        paths_results = {}
+        for t_index in target_entities_index:
+            index = t_index.unsqueeze(0).unsqueeze(0).unsqueeze(-1).expand(-1, -1, node_feature.shape[-1])
+            feature = node_feature.gather(1, index).squeeze(0)
+            score = self.mlp(feature).squeeze(-1)
+
+            edge_grads = autograd.grad(score, edge_weights, retain_graph=True)
+            distances, back_edges = self.beam_search_distance(data, edge_grads, query_entities_index, t_index, self.num_beam)
+            paths, weights = self.topk_average_length(distances, back_edges, t_index, self.path_topk)
+            paths_results[t_index.item()] = (paths, weights)
+        return paths_results

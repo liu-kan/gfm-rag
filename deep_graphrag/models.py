@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch_geometric.data import Data
 
-from deep_graphrag.ultra.models import EntityNBFNet
+from deep_graphrag.ultra.models import EntityNBFNet, QueryNBFNet
 
 
 class SemanticUltra(nn.Module):
@@ -36,7 +36,7 @@ class UltraQA(SemanticUltra):
     """Wrap the GNN model for QA."""
 
     def __init__(
-        self, entity_model: EntityNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
+        self, entity_model: QueryNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
     ) -> None:
         # kept that because super Ultra sounds cool
         super().__init__(entity_model, rel_emb_dim)
@@ -73,3 +73,37 @@ class UltraQA(SemanticUltra):
         )
 
         return output
+
+    def visualize(
+        self,
+        graph: Data,
+        sample: dict[str, torch.Tensor],
+        entities_weight: torch.Tensor | None = None,
+    ) -> dict[int, torch.Tensor]:
+        question_emb = sample["question_embeddings"]
+        question_entities_mask = sample["question_entities_masks"]
+        question_embedding = self.question_mlp(question_emb)  # shape: (bs, emb_dim)
+        batch_size = question_embedding.size(0)
+
+        assert batch_size == 1, "Currently only supports batch size 1 for visualization"
+
+        relation_representations = (
+            self.rel_mlp(graph.rel_emb).unsqueeze(0).expand(batch_size, -1, -1)
+        )
+
+        # initialize the input with the fuzzy set and question embs
+        if entities_weight is not None:
+            question_entities_mask = question_entities_mask * entities_weight.unsqueeze(
+                0
+            )
+
+        input = torch.einsum(
+            "bn, bd -> bnd", question_entities_mask, question_embedding
+        )
+        return self.entity_model.visualize(
+            graph,
+            sample,
+            input,
+            relation_representations,
+            question_embedding,  # type: ignore
+        )
