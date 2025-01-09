@@ -50,9 +50,9 @@ torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py
 Evaluate retrieval performance of the trained model on QA dataset.
 
 ```bash
-python workflow/stage2_qa_finetune.py train.num_epoch=0 datasets.train_names=[] checkpoint=save_models/qa_ultra_train_1000/model.pth
+python workflow/stage2_qa_finetune.py train.num_epoch=0 datasets.train_names=[] checkpoint=save_models/qa_ultra_512_train_60000_w_pre-train/model.pth
 # Multi-GPU evaluation
-torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py train.num_epoch=0 datasets.train_names=[] checkpoint=save_models/qa_ultra_train_1000/model.pth
+torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py train.num_epoch=0 datasets.train_names=[] checkpoint=save_models/qa_ultra_512_train_60000_w_pre-train/model.pth
 ```
 
 ### Stage3: QA Reasoning

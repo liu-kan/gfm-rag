@@ -22,8 +22,8 @@ model:
   _target_: deep_graphrag.models.SemanticUltra
   entity_model:
     _target_: deep_graphrag.ultra.models.EntityNBFNet
-    input_dim: 64
-    hidden_dims: [64, 64, 64, 64, 64, 64]
+    input_dim: 512
+    hidden_dims: [512, 512, 512, 512, 512, 512]
     message_func: distmult
     aggregate_func: sum
     short_cut: yes
