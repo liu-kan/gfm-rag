@@ -120,10 +120,10 @@ class QADataset(InMemoryDataset):
                 self.pre_filter
             ):
                 warnings.warn(
-                    "The `pre_filter` argument differs from the one used in "
-                    "the pre-processed version of this dataset. If you want to "
-                    "make use of another pre-fitering technique, make sure to "
-                    "delete '{self.processed_dir}' first",
+                    f"The `pre_filter` argument differs from the one used in "
+                    f"the pre-processed version of this dataset. If you want to "
+                    f"make use of another pre-fitering technique, make sure to "
+                    f"delete '{self.processed_dir}' first",
                     stacklevel=1,
                 )
 

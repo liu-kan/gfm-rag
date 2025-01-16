@@ -58,7 +58,7 @@ class KGConstructor(BaseKGConstructor):
         self,
         open_ie_model: BaseOPENIEModel,
         el_model: BaseELModel,
-        root: str = "tmp/kg_construnction",
+        root: str = "tmp/kg_construction",
         num_processes: int = 1,
         cosine_sim_edges: bool = True,
         threshold: float = 0.8,
@@ -149,7 +149,7 @@ class KGConstructor(BaseKGConstructor):
 
     def open_ie_extraction(self, raw_path: str) -> str:
         """
-        Extract open information extraction from the dataset corpus
+        Perform open information extraction on the dataset corpus
 
         Args:
             raw_path (str): Path to the raw dataset
@@ -166,13 +166,13 @@ class KGConstructor(BaseKGConstructor):
                 }
         passage_to_title = {corpus[title]: title for title in corpus.keys()}
 
-        logger.info(f"Numbers of passages: {len(corpus)}")
+        logger.info(f"Number of passages: {len(corpus)}")
 
         open_ie_result_path = f"{self.tmp_dir}/openie_results.jsonl"
         open_ie_results = {}
         # check if the openie results are already computed
         if os.path.exists(open_ie_result_path):
-            logger.info(f"OpenIE results already exists at {open_ie_result_path}")
+            logger.info(f"OpenIE results already exist at {open_ie_result_path}")
             with open(open_ie_result_path) as f:
                 for line in f:
                     data = json.loads(line)
@@ -182,7 +182,7 @@ class KGConstructor(BaseKGConstructor):
             passage for passage in corpus.values() if passage not in open_ie_results
         ]
         logger.info(
-            f"Numbers of passages which require processing: {len(remining_passages)}"
+            f"Number of passages which require processing: {len(remining_passages)}"
         )
 
         if len(remining_passages) > 0:

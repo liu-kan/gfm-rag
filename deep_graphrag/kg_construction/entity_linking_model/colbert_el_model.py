@@ -81,7 +81,6 @@ class ColbertELModel(BaseELModel):
                     entity: linked entity
                     score: score of the entity
                     norm_score: normalized score of the entity
-
         """
 
         try:

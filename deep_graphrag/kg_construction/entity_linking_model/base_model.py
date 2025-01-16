@@ -36,6 +36,5 @@ class BaseELModel(ABC):
                     entity: linked entity
                     score: score of the entity
                     norm_score: normalized score of the entity
-
         """
         pass

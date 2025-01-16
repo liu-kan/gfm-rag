@@ -107,10 +107,10 @@ class KGDataset(InMemoryDataset):
                 self.pre_filter
             ):
                 warnings.warn(
-                    "The `pre_filter` argument differs from the one used in "
-                    "the pre-processed version of this dataset. If you want to "
-                    "make use of another pre-fitering technique, make sure to "
-                    "delete '{self.processed_dir}' first",
+                    f"The `pre_filter` argument differs from the one used in "
+                    f"the pre-processed version of this dataset. If you want to "
+                    f"make use of another pre-fitering technique, make sure to "
+                    f"delete '{self.processed_dir}' first",
                     stacklevel=1,
                 )
 
@@ -139,7 +139,7 @@ class KGDataset(InMemoryDataset):
 
         kg_result = self.load_file(kg_file, inv_entity_vocab={}, inv_rel_vocab={})
 
-        # in some datasets, there are several new nodes in the test set, eg 123,143 YAGO train adn 123,182 in YAGO test
+        # in some datasets, there are several new nodes in the test set, eg 123,143 YAGO train and 123,182 in YAGO test
         # for consistency with other experimental results, we'll include those in the full vocab and num nodes
         num_node = kg_result["num_node"]
         # the same for rels: in most cases train == test for transductive

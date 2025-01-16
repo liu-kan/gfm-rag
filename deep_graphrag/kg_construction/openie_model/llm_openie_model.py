@@ -116,13 +116,17 @@ class LLMOPENIEModel(BaseOPENIEModel):
         return response_content
 
     def __call__(self, text: str) -> dict:
-        """_summary_
+        """
+        Perform OpenIE on the given text.
 
         Args:
-            text (str): _description_
+            text (str): input text
 
         Returns:
-            dict: _description_
+            dict: dict of passage, extracted entities, extracted_triples
+                - passage (str): input text
+                - extracted_entities (list): list of extracted entities
+                - extracted_triples (list): list of extracted triples
         """
         res = {"passage": text, "extracted_entities": [], "extracted_triples": []}
 

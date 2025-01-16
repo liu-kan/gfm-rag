@@ -8,7 +8,7 @@ from deep_graphrag.evaluation.base_evaluator import BaseEvaluator
 
 
 def normalize_answer(s: str) -> str:
-    """Lower text and remove punctuation, articles and extra whitespace."""
+    """Lower text and remove punctuation, articles, and extra whitespace."""
 
     def remove_articles(text: str) -> str:
         regex = re.compile(r"\b(a|an|the)\b", re.UNICODE)

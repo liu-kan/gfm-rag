@@ -10,7 +10,7 @@ class BaseOPENIEModel(ABC):
     @abstractmethod
     def __call__(self, text: str) -> dict:
         """
-        Perform OPENIE on the given text.
+        Perform OpenIE on the given text.
 
         Args:
             text (str): input text

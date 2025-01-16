@@ -40,7 +40,7 @@ class QAConstructor(BaseQAConstructor):
         self,
         ner_model: BaseNERModel,
         el_model: BaseELModel,
-        root: str = "tmp/qa_construnction",
+        root: str = "tmp/qa_construction",
         num_processes: int = 1,
         force: bool = False,
     ) -> None:
