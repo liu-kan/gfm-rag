@@ -8,10 +8,8 @@ packages = [{include = "deep_graphrag"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-torch = {version = "2.4.1", source = "pytorch-gpu"}
+torch = "^2.4.1"
 torch-geometric = "2.4.0"
-torch-scatter = {version = "2.1.2", source = "pyg-gpu"}
-torch-sparse = {version = "0.6.18", source = "pyg-gpu"}
 ninja = "^1.11.1.1"
 easydict = "^1.13"
 pyyaml = "^6.0.2"
@@ -28,20 +26,7 @@ langchain-openai = "^0.2.11"
 langchain-together = "^0.2.0"
 langchain-community = "^0.3.9"
 colbert-ai = "^0.2.21"
-llama-cpp-python = "^0.3.2"
 faiss-gpu-cu12 = "^1.9.0.post1"
-
-
-[[tool.poetry.source]]
-name = "pytorch-gpu"
-url = "https://download.pytorch.org/whl/cu124"
-priority = "explicit"
-
-
-[[tool.poetry.source]]
-name = "pyg-gpu"
-url = "https://data.pyg.org/whl/torch-2.4.0+cu124.html"
-priority = "explicit"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -12,6 +12,18 @@ poetry install
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
 ```
 
+## Installation
+
+Install from pip
+```bash
+pip install deep-graphrag
+pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-2.5.0+cu124.html
+```
+
+[Optional] Install Llama.cpp
+If you want to use Llama.cpp for locally held LLM, install it from the following repository.
+https://github.com/abetlen/llama-cpp-python
+
 ### For development
 Install pre-commit hooks
 ```bash
