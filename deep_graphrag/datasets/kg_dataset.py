@@ -9,8 +9,8 @@ import warnings
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
-from torch_geometric.data import Data, InMemoryDataset
-from torch_geometric.data.dataset import _repr, files_exist, makedirs
+from torch_geometric.data import Data, InMemoryDataset, makedirs
+from torch_geometric.data.dataset import _repr, files_exist
 
 from deep_graphrag.kg_construction.utils import KG_DELIMITER
 from deep_graphrag.text_emb_models import BaseTextEmbModel

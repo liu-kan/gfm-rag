@@ -2,14 +2,17 @@
 name = "deep-graphrag"
 version = "0.1.0"
 description = ""
-authors = ["RManLuo <34737002+RManLuo@users.noreply.github.com>"]
+authors = [
+    "Linhao Luo <linhao.luo@monash.edu>",
+    "Zicheng Zhao <zicheng.zhao@njust.edu.cn>"
+]
 readme = "README.md"
 packages = [{include = "deep_graphrag"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-torch = "^2.4.1"
-torch-geometric = "2.4.0"
+torch = ">=2.4.1,<2.6.0"
+torch-geometric = "^2.4.0"
 ninja = "^1.11.1.1"
 easydict = "^1.13"
 pyyaml = "^6.0.2"

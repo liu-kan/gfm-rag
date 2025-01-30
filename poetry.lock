@@ -1356,18 +1356,18 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "0.3.16"
+version = "0.3.17"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain-0.3.16-py3-none-any.whl", hash = "sha256:9a9c1a0604b599e929a5a823ee1491065dc8758fc1802d3df344214ab765f555"},
-    {file = "langchain-0.3.16.tar.gz", hash = "sha256:17d35ee6991e0ebd980c1be86c34b2d48e961213ca89e7b585f6333c90cdbdb4"},
+    {file = "langchain-0.3.17-py3-none-any.whl", hash = "sha256:4d6d3cf454cc261a5017fd1fa5014cffcc7aeaccd0ec0530fc10c5f71e6e97a0"},
+    {file = "langchain-0.3.17.tar.gz", hash = "sha256:cef56f0a7c8369f35f1fa2690ecf0caa4504a36a5383de0eb29b8a5e26f625a0"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
-langchain-core = ">=0.3.32,<0.4.0"
+langchain-core = ">=0.3.33,<0.4.0"
 langchain-text-splitters = ">=0.3.3,<0.4.0"
 langsmith = ">=0.1.17,<0.4"
 numpy = {version = ">=1.26.2,<3", markers = "python_version >= \"3.12\""}
@@ -1404,13 +1404,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10"
 
 [[package]]
 name = "langchain-core"
-version = "0.3.32"
+version = "0.3.33"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.3.32-py3-none-any.whl", hash = "sha256:c050bd1e6dd556ae49073d338aca9dca08b7b55f4778ddce881a12224bc82a7e"},
-    {file = "langchain_core-0.3.32.tar.gz", hash = "sha256:4eb85d8428585e67a1766e29c6aa2f246c6329d97cb486e8d6f564ab0bd94a4f"},
+    {file = "langchain_core-0.3.33-py3-none-any.whl", hash = "sha256:269706408a2223f863ff1f9616f31903a5712403199d828b50aadbc4c28b553a"},
+    {file = "langchain_core-0.3.33.tar.gz", hash = "sha256:b5dd93a4e7f8198d2fc6048723b0bfecf7aaf128b0d268cbac19c34c1579b953"},
 ]
 
 [package.dependencies]
@@ -1474,13 +1474,13 @@ requests = ">=2,<3"
 
 [[package]]
 name = "langsmith"
-version = "0.3.2"
+version = "0.3.3"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langsmith-0.3.2-py3-none-any.whl", hash = "sha256:48ff6bc5eda62f4729596bb68d4f96166d2654728ac32970b69b1be874c61925"},
-    {file = "langsmith-0.3.2.tar.gz", hash = "sha256:7724668e9705734ab25a7977fc34a9ee15a40ba4108987926c69293a05d40229"},
+    {file = "langsmith-0.3.3-py3-none-any.whl", hash = "sha256:ef2bde2380b3e0d27a832b1b1f22831e98ed875933c6a96c3b8057108ee17c44"},
+    {file = "langsmith-0.3.3.tar.gz", hash = "sha256:364fedd50406c46f61b2fc179ac8a2db6b3587610102c644a2a0af3fc51f4345"},
 ]
 
 [package.dependencies]
@@ -3196,13 +3196,13 @@ test = ["Cython", "array-api-strict (>=2.0,<2.1.1)", "asv", "gmpy2", "hypothesis
 
 [[package]]
 name = "sentence-transformers"
-version = "3.4.0"
+version = "3.4.1"
 description = "State-of-the-Art Text Embeddings"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "sentence_transformers-3.4.0-py3-none-any.whl", hash = "sha256:f7d4ad81260149172a98108a3481d8e82c11d31f40d41885f43d481149237743"},
-    {file = "sentence_transformers-3.4.0.tar.gz", hash = "sha256:334288062d4b888cdd7b75913fead46b1e42bfe836f8343d23478d17f799e650"},
+    {file = "sentence_transformers-3.4.1-py3-none-any.whl", hash = "sha256:e026dc6d56801fd83f74ad29a30263f401b4b522165c19386d8bc10dcca805da"},
+    {file = "sentence_transformers-3.4.1.tar.gz", hash = "sha256:68daa57504ff548340e54ff117bd86c1d2f784b21e0fb2689cf3272b8937b24b"},
 ]
 
 [package.dependencies]
@@ -3697,30 +3697,30 @@ optree = ["optree (>=0.12.0)"]
 
 [[package]]
 name = "torch-geometric"
-version = "2.4.0"
+version = "2.6.1"
 description = "Graph Neural Network Library for PyTorch"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "torch_geometric-2.4.0-py3-none-any.whl", hash = "sha256:9d8eb5eec44382f4072aa5e835450f144e9edb9d164627e532e311880b6bdad0"},
-    {file = "torch_geometric-2.4.0.tar.gz", hash = "sha256:343c6906d0678f16553c2d02b7267d0ec77eafb5b44324070ebcf7da8a934557"},
+    {file = "torch_geometric-2.6.1-py3-none-any.whl", hash = "sha256:8faeb353f9655f7dbec44c5e0b44c721773bdfb279994da96b9b8b12fd30f427"},
+    {file = "torch_geometric-2.6.1.tar.gz", hash = "sha256:1f18f9d0fc4d2239d526221e4f22606a4a3895b5d965a9856d27610a3df662c6"},
 ]
 
 [package.dependencies]
+aiohttp = "*"
+fsspec = "*"
 jinja2 = "*"
 numpy = "*"
 psutil = ">=5.8.0"
 pyparsing = "*"
 requests = "*"
-scikit-learn = "*"
-scipy = "*"
 tqdm = "*"
 
 [package.extras]
 benchmark = ["matplotlib", "networkx", "pandas", "protobuf (<4.21)", "wandb"]
-dev = ["pre-commit", "torch_geometric[test]"]
-full = ["ase", "captum", "graphviz", "h5py", "matplotlib", "networkx", "numba", "opt_einsum", "pandas", "pgmpy", "pynndescent", "pytorch-memlab", "rdflib", "rdkit", "scikit-image", "statsmodels", "sympy", "tabulate", "torch_geometric[graphgym,modelhub]", "torchmetrics", "trimesh"]
-graphgym = ["hydra-core", "protobuf (<4.21)", "pytorch-lightning", "yacs"]
+dev = ["ipython", "matplotlib-inline", "pre-commit", "torch_geometric[test]"]
+full = ["ase", "captum (<0.7.0)", "graphviz", "h5py", "matplotlib", "networkx", "numba (<0.60.0)", "opt_einsum", "pandas", "pgmpy", "pynndescent", "pytorch-memlab", "rdflib", "rdkit", "scikit-image", "scikit-learn", "scipy", "statsmodels", "sympy", "tabulate", "torch_geometric[graphgym,modelhub]", "torchmetrics", "trimesh"]
+graphgym = ["protobuf (<4.21)", "pytorch-lightning (<2.3.0)", "yacs"]
 modelhub = ["huggingface_hub"]
 test = ["onnx", "onnxruntime", "pytest", "pytest-cov"]
 
@@ -4413,4 +4413,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "800b40773d44c4a55652089ab95ddbb8ebaa4b608e2d17e52c9a4a3d4d63e6a1"
+content-hash = "55b0f5563f30673a8079a47c81f11afd6078a422ed9cb1a6ddbd8eab82b533a3"

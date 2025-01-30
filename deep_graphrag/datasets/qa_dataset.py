@@ -11,8 +11,8 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from torch.utils import data as torch_data
-from torch_geometric.data import InMemoryDataset
-from torch_geometric.data.dataset import _repr, files_exist, makedirs
+from torch_geometric.data import InMemoryDataset, makedirs
+from torch_geometric.data.dataset import _repr, files_exist
 
 from deep_graphrag.datasets.kg_dataset import KGDataset
 from deep_graphrag.text_emb_models import BaseTextEmbModel

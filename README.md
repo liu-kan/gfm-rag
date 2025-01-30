@@ -1,9 +1,9 @@
-# Deep GraphRAG
+# GFM-RAG
 
 ## Dependencies
 
 - Python 3.12
-- CUDA 12.4
+- CUDA 12
 
 ```bash
 conda create -n deep_graphrag python=3.12
@@ -17,11 +17,16 @@ conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
 Install from pip
 ```bash
 pip install deep-graphrag
-pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-2.5.0+cu124.html
+```
+Install relevant packages
+```bash
+TORCH=$(python -c "import torch; print(torch.__version__)")
+pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
 
-[Optional] Install Llama.cpp
-If you want to use Llama.cpp for locally held LLM, install it from the following repository.
+> [!NOTE]
+> Install Llama.cpp
+> If you want to use Llama.cpp for locally held LLM, install it from the following repository.
 https://github.com/abetlen/llama-cpp-python
 
 ### For development
