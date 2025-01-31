@@ -6,7 +6,7 @@ import hydra
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 
-from gfmrag import DataIndexer
+from gfmrag import KGIndexer
 from gfmrag.kg_construction import KGConstructor, QAConstructor
 
 logger = logging.getLogger(__name__)
@@ -24,8 +24,8 @@ def main(cfg: DictConfig) -> None:
     kg_constructor = KGConstructor.from_config(cfg.kg_constructor)
     qa_constructor = QAConstructor.from_config(cfg.qa_constructor)
 
-    data_indexer = DataIndexer(kg_constructor, qa_constructor)
-    data_indexer.index_data(cfg.dataset)
+    kg_indexer = KGIndexer(kg_constructor, qa_constructor)
+    kg_indexer.index_data(cfg.dataset)
 
 
 if __name__ == "__main__":

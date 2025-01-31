@@ -10,13 +10,21 @@ class BaseELModel(ABC):
     @abstractmethod
     def index(self, entity_list: list) -> None:
         """
-        Index the given list of entities.
+        This method creates an index for the provided list of entities to enable efficient entity linking and searching capabilities.
 
-        Args:
-            entity_list (list): list of entities
+            entity_list (list): A list of entities to be indexed. Each entity should be a string or dictionary containing
+                               the entity text and other relevant metadata.
 
-        Returns:
-            Any: index of the entities
+            None: This method modifies the internal index structure but does not return anything.
+
+        Raises:
+            ValueError: If entity_list is empty or contains invalid entity formats.
+            TypeError: If entity_list is not a list type.
+
+        Examples:
+            >>> model = EntityLinkingModel()
+            >>> entities = ["Paris", "France", "Eiffel Tower"]
+            >>> model.index(entities)
         """
         pass
 

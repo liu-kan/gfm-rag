@@ -35,12 +35,48 @@ Question: {}
 
 
 class LLMNERModel(BaseNERModel):
+    """A Named Entity Recognition (NER) model that uses Language Models (LLMs) for entity extraction.
+
+    This class implements entity extraction using various LLM backends (OpenAI, Together, Ollama, llama.cpp)
+    through the Langchain interface. It processes text input and returns a list of extracted named entities.
+
+    Args:
+        llm_api (Literal["openai", "together", "ollama", "llama.cpp"]): The LLM backend to use. Defaults to "openai".
+        model_name (str): Name of the specific model to use. Defaults to "gpt-4o-mini".
+        max_tokens (int): Maximum number of tokens in the response. Defaults to 1024.
+
+    Methods:
+        __call__(text: str) -> list:
+            Extracts named entities from the input text.
+
+            Args:
+                text (str): Input text to extract entities from.
+
+            Returns:
+                list: A list of processed named entities extracted from the text.
+                Returns empty list if extraction fails.
+
+    Raises:
+        Exception: If there's an error in extracting or processing named entities.
+    """
+
     def __init__(
         self,
         llm_api: Literal["openai", "together", "ollama", "llama.cpp"] = "openai",
         model_name: str = "gpt-4o-mini",
         max_tokens: int = 1024,
     ):
+        """Initialize the LLM-based NER model.
+
+        Args:
+            llm_api (Literal["openai", "together", "ollama", "llama.cpp"]): The LLM API provider to use.
+                Defaults to "openai".
+            model_name (str): Name of the language model to use.
+                Defaults to "gpt-4o-mini".
+            max_tokens (int): Maximum number of tokens for model output.
+                Defaults to 1024.
+        """
+
         self.llm_api = llm_api
         self.model_name = model_name
         self.max_tokens = max_tokens
@@ -48,6 +84,27 @@ class LLMNERModel(BaseNERModel):
         self.client = init_langchain_model(llm_api, model_name)
 
     def __call__(self, text: str) -> list:
+        """Process text input to extract named entities using different chat models.
+
+        This method handles entity extraction using various chat models (OpenAI, Ollama, LlamaCpp),
+        with special handling for JSON mode responses.
+
+        Args:
+            text (str): The input text to extract named entities from.
+
+        Returns:
+            list: A list of processed named entities extracted from the text.
+                 Returns empty list if extraction fails.
+
+        Raises:
+            None: Exceptions are caught and handled internally, logging errors when they occur.
+
+        Examples:
+            >>> ner_model = NERModel()
+            >>> entities = ner_model("Sample text with named entities")
+            >>> print(entities)
+            ['Entity1', 'Entity2']
+        """
         query_ner_prompts = ChatPromptTemplate.from_messages(
             [
                 SystemMessage("You're a very effective entity extraction system."),

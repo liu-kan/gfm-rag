@@ -10,16 +10,69 @@ from .kg_construction.utils import KG_DELIMITER
 logger = logging.getLogger(__name__)
 
 
-class DataIndexer:
+class KGIndexer:
+    """
+    A class for indexing and processing datasets by creating knowledge graph indices and preparing QA data.
+
+    Attributes:
+        DELIMITER (str): Delimiter used for separating elements in knowledge graph triples, default is `","`.
+        kg_constructor (BaseKGConstructor): Constructor for building knowledge graphs
+        qa_constructor (BaseQAConstructor): Constructor for preparing QA datasets
+    """
+
     DELIMITER = KG_DELIMITER
 
     def __init__(
         self, kg_constructor: BaseKGConstructor, qa_constructor: BaseQAConstructor
     ) -> None:
+        """
+        Initializes the KGIndexer with the given knowledge graph and QA constructors.
+
+        Args:
+            kg_constructor (BaseKGConstructor): An instance of a knowledge graph constructor.
+            qa_constructor (BaseQAConstructor): An instance of a QA constructor.
+
+        Returns:
+            None
+        """
         self.kg_constructor = kg_constructor
         self.qa_constructor = qa_constructor
 
     def index_data(self, dataset_cfg: DictConfig) -> None:
+        """Index and process dataset by creating knowledge graph (KG) indices and preparing QA data.
+
+        This method performs two main tasks:
+            1. Creates and saves knowledge graph related files (kg.txt and document2entities.json)
+            2. Prepares training and testing data if available in the raw data directory
+
+        Files created:
+            - kg.txt: Contains knowledge graph triples
+            - document2entities.json: Maps documents to their entities
+            - train.json: Processed training data (if raw exists)
+            - test.json: Processed test data (if raw exists)
+
+            Directory structure:
+            ```
+                root/
+                └── data_name/
+                    ├── raw/
+                    │   ├── train.json (optional)
+                    │   └── test.json (optional)
+                    └── processed/
+                        └── stage1/
+                            ├── kg.txt
+                            ├── document2entities.json
+                            ├── train.json
+                            └── test.json
+            ```
+
+        Args:
+            dataset_cfg (DictConfig): Refering to the dataset configuration
+
+        Returns:
+            None
+        """
+
         root = dataset_cfg.root
         data_name = dataset_cfg.data_name
         raw_data_dir = os.path.join(root, data_name, "raw")

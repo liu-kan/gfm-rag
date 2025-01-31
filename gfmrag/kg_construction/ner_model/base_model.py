@@ -10,12 +10,21 @@ class BaseNERModel(ABC):
     @abstractmethod
     def __call__(self, text: str) -> list:
         """
-        Perform NER on the given text.
+        This method implements the callable functionality of the class to perform Named Entity Recognition
+        on input text. When an instance of the class is called directly, this method is invoked.
 
-        Args:
-            text (str): input text
+            text (str): The input text to perform NER analysis on.
 
-        Returns:
-            list: list of named entities
+            list: A list of named entities found in the text. Each entity is represented
+                  according to the model's output format.
+
+        Examples:
+            >>> ner = NERModel()
+            >>> entities = ner("This is a sample text")
+            >>> print(entities)
+            [{'text': 'sample', 'label': 'EXAMPLE'}]
+
+        Note:
+            This is an abstract method that should be implemented by subclasses.
         """
         pass

@@ -1,3 +1,3 @@
-GFMRetriever is 
+GFMRetriever is
 
 ::: gfmrag.gfmrag_retriever

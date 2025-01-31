@@ -68,22 +68,22 @@ markdown_extensions:
     - pymdownx.smartsymbols # 智能符号
     - pymdownx.snippets # 代码段
     - pymdownx.tasklist:
-          custom_checkbox: true # 自定义复选框
+        custom_checkbox: true # 自定义复选框
     - attr_list
     - pymdownx.emoji:
-          emoji_index: !!python/name:material.extensions.emoji.twemoji
-          emoji_generator: !!python/name:material.extensions.emoji.to_svg
+        emoji_index: !!python/name:material.extensions.emoji.twemoji
+        emoji_generator: !!python/name:material.extensions.emoji.to_svg
     - pymdownx.superfences: # 代码块中支持Mermaid
-          custom_fences: # 支持 Mermaid
-              - name: mermaid
-                class: mermaid
-                format: !!python/name:pymdownx.superfences.fence_code_format
+        custom_fences: # 支持 Mermaid
+            - name: mermaid
+              class: mermaid
+              format: !!python/name:pymdownx.superfences.fence_code_format
     - pymdownx.tabbed:
-          alternate_style: true
-          combine_header_slug: true
+        alternate_style: true
+        combine_header_slug: true
     - pymdownx.tasklist:
-          custom_checkbox: true
-          clickable_checkbox: true
+        custom_checkbox: true
+        clickable_checkbox: true
     - meta # 支持Markdown文件上方自定义标题标签等
     - tables
 
@@ -95,8 +95,32 @@ nav:
   - Home: README.md
   - Installation: docs/install.md
   - Getting Started: docs/getting-started.md
-  - API Reference: docs/api.md
-
+    # - Data Preparation: docs/getting-started.md#data-preparation
+    # - KG-index Construction: docs/getting-started.md#kg-index-construction
+    # - Retrieve with GFM-RAG: docs/getting-started.md#retrieve-with-gfm-rag
+    # - GFM-RAG Pretraining: docs/getting-started.md#gfm-rag-pretraining
+    # - GFM-RAG Fine-tuning: docs/getting-started.md#gfm-rag-fine-tuning
+  - Workflow:
+    - Data Preparation: docs/workflow/data_preparation.md
+    - KG-index Construction: docs/workflow/kg_index.md
+    - Retrieve with GFM-RAG: docs/workflow/inference.md
+    - GFM-RAG Pretraining: docs/workflow/pretrain.md
+    - GFM-RAG Fine-tuning: docs/workflow/finetune.md
+  - Config:
+    - KG-index Config: docs/config/kg_index_config.md
+    - NER Model Config: docs/config/ner_model_config.md
+    - Entity Linking Model Config: docs/config/el_model_config.md
+    - OpenIE Model Config: docs/config/openie_model_config.md
+  - API Reference:
+    - KG-index Constructor: docs/api/kg_indexer.md
+    - GFM Retriever: docs/api/gfmrag_retriever.md
+    - Document Ranker: docs/api/doc_ranker.md
+    - KG Construnction:
+      - KG Constructor: docs/api/kg_construnction/kg_constructor.md
+      - QA Constructor: docs/api/kg_construnction/qa_constructor.md
+      - NER Model: docs/api/kg_construnction/ner_model.md
+      - Entity Linking Model: docs/api/kg_construnction/el_model.md
+      - OpenIE Model: docs/api/kg_construnction/openie_model.md
 repo_url: https://github.com/RManLuo/gfm-rag.git
 repo_name: gfm-rag
 
@@ -109,10 +133,13 @@ plugins:
           python:
             paths: [gfmrag]
             options:
-              show_root_heading: false
+              show_root_heading: true
               show_symbol_type_heading: true
               show_source: true
               show_root_toc_entry: false
+            import:
+              - url: https://docs.python.org/3/objects.inv
+                domains: [std, py]
 
 # extra:
 #     # generator: false  #删除页脚显示“使用 MkDocs 材料制造”

@@ -12,6 +12,31 @@ from .base_model import BaseELModel
 
 
 class ColbertELModel(BaseELModel):
+    """ColBERT-based Entity Linking Model.
+
+    This class implements an entity linking model using ColBERT, a neural information retrieval
+    framework. It indexes a list of entities and performs entity linking by finding the most
+    similar entities in the index for given named entities.
+
+    Attributes:
+        checkpoint_path (str): Path to the ColBERT checkpoint file
+        root (str): Root directory for storing indices
+        doc_index_name (str): Name of document index
+        phrase_index_name (str): Name of phrase index
+        force (bool): Whether to force reindex if index exists
+        entity_list (list): List of entities to be indexed
+        phrase_searcher: ColBERT phrase searcher object
+
+    Raises:
+        FileNotFoundError: If the checkpoint file is not found at the specified path.
+        AttributeError: If entity linking is attempted before indexing.
+
+    Examples:
+        >>> model = ColbertELModel("path/to/checkpoint")
+        >>> model.index(["entity1", "entity2", "entity3"])
+        >>> results = model(["query1", "query2"], topk=3)
+    """
+
     def __init__(
         self,
         checkpint_path: str,
@@ -31,6 +56,26 @@ class ColbertELModel(BaseELModel):
         self.force = force
 
     def index(self, entity_list: list) -> None:
+        """
+        Index a list of entities using ColBERT for efficient similarity search.
+
+        This method processes and indexes a list of entities using the ColBERT model. It creates
+        a unique index based on the MD5 hash of the entity list and stores it in the specified
+        root directory.
+
+        Args:
+            entity_list (list): List of entity strings to be indexed.
+
+        Returns:
+            None
+
+        Notes:
+            - Creates a unique index directory based on MD5 hash of entities
+            - If force=True, will delete existing index with same fingerprint
+            - Processes entities into phrases before indexing
+            - Sets up ColBERT indexer and searcher with specified configuration
+            - Stores phrase_searcher as instance variable for later use
+        """
         self.entity_list = entity_list
         # Get md5 fingerprint of the whole given entity list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
