@@ -46,15 +46,7 @@ class LLMNERModel(BaseNERModel):
         max_tokens (int): Maximum number of tokens in the response. Defaults to 1024.
 
     Methods:
-        __call__(text: str) -> list:
-            Extracts named entities from the input text.
-
-            Args:
-                text (str): Input text to extract entities from.
-
-            Returns:
-                list: A list of processed named entities extracted from the text.
-                Returns empty list if extraction fails.
+        __call__: Extracts named entities from the input text.
 
     Raises:
         Exception: If there's an error in extracting or processing named entities.

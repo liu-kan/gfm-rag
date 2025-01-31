@@ -49,6 +49,19 @@ class DPRELModel(BaseELModel):
         passage_instruct: str = "",
         model_kwargs: dict | None = None,
     ) -> None:
+        """Initialize DPR Entity Linking Model.
+
+        Args:
+            model_name (str): Name or path of the pre-trained model to load.
+            root (str, optional): Root directory for cache storage. Defaults to "tmp".
+            use_cache (bool, optional): Whether to use cache for embeddings. Defaults to True.
+            normalize (bool, optional): Whether to normalize the embeddings. Defaults to True.
+            batch_size (int, optional): Batch size for encoding. Defaults to 32.
+            query_instruct (str, optional): Instruction prefix for query encoding. Defaults to "".
+            passage_instruct (str, optional): Instruction prefix for passage encoding. Defaults to "".
+            model_kwargs (dict | None, optional): Additional arguments to pass to the model. Defaults to None.
+        """
+
         self.model_name = model_name
         self.use_cache = use_cache
         self.normalize = normalize
@@ -179,6 +192,20 @@ class NVEmbedV2ELModel(DPRELModel):
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        """
+        Initialize the DPR Entity Linking model.
+
+        This initialization extends the base class initialization and sets specific model parameters
+        for entity linking tasks. It configures the maximum sequence length to 32768 and sets
+        the tokenizer padding side to "right".
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            None
+        """
         super().__init__(
             *args,
             **kwargs,

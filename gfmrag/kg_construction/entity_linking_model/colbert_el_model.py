@@ -35,6 +35,9 @@ class ColbertELModel(BaseELModel):
         >>> model = ColbertELModel("path/to/checkpoint")
         >>> model.index(["entity1", "entity2", "entity3"])
         >>> results = model(["query1", "query2"], topk=3)
+        >>> print(results)
+        {'paris city': [{'entity': 'entity1', 'score': 0.82, 'norm_score': 1.0},
+                        {'entity': 'entity2', 'score': 0.35, 'norm_score': 0.43}]}
     """
 
     def __init__(
@@ -45,6 +48,25 @@ class ColbertELModel(BaseELModel):
         phrase_index_name: str = "nbits_2",
         force: bool = False,
     ) -> None:
+        """
+        Initialize the ColBERT entity linking model.
+
+        This initializes a ColBERT model for entity linking using pre-trained checkpoints and indices.
+
+        Args:
+            checkpint_path (str): Path to the ColBERT checkpoint file. Model weights will be loaded from this path. Can be downloaded [here]( https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz)
+            root (str, optional): Root directory for storing indices. Defaults to "tmp".
+            doc_index_name (str, optional): Name of the document index. Defaults to "nbits_2".
+            phrase_index_name (str, optional): Name of the phrase index. Defaults to "nbits_2".
+            force (bool, optional): Whether to force recomputation of existing indices. Defaults to False.
+
+        Raises:
+            FileNotFoundError: If the checkpoint file does not exist at the specified path.
+
+        Returns:
+            None
+        """
+
         if not os.path.exists(checkpint_path):
             raise FileNotFoundError(
                 "Checkpoint not found, download the checkpoint with: 'wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz'"
@@ -121,11 +143,13 @@ class ColbertELModel(BaseELModel):
 
         Returns:
             dict: dict of linked entities in the knowledge graph
-                key (str): named entity
-                value (list[dict]): list of linked entities
-                    entity: linked entity
-                    score: score of the entity
-                    norm_score: normalized score of the entity
+
+                - key (str): named entity
+                - value (list[dict]): list of linked entities
+
+                    - entity: linked entity
+                    - score: score of the entity
+                    - norm_score: normalized score of the entity
         """
 
         try:

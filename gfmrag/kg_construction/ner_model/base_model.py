@@ -13,8 +13,10 @@ class BaseNERModel(ABC):
         This method implements the callable functionality of the class to perform Named Entity Recognition
         on input text. When an instance of the class is called directly, this method is invoked.
 
+        Args:
             text (str): The input text to perform NER analysis on.
 
+        Returns:
             list: A list of named entities found in the text. Each entity is represented
                   according to the model's output format.
 

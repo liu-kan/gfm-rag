@@ -1,1 +1,1 @@
-::: gfmrag.kg_indexer
+::: gfmrag.KGIndexer

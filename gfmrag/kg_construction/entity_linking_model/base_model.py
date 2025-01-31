@@ -12,6 +12,7 @@ class BaseELModel(ABC):
         """
         This method creates an index for the provided list of entities to enable efficient entity linking and searching capabilities.
 
+        Args:
             entity_list (list): A list of entities to be indexed. Each entity should be a string or dictionary containing
                                the entity text and other relevant metadata.
 
@@ -39,10 +40,12 @@ class BaseELModel(ABC):
 
         Returns:
             dict: dict of linked entities in the knowledge graph
-                key (str): named entity
-                value (list[dict]): list of linked entities
-                    entity: linked entity
-                    score: score of the entity
-                    norm_score: normalized score of the entity
+
+                - key (str): named entity
+                - value (list[dict]): list of linked entities
+
+                    - entity: linked entity
+                    - score: score of the entity
+                    - norm_score: normalized score of the entity
         """
         pass

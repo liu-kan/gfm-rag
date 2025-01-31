@@ -18,6 +18,30 @@ logger = logging.getLogger(__name__)
 
 
 class GFMRetriever:
+    """Graph Foundation Model (GFM) Retriever for document retrieval.
+
+    This class implements a document retrieval system that combines named entity recognition,
+    entity linking, graph neural networks, and document ranking to retrieve relevant documents
+    based on a query.
+
+    Attributes:
+        qa_data (QADataset): Dataset containing the knowledge graph, documents and mappings
+        graph (torch.Tensor): Knowledge graph structure
+        text_emb_model (BaseTextEmbModel): Model for text embedding
+        ner_model (BaseNERModel): Named Entity Recognition model
+        el_model (BaseELModel): Entity Linking model
+        graph_retriever (GNNRetriever): Graph Neural Network based retriever
+        doc_ranker (BaseDocRanker): Document ranking model
+        doc_retriever (DocumentRetriever): Document retrieval utility
+        device (torch.device): Device to run computations on
+        num_nodes (int): Number of nodes in the knowledge graph
+        entities_weight (torch.Tensor | None): Optional weights for entities
+
+    Examples:
+        >>> retriever = GFMRetriever.from_config(cfg)
+        >>> docs = retriever.retrieve("Who is the president of France?", top_k=5)
+    """
+
     def __init__(
         self,
         qa_data: QADataset,
@@ -47,12 +71,18 @@ class GFMRetriever:
         """
         Retrieve documents from the corpus based on the given query.
 
+        1. Prepares the query input for the graph retriever
+        2. Executes the graph retriever forward pass to get entity predictions
+        3. Ranks documents based on entity predictions
+        4. Retrieves the top-k supporting documents
+
         Args:
             query (str): input query
             top_k (int): number of documents to retrieve
 
         Returns:
-            list: list of retrieved documents
+            list[dict]: A list of retrieved documents, where each document is represented as a dictionary
+                        containing document metadata and content
         """
 
         # Prepare input for deep graph retriever
@@ -74,13 +104,27 @@ class GFMRetriever:
 
     def prepare_input_for_graph_retriever(self, query: str) -> dict:
         """
-        Prepare input for the graph retriever model.
+        Prepare input for the graph retriever model by processing the query through entity detection, linking and embedding generation. The function performs the following steps:
+
+        1. Detects entities in the query using NER model
+        2. Links detected entities to knowledge graph entities
+        3. Converts entities to node masks
+        4. Generates question embeddings
+        5. Combines embeddings and masks into input format
 
         Args:
-            query (str): input query
+            query (str): Input query text to process
 
         Returns:
-            dict: input for the graph retriever model
+            dict: Dictionary containing processed inputs with keys:
+
+                - question_embeddings: Embedded representation of the query
+                - question_entities_masks: Binary mask tensor indicating entity nodes (shape: 1 x num_nodes)
+
+        Notes:
+            - If no entities are detected in query, the full query is used for entity linking
+            - Only linked entities that exist in qa_data.ent2id are included in masks
+            - Entity masks and embeddings are formatted for graph retriever model input
         """
 
         # Prepare input for deep graph retriever
@@ -112,6 +156,32 @@ class GFMRetriever:
 
     @staticmethod
     def from_config(cfg: DictConfig) -> "GFMRetriever":
+        """
+        Constructs a GFMRetriever instance from a configuration dictionary.
+
+        This factory method initializes all necessary components for the GFM retrieval system including:
+        - Graph retrieval model
+        - Question-answering dataset
+        - Named Entity Recognition (NER) model
+        - Entity Linking (EL) model
+        - Document ranking and retrieval components
+        - Text embedding model
+
+        Args:
+            cfg (DictConfig): Configuration dictionary containing settings for:
+
+                - graph_retriever: Model path and NER/EL model configurations
+                - dataset: Dataset parameters
+                - Optional entity weight initialization flag
+
+        Returns:
+            GFMRetriever: Fully initialized retriever instance with all components loaded and
+                          moved to appropriate device (CPU/GPU)
+
+        Note:
+            The configuration must contain valid paths and parameters for all required models
+            and dataset components. Models are automatically moved to available device (CPU/GPU).
+        """
         graph_retriever, model_config = utils.load_model_from_pretrained(
             cfg.graph_retriever.model_path
         )
