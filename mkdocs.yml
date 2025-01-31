@@ -94,13 +94,7 @@ docs_dir: .
 nav:
   - Home: README.md
   - Installation: docs/install.md
-  - Getting Started: docs/getting-started.md
-    # - Data Preparation: docs/getting-started.md#data-preparation
-    # - KG-index Construction: docs/getting-started.md#kg-index-construction
-    # - Retrieve with GFM-RAG: docs/getting-started.md#retrieve-with-gfm-rag
-    # - GFM-RAG Pretraining: docs/getting-started.md#gfm-rag-pretraining
-    # - GFM-RAG Fine-tuning: docs/getting-started.md#gfm-rag-fine-tuning
-  - Workflow:
+  - Getting Started:
     - Data Preparation: docs/workflow/data_preparation.md
     - KG-index Construction: docs/workflow/kg_index.md
     - Retrieve with GFM-RAG: docs/workflow/inference.md

@@ -43,7 +43,7 @@ class KGIndexer:
 
         This method performs two main tasks:
             1. Creates and saves knowledge graph related files (kg.txt and document2entities.json)
-            2. Prepares training and testing data if available in the raw data directory
+            2. Identify the query entities and supporting entities in training and testing data if available in the raw data directory
 
         Files created:
             - kg.txt: Contains knowledge graph triples
@@ -56,6 +56,7 @@ class KGIndexer:
                 root/
                 └── data_name/
                     ├── raw/
+                    |   ├── dataset_corpus.json
                     │   ├── train.json (optional)
                     │   └── test.json (optional)
                     └── processed/
@@ -67,7 +68,9 @@ class KGIndexer:
             ```
 
         Args:
-            dataset_cfg (DictConfig): Refering to the dataset configuration
+            dataset_cfg (DictConfig):
+                - root (str): Root directory of the dataset
+                - data_name (str): Name of the dataset
 
         Returns:
             None

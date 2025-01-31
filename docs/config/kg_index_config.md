@@ -53,6 +53,13 @@ qa_constructor:
 | `openie_model` |  None   | The config of the [openie_model](openie_model_config.md) |
 |   `el_model`   |  None   |     The config of the [el_model](el_model_config.md)     |
 
+## Dataset
+
+|  Parameter  | Options |              Note               |
+| :---------: | :-----: | :-----------------------------: |
+|   `root`    |  None   | The data root directory |
+| `data_name` |  None   | The data name |
+
 ## KG Constructor
 
 |      Parameter      |     Options     |                                 Note                                  |

@@ -17,6 +17,7 @@ Conda provides an easy way to install the CUDA development toolkit which is requ
 conda create -n gfmrag python=3.12
 conda activate gfmrag
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desired CUDA version
+pip install gfmrag
 TORCH=$(python -c "import torch; print(torch.__version__)")
 pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
