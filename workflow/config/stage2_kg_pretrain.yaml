@@ -9,7 +9,7 @@ defaults:
 seed: 1024
 
 datasets:
-  _target_: deep_graphrag.datasets.KGDataset
+  _target_: gfmrag.datasets.KGDataset
   cfgs:
     root: ./data
     force_rebuild: False
@@ -19,9 +19,9 @@ datasets:
   valid_names: []
 
 model:
-  _target_: deep_graphrag.models.SemanticUltra
+  _target_: gfmrag.models.QueryGNN
   entity_model:
-    _target_: deep_graphrag.ultra.models.EntityNBFNet
+    _target_: gfmrag.ultra.models.EntityNBFNet
     input_dim: 512
     hidden_dims: [512, 512, 512, 512, 512, 512]
     message_func: distmult

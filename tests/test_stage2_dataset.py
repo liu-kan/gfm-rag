@@ -1,5 +1,5 @@
-from deep_graphrag.datasets.kg_dataset import KGDataset
-from deep_graphrag.datasets.qa_dataset import QADataset
+from gfmrag.datasets.kg_dataset import KGDataset
+from gfmrag.datasets.qa_dataset import QADataset
 
 
 def test_kg_dataset() -> None:

@@ -10,7 +10,7 @@ defaults:
 seed: 1024
 
 datasets:
-  _target_: deep_graphrag.datasets.QADataset
+  _target_: gfmrag.datasets.QADataset
   cfgs:
     root: ./data
     force_rebuild: False
@@ -23,9 +23,9 @@ datasets:
     - 2wikimultihopqa_test
 
 model:
-  _target_: deep_graphrag.models.UltraQA
+  _target_: gfmrag.models.GNNRetriever
   entity_model:
-    _target_: deep_graphrag.ultra.models.QueryNBFNet
+    _target_: gfmrag.ultra.models.QueryNBFNet
     input_dim: 512
     hidden_dims: [512, 512, 512, 512, 512, 512]
     message_func: distmult
@@ -39,14 +39,14 @@ task:
   losses:
     - name: ent_bce_loss
       loss:
-        _target_: deep_graphrag.losses.BCELoss
+        _target_: gfmrag.losses.BCELoss
         adversarial_temperature: 0.2
       cfg:
         weight: 0.3
         is_doc_loss: False
     - name: ent_pcr_loss
       loss:
-        _target_: deep_graphrag.losses.ListCELoss
+        _target_: gfmrag.losses.ListCELoss
       cfg:
         weight: 0.7
         is_doc_loss: False

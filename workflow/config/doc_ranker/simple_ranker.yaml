@@ -1,1 +1,1 @@
-_target_: deep_graphrag.doc_rankers.SimpleRanker
+_target_: gfmrag.doc_rankers.SimpleRanker

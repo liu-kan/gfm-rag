@@ -13,8 +13,8 @@ from torch.nn import functional as F  # noqa:N812
 from torch.utils import data as torch_data
 from tqdm import tqdm
 
-from deep_graphrag import utils
-from deep_graphrag.ultra import query_utils
+from gfmrag import utils
+from gfmrag.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)

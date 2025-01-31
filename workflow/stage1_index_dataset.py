@@ -6,8 +6,8 @@ import hydra
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 
-from deep_graphrag import DataIndexer
-from deep_graphrag.kg_construction import KGConstructor, QAConstructor
+from gfmrag import DataIndexer
+from gfmrag.kg_construction import KGConstructor, QAConstructor
 
 logger = logging.getLogger(__name__)
 

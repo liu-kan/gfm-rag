@@ -11,9 +11,9 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch_geometric.data import Data
 
-from deep_graphrag import utils
-from deep_graphrag.datasets import QADataset
-from deep_graphrag.ultra import query_utils
+from gfmrag import utils
+from gfmrag.datasets import QADataset
+from gfmrag.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)

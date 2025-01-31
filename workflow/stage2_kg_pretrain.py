@@ -17,8 +17,8 @@ from torch.utils import data as torch_data
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from deep_graphrag import utils
-from deep_graphrag.ultra import tasks
+from gfmrag import utils
+from gfmrag.ultra import tasks
 
 # A logger for this file
 logger = logging.getLogger(__name__)

@@ -4,14 +4,13 @@ import torch
 from torch import nn
 from torch_geometric.data import Data
 
-from deep_graphrag.ultra.models import EntityNBFNet, QueryNBFNet
+from gfmrag.ultra.models import EntityNBFNet, QueryNBFNet
 
 
-class SemanticUltra(nn.Module):
+class QueryGNN(nn.Module):
     def __init__(
         self, entity_model: EntityNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
     ) -> None:
-        # kept that because super Ultra sounds cool
         super().__init__()
         self.rel_emb_dim = rel_emb_dim
         self.entity_model = entity_model
@@ -32,20 +31,19 @@ class SemanticUltra(nn.Module):
         return score
 
 
-class UltraQA(SemanticUltra):
-    """Wrap the GNN model for QA."""
+class GNNRetriever(QueryGNN):
+    """Wrap the GNN model for retrieval."""
 
     def __init__(
         self, entity_model: QueryNBFNet, rel_emb_dim: int, *args: Any, **kwargs: Any
     ) -> None:
-        # kept that because super Ultra sounds cool
         super().__init__(entity_model, rel_emb_dim)
         self.question_mlp = nn.Linear(self.rel_emb_dim, self.entity_model.dims[0])
 
     def forward(
         self,
         graph: Data,
-        batch: torch.Tensor,
+        batch: dict[str, torch.Tensor],
         entities_weight: torch.Tensor | None = None,
     ) -> torch.Tensor:
         question_emb = batch["question_embeddings"]

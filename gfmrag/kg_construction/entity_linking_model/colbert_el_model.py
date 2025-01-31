@@ -6,7 +6,7 @@ from colbert import Indexer, Searcher
 from colbert.data import Queries
 from colbert.infra import ColBERTConfig, Run, RunConfig
 
-from deep_graphrag.kg_construction.utils import processing_phrases
+from gfmrag.kg_construction.utils import processing_phrases
 
 from .base_model import BaseELModel
 

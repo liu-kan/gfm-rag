@@ -4,7 +4,7 @@ import re
 import string
 from collections.abc import Callable
 
-from deep_graphrag.evaluation.base_evaluator import BaseEvaluator
+from gfmrag.evaluation.base_evaluator import BaseEvaluator
 
 
 def normalize_answer(s: str) -> str:

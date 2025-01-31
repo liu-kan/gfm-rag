@@ -7,8 +7,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
-from deep_graphrag.kg_construction.langchain_util import init_langchain_model
-from deep_graphrag.kg_construction.utils import extract_json_dict, processing_phrases
+from gfmrag.kg_construction.langchain_util import init_langchain_model
+from gfmrag.kg_construction.utils import extract_json_dict, processing_phrases
 
 from .base_model import BaseNERModel
 

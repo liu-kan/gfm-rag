@@ -1,4 +1,4 @@
-_target_: deep_graphrag.text_emb_models.BaseTextEmbModel
+_target_: gfmrag.text_emb_models.BaseTextEmbModel
 text_emb_model_name: Alibaba-NLP/gte-Qwen2-7B-instruct
 normalize: True
 batch_size: 32

@@ -9,7 +9,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
-from deep_graphrag.kg_construction.utils import KG_DELIMITER
+from gfmrag.kg_construction.utils import KG_DELIMITER
 
 from .entity_linking_model import BaseELModel
 from .ner_model import BaseNERModel

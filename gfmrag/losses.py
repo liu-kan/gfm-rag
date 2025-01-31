@@ -4,7 +4,7 @@ from typing import Any
 import torch
 from torch.nn import functional as F  # noqa:N812
 
-from deep_graphrag.ultra.variadic import variadic_softmax
+from gfmrag.ultra.variadic import variadic_softmax
 
 
 class BaseLoss(ABC):

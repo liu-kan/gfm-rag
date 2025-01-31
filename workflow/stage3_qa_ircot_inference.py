@@ -8,11 +8,11 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
-from deep_graphrag import DeepGraphRAG
-from deep_graphrag.evaluation import RetrievalEvaluator
-from deep_graphrag.llms import BaseLanguageModel
-from deep_graphrag.prompt_builder import QAPromptBuilder
-from deep_graphrag.ultra import query_utils
+from gfmrag import GFMRetriever
+from gfmrag.evaluation import RetrievalEvaluator
+from gfmrag.llms import BaseLanguageModel
+from gfmrag.prompt_builder import QAPromptBuilder
+from gfmrag.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def agent_reasoning(
     cfg: DictConfig,
-    graphrag_retriever: DeepGraphRAG,
+    gfmrag_retriever: GFMRetriever,
     llm: BaseLanguageModel,
     qa_prompt_builder: QAPromptBuilder,
     query: str,
@@ -28,7 +28,7 @@ def agent_reasoning(
     step = 1
     current_query = query
     thoughts: list[str] = []
-    retrieved_docs = graphrag_retriever.retrieve(current_query, top_k=cfg.test.top_k)
+    retrieved_docs = gfmrag_retriever.retrieve(current_query, top_k=cfg.test.top_k)
     logs = []
     while step <= cfg.test.max_steps:
         message = qa_prompt_builder.build_input_prompt(
@@ -56,7 +56,7 @@ def agent_reasoning(
 
         step += 1
 
-        new_ret_docs = graphrag_retriever.retrieve(response, top_k=cfg.test.top_k)
+        new_ret_docs = gfmrag_retriever.retrieve(response, top_k=cfg.test.top_k)
 
         retrieved_docs_dict = {doc["title"]: doc for doc in retrieved_docs}
         for doc in new_ret_docs:
@@ -86,11 +86,11 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"Current working directory: {os.getcwd()}")
     logger.info(f"Output directory: {output_dir}")
 
-    graphrag_retriever = DeepGraphRAG.from_config(cfg)
+    gfmrag_retriever = GFMRetriever.from_config(cfg)
     llm = instantiate(cfg.llm)
     agent_prompt_builder = QAPromptBuilder(cfg.agent_prompt)
     qa_prompt_builder = QAPromptBuilder(cfg.qa_prompt)
-    test_data = graphrag_retriever.qa_data.raw_test_data
+    test_data = gfmrag_retriever.qa_data.raw_test_data
     max_samples = (
         cfg.test.max_test_samples if cfg.test.max_test_samples > 0 else len(test_data)
     )
@@ -114,7 +114,7 @@ def main(cfg: DictConfig) -> None:
                 result = processed_data[sample["id"]]
             else:
                 result = agent_reasoning(
-                    cfg, graphrag_retriever, llm, agent_prompt_builder, query
+                    cfg, gfmrag_retriever, llm, agent_prompt_builder, query
                 )
 
                 # Generate QA response

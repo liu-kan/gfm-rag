@@ -6,17 +6,19 @@
 - CUDA 12
 
 ```bash
-conda create -n deep_graphrag python=3.12
-conda activate deep_graphrag
+conda create -n gfmrag python=3.12
+conda activate gfmrag
 poetry install
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1
+TORCH=$(python -c "import torch; print(torch.__version__)")
+pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
 
 ## Installation
 
 Install from pip
 ```bash
-pip install deep-graphrag
+pip install gfmrag
 ```
 Install relevant packages
 ```bash

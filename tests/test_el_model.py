@@ -6,7 +6,7 @@ def test_colbert_el_model() -> None:
 
     cfg = OmegaConf.create(
         {
-            "_target_": "deep_graphrag.kg_construction.entity_linking_model.ColbertELModel",
+            "_target_": "gfmrag.kg_construction.entity_linking_model.ColbertELModel",
             "checkpint_path": "tmp/colbertv2.0",
             "root": "tmp",
         }
@@ -33,7 +33,7 @@ def test_dpr_el_model() -> None:
 
     cfg = OmegaConf.create(
         {
-            "_target_": "deep_graphrag.kg_construction.entity_linking_model.DPRELModel",
+            "_target_": "gfmrag.kg_construction.entity_linking_model.DPRELModel",
             "model_name": "BAAI/bge-large-en-v1.5",
             "root": "tmp",
             "use_cache": True,

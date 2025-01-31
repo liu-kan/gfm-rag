@@ -13,7 +13,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
-from deep_graphrag.kg_construction.utils import KG_DELIMITER, processing_phrases
+from gfmrag.kg_construction.utils import KG_DELIMITER, processing_phrases
 
 from .entity_linking_model import BaseELModel
 from .openie_model.base_model import BaseOPENIEModel

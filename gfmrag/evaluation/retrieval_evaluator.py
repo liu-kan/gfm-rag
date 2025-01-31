@@ -1,6 +1,6 @@
 from statistics import mean
 
-from deep_graphrag.evaluation.base_evaluator import BaseEvaluator
+from gfmrag.evaluation.base_evaluator import BaseEvaluator
 
 
 class RetrievalEvaluator(BaseEvaluator):

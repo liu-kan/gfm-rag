@@ -4,7 +4,7 @@ import torch
 from torch import distributed as dist
 from torch_scatter import scatter_add
 
-from deep_graphrag.ultra import variadic
+from gfmrag.ultra import variadic
 
 
 class DocumentRetriever:

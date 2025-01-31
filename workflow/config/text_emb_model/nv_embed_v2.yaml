@@ -1,4 +1,4 @@
-_target_: deep_graphrag.text_emb_models.NVEmbedV2
+_target_: gfmrag.text_emb_models.NVEmbedV2
 text_emb_model_name: nvidia/NV-Embed-v2
 normalize: True
 batch_size: 32

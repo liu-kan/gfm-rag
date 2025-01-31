@@ -4,27 +4,27 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
-from deep_graphrag import utils
-from deep_graphrag.datasets import QADataset
-from deep_graphrag.doc_rankers import BaseDocRanker
-from deep_graphrag.kg_construction.entity_linking_model import BaseELModel
-from deep_graphrag.kg_construction.ner_model import BaseNERModel
-from deep_graphrag.models import UltraQA
-from deep_graphrag.text_emb_models import BaseTextEmbModel
-from deep_graphrag.ultra import query_utils
-from deep_graphrag.utils.qa_utils import entities_to_mask
+from gfmrag import utils
+from gfmrag.datasets import QADataset
+from gfmrag.doc_rankers import BaseDocRanker
+from gfmrag.kg_construction.entity_linking_model import BaseELModel
+from gfmrag.kg_construction.ner_model import BaseNERModel
+from gfmrag.models import GNNRetriever
+from gfmrag.text_emb_models import BaseTextEmbModel
+from gfmrag.ultra import query_utils
+from gfmrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
 
 
-class DeepGraphRAG:
+class GFMRetriever:
     def __init__(
         self,
         qa_data: QADataset,
         text_emb_model: BaseTextEmbModel,
         ner_model: BaseNERModel,
         el_model: BaseELModel,
-        graph_retriever: UltraQA,
+        graph_retriever: GNNRetriever,
         doc_ranker: BaseDocRanker,
         doc_retriever: utils.DocumentRetriever,
         entities_weight: torch.Tensor | None,
@@ -111,7 +111,7 @@ class DeepGraphRAG:
         return graph_retriever_input
 
     @staticmethod
-    def from_config(cfg: DictConfig) -> "DeepGraphRAG":
+    def from_config(cfg: DictConfig) -> "GFMRetriever":
         graph_retriever, model_config = utils.load_model_from_pretrained(
             cfg.graph_retriever.model_path
         )
@@ -143,7 +143,7 @@ class DeepGraphRAG:
         if cfg.graph_retriever.init_entities_weight:
             entities_weight = utils.get_entities_weight(ent2docs)
 
-        return DeepGraphRAG(
+        return GFMRetriever(
             qa_data=qa_data,
             text_emb_model=text_emb_model,
             ner_model=ner_model,

@@ -14,10 +14,10 @@ from torch.utils import data as torch_data
 from torch_geometric.data import InMemoryDataset, makedirs
 from torch_geometric.data.dataset import _repr, files_exist
 
-from deep_graphrag.datasets.kg_dataset import KGDataset
-from deep_graphrag.text_emb_models import BaseTextEmbModel
-from deep_graphrag.utils import get_rank, is_main_process, synchronize
-from deep_graphrag.utils.qa_utils import entities_to_mask
+from gfmrag.datasets.kg_dataset import KGDataset
+from gfmrag.text_emb_models import BaseTextEmbModel
+from gfmrag.utils import get_rank, is_main_process, synchronize
+from gfmrag.utils.qa_utils import entities_to_mask
 
 logger = logging.getLogger(__name__)
 

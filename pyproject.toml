@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "deep-graphrag"
+name = "gfmrag"
 version = "0.1.0"
 description = ""
 authors = [
@@ -7,7 +7,7 @@ authors = [
     "Zicheng Zhao <zicheng.zhao@njust.edu.cn>"
 ]
 readme = "README.md"
-packages = [{include = "deep_graphrag"}]
+packages = [{include = "gfmrag"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
@@ -39,7 +39,7 @@ mypy = "^1.12.1"
 pytest = "^8.3.3"
 
 [tool.ruff]
-exclude = ['deep_graphrag/ultra']
+exclude = ['gfmrag/ultra']
 
 [tool.ruff.lint]
 extend-select = ["I", "N", "UP", "B", "PD002"]

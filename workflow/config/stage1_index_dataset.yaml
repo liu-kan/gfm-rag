@@ -13,7 +13,7 @@ dataset:
   data_name: hotpotqa
 
 kg_constructor:
-  _target_: deep_graphrag.kg_construction.KGConstructor
+  _target_: gfmrag.kg_construction.KGConstructor
   open_ie_model: ${openie_model}
   ner_model: ${ner_model}
   el_model: ${el_model}
@@ -26,7 +26,7 @@ kg_constructor:
   force: False
 
 qa_constructor:
-  _target_: deep_graphrag.kg_construction.QAConstructor
+  _target_: gfmrag.kg_construction.QAConstructor
   root: tmp/qa_construction
   ner_model: ${ner_model}
   el_model: ${el_model}

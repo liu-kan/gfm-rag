@@ -18,7 +18,7 @@ dataset:
   data_name: hotpotqa_test
 
 llm:
-  _target_: deep_graphrag.llms.ChatGPT
+  _target_: gfmrag.llms.ChatGPT
   model_name_or_path: gpt-3.5-turbo
   retry: 5
 

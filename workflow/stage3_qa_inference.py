@@ -13,10 +13,10 @@ from torch.utils import data as torch_data
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from deep_graphrag import utils
-from deep_graphrag.datasets import QADataset
-from deep_graphrag.prompt_builder import QAPromptBuilder
-from deep_graphrag.ultra import query_utils
+from gfmrag import utils
+from gfmrag.datasets import QADataset
+from gfmrag.prompt_builder import QAPromptBuilder
+from gfmrag.ultra import query_utils
 
 # A logger for this file
 logger = logging.getLogger(__name__)

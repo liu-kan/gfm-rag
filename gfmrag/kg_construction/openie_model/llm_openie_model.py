@@ -8,12 +8,12 @@ import numpy as np
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
 from langchain_openai import ChatOpenAI
 
-from deep_graphrag.kg_construction.langchain_util import init_langchain_model
-from deep_graphrag.kg_construction.openie_extraction_instructions import (
+from gfmrag.kg_construction.langchain_util import init_langchain_model
+from gfmrag.kg_construction.openie_extraction_instructions import (
     ner_prompts,
     openie_post_ner_prompts,
 )
-from deep_graphrag.kg_construction.utils import extract_json_dict
+from gfmrag.kg_construction.utils import extract_json_dict
 
 from .base_model import BaseOPENIEModel
 

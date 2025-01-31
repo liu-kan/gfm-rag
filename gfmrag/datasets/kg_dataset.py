@@ -12,10 +12,10 @@ from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Data, InMemoryDataset, makedirs
 from torch_geometric.data.dataset import _repr, files_exist
 
-from deep_graphrag.kg_construction.utils import KG_DELIMITER
-from deep_graphrag.text_emb_models import BaseTextEmbModel
-from deep_graphrag.ultra.tasks import build_relation_graph
-from deep_graphrag.utils import get_rank, is_main_process, synchronize
+from gfmrag.kg_construction.utils import KG_DELIMITER
+from gfmrag.text_emb_models import BaseTextEmbModel
+from gfmrag.ultra.tasks import build_relation_graph
+from gfmrag.utils import get_rank, is_main_process, synchronize
 
 logger = logging.getLogger(__name__)
 
