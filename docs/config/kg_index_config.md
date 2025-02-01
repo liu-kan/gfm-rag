@@ -77,7 +77,7 @@ qa_constructor:
 |      `force`        |      None       | Whether to force recompute the KG |
 
 
-Please refer to the `__init__` method of the [KG Constructor][gfmrag.kg_construction.KGConstructor] for details of parameters.
+Please refer to [KG Constructor][gfmrag.kg_construction.KGConstructor] for details of parameters.
 
 
 ## QA Constructor
@@ -91,4 +91,4 @@ Please refer to the `__init__` method of the [KG Constructor][gfmrag.kg_construc
 |   `num_processes`   |      None       | The number of processes to use |
 |      `force`        |      None       | Whether to force recompute the QA data |
 
-Please refer to the `__init__` method [QAConstructor][gfmrag.kg_construction.QAConstructor] for details of parameters.
+Please refer to [QAConstructor][gfmrag.kg_construction.QAConstructor] for details of parameters.

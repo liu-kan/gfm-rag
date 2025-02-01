@@ -22,6 +22,21 @@ logger = logging.getLogger(__name__)
 
 
 class BaseKGConstructor(ABC):
+    """
+    Abstract base class for knowledge graph construction.
+
+    This class defines the interface for constructing knowledge graphs from datasets.
+    Subclasses must implement create_kg() and get_document2entities() methods.
+
+    Attributes:
+        None
+
+    Methods:
+        create_kg: Creates a knowledge graph from the specified dataset.
+
+        get_document2entities: Get mapping between documents and their associated entities.
+    """
+
     @abstractmethod
     def create_kg(self, data_root: str, data_name: str) -> list[tuple[str, str, str]]:
         """
@@ -52,6 +67,41 @@ class BaseKGConstructor(ABC):
 
 
 class KGConstructor(BaseKGConstructor):
+    """A class for constructing Knowledge Graphs (KG) from text data using Open Information Extraction and Entity Linking.
+
+
+    Args:
+        open_ie_model (BaseOPENIEModel): Model for performing Open Information Extraction
+        el_model (BaseELModel): Model for Entity Linking
+        root (str, optional): Root directory for storing temporary files. Defaults to "tmp/kg_construction".
+        num_processes (int, optional): Number of processes to use for parallel processing. Defaults to 1.
+        cosine_sim_edges (bool, optional): Whether to add edges based on cosine similarity between entities. Defaults to True.
+        threshold (float, optional): Similarity threshold for adding edges between similar entities. Defaults to 0.8.
+        max_sim_neighbors (int, optional): Maximum number of similar neighbors to consider per entity. Defaults to 100.
+        add_title (bool, optional): Whether to prepend document titles to passages. Defaults to True.
+        force (bool, optional): Whether to force recomputation of cached results. Defaults to False.
+
+    Attributes:
+        data_name (str): Name of the current dataset being processed
+        tmp_dir (str): Temporary directory for storing intermediate results
+
+    Methods:
+        from_config(cfg): Creates a KGConstructor instance from a configuration object
+        create_kg(data_root, data_name): Creates a knowledge graph from the documents in the specified dataset
+        get_document2entities(data_root, data_name): Gets mapping of documents to their extracted entities
+        open_ie_extraction(raw_path): Performs Open IE on the dataset corpus
+        create_graph(open_ie_result_path): Creates a knowledge graph from Open IE results
+        augment_graph(graph, kb_phrase_dict): Augments the graph with similarity-based edges
+
+    Notes:
+        The knowledge graph is constructed in multiple steps:
+
+        1. Open Information Extraction to get initial triples
+        2. Entity Linking to normalize entities
+        3. Optional augmentation with similarity-based edges
+        4. Creation of the final graph structure
+    """
+
     DELIMITER = KG_DELIMITER
 
     def __init__(
@@ -66,6 +116,32 @@ class KGConstructor(BaseKGConstructor):
         add_title: bool = True,
         force: bool = False,
     ) -> None:
+        """Initialize the KGConstructor class.
+
+        Args:
+            open_ie_model (BaseOPENIEModel): Model for Open Information Extraction.
+            el_model (BaseELModel): Model for Entity Linking.
+            root (str, optional): Root directory for storing KG construction outputs. Defaults to "tmp/kg_construction".
+            num_processes (int, optional): Number of processes for parallel processing. Defaults to 1.
+            cosine_sim_edges (bool, optional): Whether to add cosine similarity edges. Defaults to True.
+            threshold (float, optional): Similarity threshold for adding edges. Defaults to 0.8.
+            max_sim_neighbors (int, optional): Maximum number of similar neighbors to connect. Defaults to 100.
+            add_title (bool, optional): Whether to add document titles as nodes. Defaults to True.
+            force (bool, optional): Whether to force reconstruction of existing outputs. Defaults to False.
+
+        Attributes:
+            open_ie_model: Model instance for Open Information Extraction
+            el_model: Model instance for Entity Linking
+            root: Root directory path
+            num_processes: Number of parallel processes
+            cosine_sim_edges: Flag for adding similarity edges
+            threshold: Similarity threshold value
+            max_sim_neighbors: Max number of similar neighbors
+            add_title: Flag for adding document titles
+            force: Flag for forced reconstruction
+            data_name: Name of the dataset being processed
+        """
+
         self.open_ie_model = open_ie_model
         self.el_model = el_model
         self.root = root
@@ -79,6 +155,18 @@ class KGConstructor(BaseKGConstructor):
 
     @property
     def tmp_dir(self) -> str:
+        """
+        Returns the temporary directory path for data processing.
+
+        This property method creates and returns a directory path specific to the current
+        data_name under the root directory. The directory is created if it doesn't exist.
+
+        Returns:
+            str: Path to the temporary directory.
+
+        Raises:
+            AssertionError: If data_name is not set before accessing this property.
+        """
         assert (
             self.data_name is not None
         )  # data_name should be set before calling this property
@@ -89,6 +177,34 @@ class KGConstructor(BaseKGConstructor):
 
     @staticmethod
     def from_config(cfg: DictConfig) -> "KGConstructor":
+        """
+        Creates a KGConstructor instance from a configuration.
+
+        This method initializes a KGConstructor using parameters specified in an OmegaConf
+        configuration object. It creates a unique fingerprint of the configuration and sets up
+        a temporary directory for storing processed data.
+
+        Args:
+            cfg (DictConfig): An OmegaConf configuration object containing the following parameters:
+
+                - root: Base directory for storing temporary files
+                - open_ie_model: Configuration for the Open IE model
+                - el_model: Configuration for the Entity Linking model
+                - num_processes: Number of processes to use
+                - cosine_sim_edges: Whether to use cosine similarity for edges
+                - threshold: Similarity threshold
+                - max_sim_neighbors: Maximum number of similar neighbors
+                - add_title: Whether to add titles
+                - force: Whether to force reprocessing
+
+        Returns:
+            KGConstructor: An initialized KGConstructor instance
+
+        Notes:
+            The method creates a fingerprint of the configuration (excluding 'force' parameters)
+            and uses it to create a temporary directory. The configuration is saved in this
+            directory for reference.
+        """
         # create a fingerprint of config for tmp directory
         config = OmegaConf.to_container(cfg, resolve=True)
         if "force" in config:
@@ -118,6 +234,23 @@ class KGConstructor(BaseKGConstructor):
         )
 
     def create_kg(self, data_root: str, data_name: str) -> list[tuple[str, str, str]]:
+        """
+        Create a knowledge graph from raw data.
+
+        This method processes raw data to extract triples and construct a knowledge graph.
+        It first performs Open IE extraction on the raw data, then creates a graph structure,
+        and finally converts the graph into a list of triples.
+
+        Args:
+            data_root (str): Root directory path containing the data.
+            data_name (str): Name of the dataset to process.
+
+        Returns:
+            list[tuple[str, str, str]]: List of extracted triples in the format (head, relation, tail).
+
+        Note:
+            If self.force is True, it will clear all temporary files before processing.
+        """
         # Get dataset information
         self.data_name = data_name  # type: ignore
         raw_path = os.path.join(data_root, data_name, "raw")
@@ -133,6 +266,22 @@ class KGConstructor(BaseKGConstructor):
         return extracted_triples
 
     def get_document2entities(self, data_root: str, data_name: str) -> dict:
+        """
+        Retrieves a mapping of document titles to their associated entities from a preprocessed dataset.
+
+        This method requires that a knowledge graph has been previously created using create_kg().
+        If the necessary files do not exist, it will automatically call create_kg() first.
+
+        Args:
+            data_root (str): Root directory containing the dataset
+            data_name (str): Name of the dataset to process
+
+        Returns:
+            dict: A dictionary mapping document titles (str) to lists of entity IDs (list)
+
+        Raises:
+            Warning: If passage information file is not found and create_kg needs to be run first
+        """
         # Get dataset information
         self.data_name = data_name  # type: ignore
 
@@ -208,10 +357,12 @@ class KGConstructor(BaseKGConstructor):
 
         Args:
             open_ie_result_path (str): Path to the openie results
+
         Returns:
             dict: Knowledge graph
-                key: (head, tail)
-                value: relation
+
+                - key: (head, tail)
+                - value: relation
         """
 
         with open(open_ie_result_path) as f:
@@ -329,7 +480,24 @@ class KGConstructor(BaseKGConstructor):
 
     def augment_graph(self, graph: dict[Any, Any], kb_phrase_dict: dict) -> None:
         """
-        Augment the graph with synonyms edges
+        Augment the graph with synonym edges between similar phrases.
+
+        This method adds "equivalent" edges between phrases that are semantically similar based on embeddings.
+        Similar phrases are found using an entity linking model and filtered based on similarity thresholds.
+
+        Args:
+            graph (dict[Any, Any]): The knowledge graph to augment, represented as an edge dictionary
+                where keys are (phrase1, phrase2) tuples and values are edge types
+            kb_phrase_dict (dict): Dictionary mapping phrases to their unique IDs in the knowledge base
+
+        Returns:
+            None: The graph is modified in place by adding new edges
+
+        Notes:
+            - Only processes phrases with >2 alphanumeric characters
+            - Adds up to self.max_sim_neighbors equivalent edges per phrase
+            - Only adds edges for pairs with similarity score above self.threshold
+            - Uses self.el_model for computing phrase similarities
         """
         logger.info("Augmenting graph from similarity")
 

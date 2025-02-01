@@ -15,4 +15,4 @@ max_tokens: 300
 | `model_name` |                        None                         |      The name of the LLM model to use. For example, `gpt-4o-mini`       |
 | `max_tokens` |                        None                         |         The maximum number of tokens to use for the LLM model.          |
 
-Please refer to the `__init__` method of the [LLM NER model][gfmrag.kg_construction.ner_model.LLMNERModel.__init__] for details on the other parameters.
+Please refer to [LLM NER model][gfmrag.kg_construction.ner_model.LLMNERModel] for details on the other parameters.
