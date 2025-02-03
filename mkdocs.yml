@@ -119,7 +119,13 @@ nav:
   - API Reference:
     - KG-index Constructor: docs/api/kg_indexer.md
     - GFM Retriever: docs/api/gfmrag_retriever.md
+    - GNN Models: docs/api/models.md
     - Document Ranker: docs/api/doc_ranker.md
+    - Datasets: docs/api/datasets.md
+    - Text Embedding Models: docs/api/text_emb_models.md
+    - Loss Functions: docs/api/losses.md
+    - Prompt Builder: docs/api/prompt_builder.md
+    - Evaluator: docs/api/evaluator.md
     - KG Construnction:
       - KG Constructor: docs/api/kg_construnction/kg_constructor.md
       - QA Constructor: docs/api/kg_construnction/qa_constructor.md

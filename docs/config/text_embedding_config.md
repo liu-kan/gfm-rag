@@ -1,0 +1,1 @@
+# Text Embedding Model Configuration

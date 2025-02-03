@@ -24,6 +24,9 @@ data_name/
 
 During pre-training, the GFM model will sample triples from the KG-index `kg.txt` to construct synthetic queries and target entities for training.
 
+!!! tip
+    It is recommended to conduct [fine-tuning][gfm-fine-tuning] after the pre-training to empower the model with the ability to understand user queries and retrieve relevant documents.
+
 A example of the KG-index:
 
 ```txt
@@ -77,8 +80,8 @@ You need to create a configuration file for pre-training. Here is an [example](.
         metric: [mr, mrr, hits@1, hits@3, hits@10]
 
         optimizer:
-        _target_: torch.optim.AdamW
-        lr: 5.0e-4
+            _target_: torch.optim.AdamW
+            lr: 5.0e-4
 
     # Training configuration
     train:
