@@ -58,6 +58,35 @@ Details of the configuration parameters are explained in the [KG-index Configura
 
 ## Index dataset
 
+This method performs two main tasks:
+
+1. Creates and saves knowledge graph related files (`kg.txt` and `document2entities.json`) from the `dataset_corpus.json` file
+2. Identify the query entities and supporting entities in training and testing data if available in the raw data directory
+
+Files created:
+
+- `kg.txt`: Contains knowledge graph triples
+- `document2entities.json`: Maps documents to their entities
+- `train.json`: Processed training data (if raw exists)
+- `test.json`: Processed test data (if raw exists)
+
+Directory structure:
+```
+    root/
+    └── data_name/
+        ├── raw/
+        │   ├── dataset_corpus.json
+        │   ├── train.json (optional)
+        │   └── test.json (optional)
+        └── processed/
+            └── stage1/
+                ├── kg.txt
+                ├── document2entities.json
+                ├── train.json
+                └── test.json
+```
+
+
 ```python title="workflow/stage1_index_dataset.py"
 import logging
 import os
@@ -104,34 +133,6 @@ You can overwrite the configuration like this:
 
 ```bash
 python workflow/stage1_index_dataset.py +kg_constructor.num_processes=5
-```
-
-This method performs two main tasks:
-
-1. Creates and saves knowledge graph related files (`kg.txt` and `document2entities.json`) from the `dataset_corpus.json` file
-2. Identify the query entities and supporting entities in training and testing data if available in the raw data directory
-
-Files created:
-
-- `kg.txt`: Contains knowledge graph triples
-- `document2entities.json`: Maps documents to their entities
-- `train.json`: Processed training data (if raw exists)
-- `test.json`: Processed test data (if raw exists)
-
-Directory structure:
-```
-    root/
-    └── data_name/
-        ├── raw/
-        │   ├── dataset_corpus.json
-        │   ├── train.json (optional)
-        │   └── test.json (optional)
-        └── processed/
-            └── stage1/
-                ├── kg.txt
-                ├── document2entities.json
-                ├── train.json
-                └── test.json
 ```
 
 ## Output Files

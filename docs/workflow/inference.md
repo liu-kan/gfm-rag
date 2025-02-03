@@ -50,6 +50,8 @@ Details of the configuration parameters are explained in the [GFM-RAG Configurat
 
 ## Initialize GFMRetriever
 
+You can initialize the GFMRetriever with the following code. It will load the pre-trained GFM-RAG model and the KG-index for retrieval.
+
 ```python
 import logging
 import os
@@ -77,6 +79,7 @@ def main(cfg: DictConfig) -> None:
 
 ## Document Retrieval
 
+You can use GFM-RAG retriever to reason over the KG-index and obtain documents for a given query.
 ```python
 docs = retriever.retrieve("Who is the president of France?", top_k=5)
 ```

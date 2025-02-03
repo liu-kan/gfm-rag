@@ -88,6 +88,11 @@ markdown_extensions:
     - meta # 支持Markdown文件上方自定义标题标签等
     - tables
 
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
 # 下面的是需要自定义的内容，请不要修改上方的内容，上面都是在开启各种插件和功能
 
 site_name: GFM-RAG
@@ -98,15 +103,19 @@ nav:
   - Getting Started:
     - Data Preparation: docs/workflow/data_preparation.md
     - KG-index Construction: docs/workflow/kg_index.md
-    - Retrieve with GFM-RAG: docs/workflow/inference.md
-    - GFM-RAG Pretraining: docs/workflow/pretrain.md
-    - GFM-RAG Fine-tuning: docs/workflow/finetune.md
+    - GFM-RAG Retrieval: docs/workflow/inference.md
+    - GFM-RAG Training: docs/workflow/training.md
+    - Path Interpretation: docs/workflow/path_interpretation.md
   - Config:
     - KG-index Config: docs/config/kg_index_config.md
     - GFM-RAG Config: docs/config/gfmrag_retriever_config.md
+    - GFM-RAG Pre-training Config: docs/config/gfmrag_pretrain_config.md
+    - GFM-RAG Fine-tuning Config: docs/config/gfmrag_finetune_config.md
     - NER Model Config: docs/config/ner_model_config.md
     - Entity Linking Model Config: docs/config/el_model_config.md
     - OpenIE Model Config: docs/config/openie_model_config.md
+    - Document Ranker Config: docs/config/doc_ranker_config.md
+    - Text Embedding Config: docs/config/text_embedding_config.md
   - API Reference:
     - KG-index Constructor: docs/api/kg_indexer.md
     - GFM Retriever: docs/api/gfmrag_retriever.md
