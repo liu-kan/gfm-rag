@@ -95,6 +95,8 @@ You need to create a configuration file for pre-training. Here is an [example](.
     checkpoint: null
     ```
 
+Details of the configuration parameters are explained in the [GFM-RAG Pre-training Config][gfm-rag-pre-training-configuration] page.
+
 You can pre-train the GFM-RAG model on your dataset using the following command:
 
 [stage2_kg_pretrain.py](../../workflow/stage2_kg_pretrain.py)
@@ -226,6 +228,9 @@ You need to create a configuration file for fine-tuning. Here is an [example](..
 
         checkpoint: null
     ```
+
+Details of the configuration parameters are explained in the [GFM-RAG Fine-tuning Configuration][gfm-rag-fine-tuning-configuration] page.
+
 
 You can fine-tune the pre-trained GFM-RAG model on your dataset using the following command:
 

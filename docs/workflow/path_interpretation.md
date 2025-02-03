@@ -14,6 +14,8 @@ You can visualize the paths and their importance using the following code:
 
 [visualize_path.py](../../workflow/experiments/visualize_path.py)
 
+[exp_visualize_path.yaml](../../workflow/config/exp_visualize_path.yaml)
+
 ```bash
 python workflow/experiments/workflow/experiments/visualize_path.py
 ```
