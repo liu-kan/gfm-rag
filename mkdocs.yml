@@ -64,7 +64,6 @@ markdown_extensions:
     - pymdownx.critic
     - pymdownx.details # 可以折叠的代码块 ??? note 可以让警告变成折叠的
     - pymdownx.inlinehilite
-    - pymdownx.snippets
     - pymdownx.superfences
     - pymdownx.magiclink # 自动识别链接
     - pymdownx.smartsymbols # 智能符号
@@ -104,6 +103,7 @@ nav:
     - GFM-RAG Fine-tuning: docs/workflow/finetune.md
   - Config:
     - KG-index Config: docs/config/kg_index_config.md
+    - GFM-RAG Config: docs/config/gfmrag_retriever_config.md
     - NER Model Config: docs/config/ner_model_config.md
     - Entity Linking Model Config: docs/config/el_model_config.md
     - OpenIE Model Config: docs/config/openie_model_config.md
