@@ -82,7 +82,7 @@ Please refer to the [LLMs][gfmrag.llms] page for more details.
 
 |       Parameter        |    Options     |                                Note                                |
 | :--------------------: | :------------: | :----------------------------------------------------------------: |
-|       `_target_`       |      None      |        The [graph retriever][gfmrag.graph_retriever] to use        |
+|       `_target_`       |      None      |        The [graph retriever][gfmrag.gfmrag_retriever] to use        |
 |      `model_path`      |      None      |          Checkpoint path of the pre-trained GFM-RAG model          |
 |      `doc_ranker`      |      None      |          The [document ranker][gfmrag.doc_rankers] to use          |
 |      `ner_model`       |      None      |      The [NER model][gfmrag.kg_construction.ner_model] to use      |
