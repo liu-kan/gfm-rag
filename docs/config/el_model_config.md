@@ -11,6 +11,20 @@ doc_index_name: nbits_2
 phrase_index_name: nbits_2
 ```
 
+To use colbertv2.0 model, you need to download the [checkpoint file](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz) and unzip it into the `checkpint_path`.
+
+An example checkpoint file structure is shown below:
+
+```
+tmp/colbertv2.0/
+├── artifact.metadata
+├── tokenizer.json
+├── special_tokens_map.json
+├── config.json
+├── tokenizer_config.json
+├── vocab.txt
+└── pytorch_model.bin
+```
 
 |      Parameter      |                           Options                            |                                               Note                                               |
 | :-----------------: | :----------------------------------------------------------: | :----------------------------------------------------------------------------------------------: |

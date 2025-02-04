@@ -54,7 +54,7 @@ class ColbertELModel(BaseELModel):
         This initializes a ColBERT model for entity linking using pre-trained checkpoints and indices.
 
         Args:
-            checkpint_path (str): Path to the ColBERT checkpoint file. Model weights will be loaded from this path. Can be downloaded [here]( https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz)
+            checkpint_path (str): Path to the ColBERT checkpoint file. Model weights will be loaded from this path. Can be downloaded [here](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz)
             root (str, optional): Root directory for storing indices. Defaults to "tmp".
             doc_index_name (str, optional): Name of the document index. Defaults to "nbits_2".
             phrase_index_name (str, optional): Name of the phrase index. Defaults to "nbits_2".
