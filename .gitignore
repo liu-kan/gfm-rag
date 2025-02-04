@@ -5,7 +5,6 @@ data/*/tmp/
 .vscode
 checkpoints/
 data/*
-scripts/*
 tmp
 .env
 zicheng/
