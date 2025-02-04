@@ -56,8 +56,8 @@ test:
 |   `el_model`   |  None   |                   The config of the [el_model](el_model_config.md)                    |
 |  `doc_ranker`  |  None   |                 The config of the [doc_ranker](doc_ranker_config.md)                  |
 | `qa_evaluator` |  None   |                  The config of the [qa_evaluator][gfmrag.evaluation]                  |
-| `agent_prompt` |  None   | The config of the [QAPromptBuilder][gfmrag.evaluation.QAPromptBuilder] used for IRCOT |
-|  `qa_prompt`   |  None   |        The config of the [QAPromptBuilder][gfmrag.evaluation.QAPromptBuilder]         |
+| `agent_prompt` |  None   | The config of the [PromptBuilder][gfmrag.prompt_builder] used for IRCOT |
+|  `qa_prompt`   |  None   |        The config of the [PromptBuilder][gfmrag.prompt_builder]         |
 
 
 ## Dataset

@@ -60,14 +60,6 @@ TORCH=$(python -c "import torch; print(torch.__version__)")
 pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
 
-### For Development
-
-Set up pre-commit hooks for development:
-
-```bash
-pre-commit install
-```
-
 ## Optional Components
 
 ### Llama.cpp Integration

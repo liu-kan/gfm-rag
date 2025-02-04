@@ -98,7 +98,10 @@ extra_javascript:
 site_name: GFM-RAG
 docs_dir: .
 nav:
-  - Home: README.md
+  - Home:
+    - Wellcome: docs/index.md
+    - Development: DEVELOPING.md
+    - Changelog: CHANGELOG.md
   - Installation: docs/install.md
   - Getting Started:
     - Data Preparation: docs/workflow/data_preparation.md
