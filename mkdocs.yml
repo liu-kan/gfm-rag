@@ -96,6 +96,7 @@ extra_javascript:
 # 下面的是需要自定义的内容，请不要修改上方的内容，上面都是在开启各种插件和功能
 
 site_name: GFM-RAG
+site_url: https://rmanluo.github.io/gfm-rag/
 docs_dir: .
 nav:
   - Home:
