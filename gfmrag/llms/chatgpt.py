@@ -44,6 +44,30 @@ def get_token_limit(model: str = "gpt-4") -> int:
 
 
 class ChatGPT(BaseLanguageModel):
+    """A class that interacts with OpenAI's ChatGPT models through their API.
+
+    This class provides functionality to generate text using ChatGPT models while handling
+    token limits, retries, and various input formats.
+
+    Args:
+        model_name_or_path (str): The name or path of the ChatGPT model to use
+        retry (int, optional): Number of retries for failed API calls. Defaults to 5
+
+    Attributes:
+        retry (int): Maximum number of retry attempts for failed API calls
+        model_name (str): Name of the ChatGPT model being used
+        maximun_token (int): Maximum token limit for the specified model
+        client (OpenAI): OpenAI client instance for API interactions
+
+    Methods:
+        token_len(text): Calculate the number of tokens in a given text
+        generate_sentence(llm_input, system_input): Generate response using the ChatGPT model
+
+    Raises:
+        KeyError: If the specified model is not found when calculating tokens
+        Exception: If generation fails after maximum retries
+    """
+
     def __init__(self, model_name_or_path: str, retry: int = 5):
         self.retry = retry
         self.model_name = model_name_or_path
@@ -68,6 +92,30 @@ class ChatGPT(BaseLanguageModel):
     def generate_sentence(
         self, llm_input: str | list, system_input: str = ""
     ) -> str | Exception:
+        """Generate a response using the ChatGPT API.
+
+        This method sends a request to the ChatGPT API and returns the generated response.
+        It handles both single string inputs and message lists, with retry logic for failed attempts.
+
+        Args:
+            llm_input (Union[str, list]): Either a string containing the user's input or a list of message dictionaries
+                in the format [{"role": "role_type", "content": "message_content"}, ...]
+            system_input (str, optional): System message to be prepended to the conversation. Defaults to "".
+
+        Returns:
+            Union[str, Exception]: The generated response text if successful, or the Exception if all retries fail.
+                The response is stripped of leading/trailing whitespace.
+
+        Raises:
+            Exception: If all retry attempts fail, returns the last encountered exception.
+
+        Notes:
+            - Automatically truncates inputs that exceed the maximum token limit
+            - Uses exponential backoff with 30 second delays between retries
+            - Sets temperature to 0.0 for deterministic outputs
+            - Timeout is set to 60 seconds per API call
+        """
+
         # If the input is a list, it is assumed that the input is a list of messages
         if isinstance(llm_input, list):
             message = llm_input

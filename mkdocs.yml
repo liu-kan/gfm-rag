@@ -125,6 +125,7 @@ nav:
     - GNN Models: docs/api/models.md
     - Document Ranker: docs/api/doc_ranker.md
     - Datasets: docs/api/datasets.md
+    - Large Language Models: docs/api/llms.md
     - Text Embedding Models: docs/api/text_emb_models.md
     - Loss Functions: docs/api/losses.md
     - Prompt Builder: docs/api/prompt_builder.md
@@ -145,7 +146,6 @@ plugins:
     - mkdocstrings:
         handlers:
           python:
-            paths: [gfmrag]
             options:
               show_root_heading: true
               show_symbol_type_heading: true
