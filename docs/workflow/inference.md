@@ -31,7 +31,7 @@ You need to create a configuration file for inference. Here is an [example](../.
         retry: 5 # Number of retries
 
     graph_retriever:
-        model_path: save_models/gfmrag_8M # Checkpoint path of the pre-trained GFM-RAG model
+        model_path: rmanluo/GFM-RAG-8M # Checkpoint path of the pre-trained GFM-RAG model
         doc_ranker: ${doc_ranker} # The document ranker to use
         ner_model: ${ner_model} # The NER model to usek
         el_model: ${el_model} # The EL model to use
