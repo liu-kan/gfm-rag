@@ -21,6 +21,32 @@ logger = logging.getLogger(__name__)
 
 
 class KGDataset(InMemoryDataset):
+    """A dataset class for processing and managing Knowledge Graph (KG) data.
+
+    This class extends InMemoryDataset to handle knowledge graph data, including entity-relation-entity triplets,
+    and supports processing of both direct and inverse relations.
+
+    Args:
+        root (str): Root directory where the dataset should be saved.
+        data_name (str): Name of the dataset.
+        text_emb_model_cfgs (DictConfig): Configuration for the text embedding model.
+        force_rebuild (bool, optional): Whether to force rebuilding the processed data. Defaults to False.
+        **kwargs (str): Additional keyword arguments.
+
+    Attributes:
+        name (str): Name of the dataset.
+        fingerprint (str): MD5 hash of the text embedding model configuration.
+        delimiter (str): Delimiter used in the KG text file.
+        data (Data): Processed graph data object.
+        slices (dict): Data slices for batching.
+
+    Note:
+        - The class expects a 'kg.txt' file in the raw directory containing triplets.
+        - Processes both direct and inverse relations.
+        - Generates and stores relation embeddings using the specified text embedding model.
+        - Saves processed data along with entity and relation mappings.
+    """
+
     delimiter = KG_DELIMITER
 
     def __init__(
@@ -135,6 +161,32 @@ class KGDataset(InMemoryDataset):
         synchronize()
 
     def process(self) -> None:
+        """Process the knowledge graph dataset.
+
+        This method processes the raw knowledge graph file and creates the following:
+
+        1. Loads the KG triplets and vocabulary
+        2. Creates edge indices and types for both original and inverse relations
+        3. Saves entity and relation mappings to JSON files
+        4. Generates relation embeddings using a text embedding model
+        5. Builds relation graphs
+        6. Saves the processed data and model configurations
+
+        The processed data includes:
+
+        - Edge indices and types for both original and inverse edges
+        - Target edge indices and types (original edges only)
+        - Number of nodes and relations
+        - Relation embeddings
+        - Relation graphs
+
+        Files created:
+
+        - ent2id.json: Entity to ID mapping
+        - rel2id.json: Relation to ID mapping (including inverse relations)
+        - text_emb_model_cfgs.json: Text embedding model configuration
+        - Processed graph data file at self.processed_paths[0]
+        """
         kg_file = self.raw_paths[0]
 
         kg_result = self.load_file(kg_file, inv_entity_vocab={}, inv_rel_vocab={})

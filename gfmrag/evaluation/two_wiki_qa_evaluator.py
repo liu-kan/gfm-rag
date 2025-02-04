@@ -82,6 +82,10 @@ def update_answer(metrics: dict, prediction: str, golds: list) -> tuple:
 
 
 class TwoWikiQAEvaluator(BaseEvaluator):
+    """
+    TwoWikiQAEvaluator
+    """
+
     def evaluate(self) -> dict:
         metrics = {"em": 0.0, "f1": 0.0, "precision": 0.0, "recall": 0.0}
 

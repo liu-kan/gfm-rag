@@ -23,6 +23,41 @@ logger = logging.getLogger(__name__)
 
 
 class QADataset(InMemoryDataset):
+    """A dataset class for Question-Answering tasks built on top of a Knowledge Graph.
+
+    This dataset inherits from torch_geometric's InMemoryDataset and processes raw QA data
+    into a format suitable for graph-based QA models. It handles both training and test splits.
+
+    Args:
+        root (str): Root directory where the dataset should be saved.
+        data_name (str): Name of the dataset.
+        text_emb_model_cfgs (DictConfig): Configuration for the text embedding model used to encode questions.
+        force_rebuild (bool, optional): If True, forces the dataset to be reprocessed even if it exists. Defaults to False.
+
+    Attributes:
+        name (str): Name of the dataset.
+        kg (KGDataset): The underlying knowledge graph dataset.
+        rel_emb_dim (int): Dimension of relation embeddings.
+        ent2id (dict): Mapping from entity names to IDs.
+        rel2id (dict): Mapping from relation names to IDs.
+        doc (dict): Corpus of documents.
+        doc2entities (dict): Mapping from documents to contained entities.
+        raw_train_data (list): Raw training data samples.
+        raw_test_data (list): Raw test data samples.
+        ent2docs (torch.Tensor): Sparse tensor mapping entities to documents.
+        id2doc (dict): Mapping from document IDs to document names.
+
+    Notes:
+        The processed dataset contains:
+        - Question embeddings
+        - Question entity masks
+        - Supporting entity masks
+        - Supporting document masks
+        - Sample IDs
+
+        The dataset processes raw JSON files and creates PyTorch tensors for efficient training.
+    """
+
     def __init__(
         self,
         root: str,
@@ -148,6 +183,36 @@ class QADataset(InMemoryDataset):
         synchronize()
 
     def process(self) -> None:
+        """Process and prepare the question-answering dataset.
+
+        This method processes raw data files to create a structured dataset for question answering
+        tasks. It performs the following main operations:
+
+        1. Loads entity and relation mappings from processed files
+        2. Creates entity-document mapping tensors
+        3. Processes question samples to generate:
+            - Question embeddings
+            - Question entity masks
+            - Supporting entity masks
+            - Supporting document masks
+
+        The processed dataset is saved as torch splits containing:
+
+        - Question embeddings
+        - Various mask tensors for entities and documents
+        - Sample IDs
+
+        Files created:
+
+        - ent2doc.pt: Sparse tensor mapping entities to documents
+        - qa_data.pt: Processed QA dataset
+        - text_emb_model_cfgs.json: Text embedding model configuration
+
+        The method also saves the text embedding model configuration.
+
+        Returns:
+            None
+        """
         with open(os.path.join(self.processed_dir, "ent2id.json")) as fin:
             self.ent2id = json.load(fin)
         with open(os.path.join(self.processed_dir, "rel2id.json")) as fin:

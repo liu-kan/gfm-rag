@@ -67,6 +67,10 @@ def update_answer(metrics: dict, prediction: str, gold: str) -> tuple:
 
 
 class HotpotQAEvaluator(BaseEvaluator):
+    """
+    HotpotQAEvaluator
+    """
+
     def evaluate(self) -> dict:
         metrics = {"em": 0.0, "f1": 0.0, "precision": 0.0, "recall": 0.0}
 

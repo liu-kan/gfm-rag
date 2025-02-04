@@ -81,6 +81,10 @@ def metric_max_f1_over_ground_truths(
 
 
 class MusiqueEvaluator(BaseEvaluator):
+    """
+    MusiqueEvaluator
+    """
+
     def evaluate(self) -> dict:
         metrics = {"em": 0.0, "f1": 0.0, "precision": 0.0, "recall": 0.0}
 

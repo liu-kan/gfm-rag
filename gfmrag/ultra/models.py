@@ -124,6 +124,47 @@ class RelNBFNet(BaseNBFNet):
 
 
 class EntityNBFNet(BaseNBFNet):
+    """Neural Bellman-Ford Network for Entity Prediction.
+
+    This class extends BaseNBFNet to perform entity prediction in knowledge graphs using a neural
+    version of the Bellman-Ford algorithm. It learns entity representations through message passing
+    over the graph structure.
+
+    Args:
+        input_dim (int): Dimension of input node/relation features
+        hidden_dims (list): List of hidden dimensions for each layer
+        num_relation (int, optional): Number of relation types. Defaults to 1 (dummy value)
+        **kwargs: Additional arguments passed to BaseNBFNet
+
+    Attributes:
+        layers (nn.ModuleList): List of GeneralizedRelationalConv layers
+        mlp (nn.Sequential): Multi-layer perceptron for final prediction
+        query (torch.Tensor): Relation type embeddings used as queries
+
+    Methods:
+        bellmanford(data, h_index, r_index, separate_grad=False):
+            Performs neural Bellman-Ford message passing iterations.
+
+            Args:
+                data: Graph data object containing edge information
+                h_index (torch.Tensor): Indices of head entities
+                r_index (torch.Tensor): Indices of relations
+                separate_grad (bool): Whether to use separate gradients for visualization
+
+            Returns:
+                dict: Contains node features and edge weights after message passing
+
+        forward(data, relation_representations, batch):
+            Forward pass for entity prediction.
+
+            Args:
+                data: Graph data object
+                relation_representations (torch.Tensor): Embeddings of relations
+                batch: Batch of (head, tail, relation) triples
+
+            Returns:
+                torch.Tensor: Prediction scores for tail entities
+    """
     def __init__(self, input_dim, hidden_dims, num_relation=1, **kwargs):
         # dummy num_relation = 1 as we won't use it in the NBFNet layer
         super().__init__(input_dim, hidden_dims, num_relation, **kwargs)
@@ -256,12 +297,54 @@ class EntityNBFNet(BaseNBFNet):
 
 class QueryNBFNet(EntityNBFNet):
     """
-    The entity-level reasoner for UltraQuery-like complex query answering pipelines
-    Almost the same as EntityNBFNet except that
-    (1) we already get the initial node features at the forward pass time
-    and don't have to read the triples batch
-    (2) we get `query` from the outer loop
-    (3) we return a distribution over all nodes (assuming t_index = all nodes)
+    The entity-level reasoner for UltraQuery-like complex query answering pipelines.
+
+    This class extends EntityNBFNet to handle query-specific reasoning in knowledge graphs.
+    Key differences from EntityNBFNet include:
+
+    1. Initial node features are provided during forward pass rather than read from triples batch
+    2. Query comes from outer loop
+    3. Returns distribution over all nodes (assuming t_index covers all nodes)
+
+    Attributes:
+        layers: List of neural network layers for message passing
+        short_cut: Boolean flag for using residual connections
+        concat_hidden: Boolean flag for concatenating hidden states
+        mlp: Multi-layer perceptron for final scoring
+        num_beam: Beam size for path search
+        path_topk: Number of top paths to return
+
+    Methods:
+        bellmanford(data, node_features, query, separate_grad=False):
+            Performs Bellman-Ford message passing iterations.
+            Args:
+                data: Graph data object containing edge information
+                node_features: Initial node representations
+                query: Query representation
+                separate_grad: Whether to track gradients separately for edges
+            Returns:
+                dict: Contains node features and edge weights
+
+        forward(data, node_features, relation_representations, query):
+            Main forward pass of the model.
+            Args:
+                data: Graph data object
+                node_features: Initial node features
+                relation_representations: Representations for relations
+                query: Query representation
+            Returns:
+                torch.Tensor: Scores for each node
+
+        visualize(data, sample, node_features, relation_representations, query):
+            Visualizes reasoning paths for given entities.
+            Args:
+                data: Graph data object
+                sample: Dictionary containing entity masks
+                node_features: Initial node features
+                relation_representations: Representations for relations
+                query: Query representation
+            Returns:
+                dict: Contains paths and weights for target entities
     """
 
     def bellmanford(self, data, node_features, query, separate_grad=False):
