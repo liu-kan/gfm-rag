@@ -100,4 +100,8 @@ export CUDA_HOME=/usr/local/cuda-12.4
 
 Usually, if your install CUDA toolkit via conda, the CUDA_HOME variable is set automatically.
 
+### Stuck when compiling `rspmm` kernel
+
+Sometimes the compilation of the `rspmm` kernel may get stuck. If you encounter this issue, try to manually remove the compilation cache under `~/.cache/torch_extensions/` and recompile the kernel.
+
 For more help, please check our [GitHub issues](https://github.com/RManLuo/gfm-rag/issues) or create a new one.
