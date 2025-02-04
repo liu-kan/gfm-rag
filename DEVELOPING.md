@@ -82,3 +82,23 @@ gfm_rag/                     # Root directory
 ├── poetry.lock         # Poetry lock file
 └── pyproject.toml      # Project configuration
 ```
+
+## Common Commands
+
+Serve the documentation locally:
+
+```shell
+mkdocs serve
+```
+
+Run the pre-commit hooks:
+
+```shell
+pre-commit run --all-files
+```
+
+Build package:
+
+```shell
+poetry build
+```
