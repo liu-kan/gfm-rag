@@ -4,6 +4,7 @@ import os
 import torch
 from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, OmegaConf
+from transformers.utils import cached_file
 
 
 def save_model_to_pretrained(
@@ -25,10 +26,16 @@ def save_model_to_pretrained(
 
 
 def load_model_from_pretrained(path: str) -> tuple[torch.nn.Module, dict]:
-    with open(os.path.join(path, "config.json")) as f:
+    config_path = cached_file(path, "config.json")
+    if config_path is None:
+        raise FileNotFoundError(f"config.json not found in {path}")
+    with open(config_path) as f:
         config = json.load(f)
     model = instantiate(config["model_config"])
-    state = torch.load(os.path.join(path, "model.pth"), map_location="cpu")
+    model_path = cached_file(path, "model.pth")
+    if model_path is None:
+        raise FileNotFoundError(f"model.pth not found in {path}")
+    state = torch.load(model_path, map_location="cpu")
     model.load_state_dict(state["model"])
     return model, config
 

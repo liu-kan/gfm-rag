@@ -378,8 +378,12 @@ def main(cfg: DictConfig) -> None:
     model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
-        state = torch.load(cfg.checkpoint, map_location="cpu")
-        model.load_state_dict(state["model"])
+        if os.path.exists(cfg.checkpoint):
+            state = torch.load(cfg.checkpoint, map_location="cpu")
+            model.load_state_dict(state["model"])
+        # Try to load the model from the remote dictionary
+        else:
+            model, _ = utils.load_model_from_pretrained(cfg.checkpoint)
 
     model = model.to(device)
 

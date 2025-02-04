@@ -345,8 +345,12 @@ def main(cfg: DictConfig) -> None:
             }
 
     if "checkpoint" in cfg and cfg.checkpoint is not None:
-        state = torch.load(cfg.checkpoint, map_location="cpu")
-        model.load_state_dict(state["model"], strict=False)
+        if os.path.exists(cfg.checkpoint):
+            state = torch.load(cfg.checkpoint, map_location="cpu")
+            model.load_state_dict(state["model"])
+        # Try to load the model from the remote dictionary
+        else:
+            model, _ = utils.load_model_from_pretrained(cfg.checkpoint)
 
     model = model.to(device)
     train_and_validate(

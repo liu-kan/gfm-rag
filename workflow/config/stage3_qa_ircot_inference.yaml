@@ -23,7 +23,7 @@ llm:
   retry: 5
 
 graph_retriever:
-  model_path: save_models/qa_ultra_512_train_60000_w_pre-train
+  model_path: rmanluo/GFM-RAG-8M
   doc_ranker: ${doc_ranker}
   ner_model: ${ner_model}
   el_model: ${el_model}
