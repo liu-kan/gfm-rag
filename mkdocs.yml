@@ -103,7 +103,7 @@ nav:
     - Development: DEVELOPING.md
     - Changelog: CHANGELOG.md
   - Installation: install.md
-  - Getting Started:
+  - Workflow:
     - Data Preparation: workflow/data_preparation.md
     - KG-index Construction: workflow/kg_index.md
     - GFM-RAG Retrieval: workflow/inference.md

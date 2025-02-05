@@ -1,6 +1,6 @@
 # Large scale pretraining on the KG-index
 N_GPU=8
-DATA_ROOT="data_full/large_scale"
+DATA_ROOT="data"
 N_EPOCH=1
 BATCH_PER_EPOCH=30000
 START_N=0
@@ -15,10 +15,10 @@ for DATA_NAME in ${DATA_NAME_LIST}; do
 done
 TRAIN_DATA_NAME_LIST=${TRAIN_DATA_NAME_LIST:1}
 echo "TRAIN_DATA_NAME_LIST: [${TRAIN_DATA_NAME_LIST}]"
-torchrun --nproc-per-node=${N_GPU} workflow/stage2_kg_pretrain.py \
+torchrun --nproc-per-node=${N_GPU} -m gfmrag.workflow.stage2_kg_pretrain \
     datasets.train_names=[${TRAIN_DATA_NAME_LIST}] \
     datasets.cfgs.root=${DATA_ROOT} \
     train.fast_test=5000 \
     train.num_epoch=${N_EPOCH} \
     train.batch_per_epoch=${BATCH_PER_EPOCH} \
-    train.batch_size=${BATCH_SIZE}"
+    train.batch_size=${BATCH_SIZE}

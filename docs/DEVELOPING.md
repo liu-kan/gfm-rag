@@ -38,6 +38,8 @@ An overview of the repository's top-level folder structure is provided below, de
 ```shell
 gfm_rag/                     # Root directory
 ├── docs/                    # Documentation
+|   ├── DEVELOPING.md         # Development guide
+|   |── CHANGELOG.md             # Project changelog
 │   ├── config/             # Configuration documentation
 │   │   ├── kg_index_config.md
 │   │   └── ...
@@ -77,7 +79,8 @@ gfm_rag/                     # Root directory
 │   ├── llms/              # Language models
 │   ├── evaluation/         # Evaluator for QA
 │   └── utils/             # Utility functions
-├── DEVELOPING.md         # Development guide
+├── tests/                  # Test cases
+├── scripts/                  # Scripts for running experiments
 ├── mkdocs.yml           # Documentation configuration
 ├── poetry.lock         # Poetry lock file
 └── pyproject.toml      # Project configuration
