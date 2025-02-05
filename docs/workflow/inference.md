@@ -76,6 +76,12 @@ You can run the following command to perform multi-step reasoning:
 python -m gfmrag.workflow.stage3_qa_ircot_inference
 ```
 
+You can overwrite the configuration like this:
+
+```bash
+python -m gfmrag.workflow.stage3_qa_ircot_inference test.max_steps=3
+```
+
 ## Batch Retrieval
 You can also perform batch retrieval with GFM-RAG with multi GPUs supports by running the following command:
 
@@ -95,4 +101,10 @@ You can also perform batch retrieval with GFM-RAG with multi GPUs supports by ru
 python -m gfmrag.workflow.stage3_qa_inference
 # Multi-GPU retrieval
 torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference
+```
+
+You can overwrite the configuration like this:
+
+```bash
+python -m gfmrag.workflow.stage3_qa_inference test.retrieval_batch_size=4
 ```

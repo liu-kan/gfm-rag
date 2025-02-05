@@ -61,6 +61,12 @@ torchrun --nproc_per_node=4 gfmrag.workflow.stage2_kg_pretrain
 torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_kg_pretrain
 ```
 
+You can overwrite the configuration like this:
+
+```bash
+python -m gfmrag.workflow.stage2_kg_pretrain train.batch_size=4
+```
+
 ## GFM Fine-tuning
 
 During fine-tuning, the GFM model will be trained on the query-documents pairs `train.json` from the labeled dataset to learn complex relationships for retrieval.
@@ -126,4 +132,10 @@ python -m gfmrag.workflow.stage2_qa_finetune
 torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
 # Multi-node Multi-GPU training
 torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
+```
+
+You can overwrite the configuration like this:
+
+```bash
+python -m gfmrag.workflow.stage2_qa_finetune train.batch_size=4
 ```

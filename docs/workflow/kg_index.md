@@ -68,7 +68,7 @@ python -m gfmrag.workflow.stage1_index_dataset
 You can overwrite the configuration like this:
 
 ```bash
-python -m gfmrag.workflow.stage1_index_dataset +kg_constructor.num_processes=5
+python -m gfmrag.workflow.stage1_index_dataset kg_constructor.num_processes=5
 ```
 
 ## Output Files
