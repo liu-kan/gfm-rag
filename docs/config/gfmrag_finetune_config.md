@@ -24,7 +24,7 @@ An example configuration file for GFM fine-tuning is shown below:
 
 |         Parameter          | Options |                                  Note                                   |
 | :------------------------: | :-----: | :---------------------------------------------------------------------: |
-|        `__target__`        |  None   |                 [QADataset][gfmrag.datasets.QADataset]                  |
+|        `_target_`        |  None   |                 [QADataset][gfmrag.datasets.QADataset]                  |
 |        `cfgs.root`         |  None   |               root dictionary of the datasets saving path               |
 |    `cfgs.force_rebuild`    |  None   |                  whether to force rebuild the dataset                   |
 | `cfgs.text_emb_model_cfgs` |  None   | [text embedding model][text-embedding-model-configuration]configuration |
@@ -35,7 +35,7 @@ An example configuration file for GFM fine-tuning is shown below:
 
 |    Parameter     |            Options             |                          Note                          |
 | :--------------: | :----------------------------: | :----------------------------------------------------: |
-|   `__target__`   |              None              |        [QueryGNN][gfmrag.models.QueryGNN] model        |
+|   `_target_`   |              None              |        [QueryGNN][gfmrag.models.QueryGNN] model        |
 |  `entity_model`  |              None              | [EntityNBFNet][gfmrag.ultra.models.QueryNBFNet] model |
 |   `input_dim`    |              None              |              input dimension of the model              |
 |  `hidden_dims`   |              `[]`              |             hidden dimensions of the model             |
