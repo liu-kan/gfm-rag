@@ -37,78 +37,28 @@ fred gehrke,played for,cleveland   los angeles rams
 
 You need to create a configuration file for pre-training. Here is an [example](../../workflow/config/stage2_kg_pretrain.yaml):
 
-??? example
+??? example "gfmrag/workflow/config/stage2_kg_pretrain.yaml"
 
-    ```yaml title="workflow/config/stage2_kg_pretrain.yaml"
-    hydra:
-        run:
-            dir: outputs/kg_pretrain/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
-
-    defaults:
-        - _self_
-        - text_emb_model: mpnet # The text embedding model to use
-
-    seed: 1024
-
-    datasets:
-        _target_: gfmrag.datasets.KGDataset # The KG dataset class
-        cfgs:
-            root: ./data # data root directory
-            force_rebuild: False # Whether to force rebuild the dataset
-            text_emb_model_cfgs: ${text_emb_model} # The text embedding model configuration
-        train_names: # List of training dataset names
-            - hotpotqa
-        valid_names: []
-
-    # GFM model configuration
-    model:
-        _target_: gfmrag.models.QueryGNN
-        entity_model:
-            _target_: gfmrag.ultra.models.EntityNBFNet
-            input_dim: 512
-            hidden_dims: [512, 512, 512, 512, 512, 512]
-            message_func: distmult
-            aggregate_func: sum
-            short_cut: yes
-            layer_norm: yes
-
-    # Loss configuration
-    task:
-        num_negative: 256
-        strict_negative: yes
-        adversarial_temperature: 1
-        metric: [mr, mrr, hits@1, hits@3, hits@10]
-
-        optimizer:
-            _target_: torch.optim.AdamW
-            lr: 5.0e-4
-
-    # Training configuration
-    train:
-        batch_size: 8
-        num_epoch: 10
-        log_interval: 100
-        fast_test: 500
-        save_best_only: no
-        save_pretrained: no # Save the model for QA inference
-        batch_per_epoch: null
-        timeout: 60 # timeout minutes for multi-gpu training
-
-    # Checkpoint configuration
-    checkpoint: null
+    ```yaml title="gfmrag/workflow/config/stage2_kg_pretrain.yaml"
+    --8<-- "gfmrag/workflow/config/stage2_kg_pretrain.yaml"
     ```
 
 Details of the configuration parameters are explained in the [GFM-RAG Pre-training Config][gfm-rag-pre-training-configuration] page.
 
 You can pre-train the GFM-RAG model on your dataset using the following command:
 
-[stage2_kg_pretrain.py](../../workflow/stage2_kg_pretrain.py)
+??? example "gfmrag/workflow/stage2_kg_pretrain.py"
+
+    ```python title="gfmrag/workflow/stage2_kg_pretrain.py"
+    --8 < --"gfmrag/workflow/stage2_kg_pretrain.py"
+    ```
+
 ```bash
-python workflow/stage2_kg_pretrain.py
+python -m gfmrag.workflow.stage2_kg_pretrain
 # Multi-GPU training
-torchrun --nproc_per_node=4 workflow/stage2_kg_pretrain.py
+torchrun --nproc_per_node=4 gfmrag.workflow.stage2_kg_pretrain
 # Multi-node Multi-GPU training
-torchrun --nproc_per_node=4 --nnodes=2 workflow/stage2_kg_pretrain.py
+torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_kg_pretrain
 ```
 
 ## GFM Fine-tuning
@@ -151,85 +101,12 @@ A example of the training data:
 ]
 ```
 
-You need to create a configuration file for fine-tuning. Here is an [example](../../workflow/config/stage2_qa_finetune.yaml):
+You need to create a configuration file for fine-tuning.
 
-??? example
+??? example "gfmrag/workflow/config/stage2_qa_finetune.yaml"
 
-    ```yaml title="workflow/config/stage2_qa_finetune.yaml"
-    hydra:
-        run:
-            dir: outputs/qa_finetune/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
-
-        defaults:
-            - _self_
-            - doc_ranker: idf_topk_ranker # The document ranker to use
-            - text_emb_model: mpnet # The text embedding model to use
-
-    seed: 1024
-
-    datasets:
-        _target_: gfmrag.datasets.QADataset # The QA dataset class
-        cfgs:
-            root: ./data # data root directory
-            force_rebuild: False # Whether to force rebuild the dataset
-            text_emb_model_cfgs: ${text_emb_model} # The text embedding model configuration
-        train_names: # List of training dataset names
-            - hotpotqa
-        valid_names: # List of validation dataset names
-            - hotpotqa_test
-            - musique_test
-            - 2wikimultihopqa_test
-
-    # GFM model configuration
-    model:
-        _target_: gfmrag.models.GNNRetriever
-        entity_model:
-            _target_: gfmrag.ultra.models.QueryNBFNet
-            input_dim: 512
-            hidden_dims: [512, 512, 512, 512, 512, 512]
-            message_func: distmult
-            aggregate_func: sum
-            short_cut: yes
-            layer_norm: yes
-
-    # Loss configuration
-    task:
-        strict_negative: yes
-        metric: [mrr, hits@1, hits@2, hits@3, hits@5, hits@10, hits@20, hits@50, hits@100]
-        losses:
-            - name: ent_bce_loss
-              loss:
-                _target_: gfmrag.losses.BCELoss
-                adversarial_temperature: 0.2
-              cfg:
-                weight: 0.3
-                is_doc_loss: False
-            - name: ent_pcr_loss
-              loss:
-                _target_: gfmrag.losses.ListCELoss
-              cfg:
-                weight: 0.7
-                is_doc_loss: False
-
-
-    # Optimizer configuration
-    optimizer:
-        _target_: torch.optim.AdamW
-        lr: 5.0e-4
-
-    # Training configuration
-    train:
-        batch_size: 8
-        num_epoch: 20
-        log_interval: 100
-        batch_per_epoch: null
-        save_best_only: yes
-        save_pretrained: yes # Save the model for QA inference
-        do_eval: yes
-        timeout: 60 # timeout minutes for multi-gpu training
-        init_entities_weight: True
-
-        checkpoint: null
+    ```yaml title="gfmrag/workflow/config/stage2_qa_finetune.yaml"
+    --8<-- "gfmrag/workflow/config/stage2_qa_finetune.yaml"
     ```
 
 Details of the configuration parameters are explained in the [GFM-RAG Fine-tuning Configuration][gfm-rag-fine-tuning-configuration] page.
@@ -237,11 +114,16 @@ Details of the configuration parameters are explained in the [GFM-RAG Fine-tunin
 
 You can fine-tune the pre-trained GFM-RAG model on your dataset using the following command:
 
-[stage2_qa_finetune.py](../../workflow/stage2_qa_finetune.py)
+??? example "gfmrag/workflow/stage2_qa_finetune.py"
+
+    ```python title="gfmrag/workflow/stage2_qa_finetune.py"
+    --8 < --"gfmrag/workflow/stage2_qa_finetune.py"
+    ```
+
 ```bash
-python workflow/stage2_qa_finetune.py
+python -m gfmrag.workflow.stage2_qa_finetune
 # Multi-GPU training
-torchrun --nproc_per_node=4 workflow/stage2_qa_finetune.py
+torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
 # Multi-node Multi-GPU training
-torchrun --nproc_per_node=4 --nnodes=2 workflow/stage2_qa_finetune.py
+torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
 ```

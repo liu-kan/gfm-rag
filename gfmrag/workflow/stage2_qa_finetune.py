@@ -344,13 +344,13 @@ def main(cfg: DictConfig) -> None:
                 "ent2docs": ent2docs,
             }
 
-    if "checkpoint" in cfg and cfg.checkpoint is not None:
-        if os.path.exists(cfg.checkpoint):
-            state = torch.load(cfg.checkpoint, map_location="cpu")
+    if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
+        if os.path.exists(cfg.train.checkpoint):
+            state = torch.load(cfg.train.checkpoint, map_location="cpu")
             model.load_state_dict(state["model"])
         # Try to load the model from the remote dictionary
         else:
-            model, _ = utils.load_model_from_pretrained(cfg.checkpoint)
+            model, _ = utils.load_model_from_pretrained(cfg.train.checkpoint)
 
     model = model.to(device)
     train_and_validate(

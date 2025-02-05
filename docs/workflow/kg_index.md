@@ -13,46 +13,13 @@ data_name/
 ```
 
 ## Config
-You need to create a KG-index configuration file. Here is an [example](../../workflow/config/stage1_index_dataset.yaml).
+You need to create a KG-index configuration file.
 
-??? example
+??? example "gfmrag/workflow/config/stage1_index_dataset.yaml"
 
-	```yaml title="workflow/config/stage1_index_dataset.yaml"
-	hydra:
-		run:
-			dir: outputs/kg_construction/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
-
-	defaults:
-		- _self_
-		- ner_model: llm_ner_model # The NER model to use
-		- openie_model: llm_openie_model # The OpenIE model to use
-		- el_model: colbert_el_model # The EL model to use
-
-	dataset:
-		root: ./data # data root directory
-		data_name: hotpotqa # data name
-
-	kg_constructor:
-		_target_: gfmrag.kg_construction.KGConstructor # The KGConstructor class
-		open_ie_model: ${openie_model}
-		ner_model: ${ner_model}
-		el_model: ${el_model}
-		root: tmp/kg_construction # Temporary directory for storing intermediate files during KG construction
-		num_processes: 10 # Number of processes to use
-		cosine_sim_edges: True # Whether to conduct entities resolution using cosine similarity
-		threshold: 0.8 # Threshold for cosine similarity
-		max_sim_neighbors: 100 # Maximum number of similar neighbors to add
-		add_title: True # Whether to add the title to the content of the document during OpenIE
-		force: False # Whether to force recompute the KG
-
-	qa_constructor:
-		_target_: gfmrag.kg_construction.QAConstructor # The QAConstructor class
-		root: tmp/qa_construction # Temporary directory for storing intermediate files during QA construction
-		ner_model: ${ner_model}
-		el_model: ${el_model}
-		num_processes: 10 # Number of processes to use
-		force: False # Whether to force recompute the QA data
-	```
+    ```yaml title="gfmrag/workflow/config/stage1_index_dataset.yaml"
+    --8<-- "gfmrag/workflow/config/stage1_index_dataset.yaml"
+    ```
 
 Details of the configuration parameters are explained in the [KG-index Configuration][kg-index-configuration] page.
 
@@ -72,67 +39,36 @@ Files created:
 
 Directory structure:
 ```
-    root/
-    └── data_name/
-        ├── raw/
-        │   ├── dataset_corpus.json
-        │   ├── train.json (optional)
-        │   └── test.json (optional)
-        └── processed/
-            └── stage1/
-                ├── kg.txt
-                ├── document2entities.json
-                ├── train.json
-                └── test.json
-```
-
-
-```python title="workflow/stage1_index_dataset.py"
-import logging
-import os
-
-import dotenv
-import hydra
-from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig, OmegaConf
-
-from gfmrag import KGIndexer
-from gfmrag.kg_construction import KGConstructor, QAConstructor
-
-logger = logging.getLogger(__name__)
-
-dotenv.load_dotenv()
-
-
-@hydra.main(config_path="config", config_name="stage1_index_dataset", version_base=None)
-def main(cfg: DictConfig) -> None:
-    output_dir = HydraConfig.get().runtime.output_dir
-    logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")
-    logger.info(f"Current working directory: {os.getcwd()}")
-    logger.info(f"Output directory: {output_dir}")
-
-    kg_constructor = KGConstructor.from_config(cfg.kg_constructor)
-    qa_constructor = QAConstructor.from_config(cfg.qa_constructor)
-
-    kg_indexer = KGIndexer(kg_constructor, qa_constructor)
-    kg_indexer.index_data(cfg.dataset)
-
-
-if __name__ == "__main__":
-    main()
+root/
+└── data_name/
+	├── raw/
+	│   ├── dataset_corpus.json
+	│   ├── train.json (optional)
+	│   └── test.json (optional)
+	└── processed/
+		└── stage1/
+			├── kg.txt
+			├── document2entities.json
+			├── train.json
+			└── test.json
 ```
 
 To index the data, run the following command:
 
-[stage1_index_dataset.py](../../workflow/stage1_index_dataset.py)
+??? example "gfmrag/workflow/stage1_index_dataset.py"
+
+    ```python title="gfmrag/workflow/stage1_index_dataset.py"
+    --8 < --"gfmrag/workflow/stage1_index_dataset.py"
+    ```
+
 ```bash
-python workflow/stage1_index_dataset.py
+python -m gfmrag.workflow.stage1_index_dataset
 ```
 
 You can overwrite the configuration like this:
 
 ```bash
-python workflow/stage1_index_dataset.py +kg_constructor.num_processes=5
+python -m gfmrag.workflow.stage1_index_dataset +kg_constructor.num_processes=5
 ```
 
 ## Output Files

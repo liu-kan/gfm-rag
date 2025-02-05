@@ -97,46 +97,45 @@ extra_javascript:
 
 site_name: GFM-RAG
 site_url: https://rmanluo.github.io/gfm-rag/
-docs_dir: .
 nav:
   - Home:
-    - Wellcome: docs/index.md
+    - Wellcome: index.md
     - Development: DEVELOPING.md
     - Changelog: CHANGELOG.md
-  - Installation: docs/install.md
+  - Installation: install.md
   - Getting Started:
-    - Data Preparation: docs/workflow/data_preparation.md
-    - KG-index Construction: docs/workflow/kg_index.md
-    - GFM-RAG Retrieval: docs/workflow/inference.md
-    - GFM-RAG Training: docs/workflow/training.md
-    - Path Interpretation: docs/workflow/path_interpretation.md
+    - Data Preparation: workflow/data_preparation.md
+    - KG-index Construction: workflow/kg_index.md
+    - GFM-RAG Retrieval: workflow/inference.md
+    - GFM-RAG Training: workflow/training.md
+    - Path Interpretation: workflow/path_interpretation.md
   - Config:
-    - KG-index Config: docs/config/kg_index_config.md
-    - GFM-RAG Config: docs/config/gfmrag_retriever_config.md
-    - GFM-RAG Pre-training Config: docs/config/gfmrag_pretrain_config.md
-    - GFM-RAG Fine-tuning Config: docs/config/gfmrag_finetune_config.md
-    - NER Model Config: docs/config/ner_model_config.md
-    - Entity Linking Model Config: docs/config/el_model_config.md
-    - OpenIE Model Config: docs/config/openie_model_config.md
-    - Document Ranker Config: docs/config/doc_ranker_config.md
-    - Text Embedding Config: docs/config/text_embedding_config.md
+    - KG-index Config: config/kg_index_config.md
+    - GFM-RAG Config: config/gfmrag_retriever_config.md
+    - GFM-RAG Pre-training Config: config/gfmrag_pretrain_config.md
+    - GFM-RAG Fine-tuning Config: config/gfmrag_finetune_config.md
+    - NER Model Config: config/ner_model_config.md
+    - Entity Linking Model Config: config/el_model_config.md
+    - OpenIE Model Config: config/openie_model_config.md
+    - Document Ranker Config: config/doc_ranker_config.md
+    - Text Embedding Config: config/text_embedding_config.md
   - API Reference:
-    - KG-index Constructor: docs/api/kg_indexer.md
-    - GFM Retriever: docs/api/gfmrag_retriever.md
-    - GNN Models: docs/api/models.md
-    - Document Ranker: docs/api/doc_ranker.md
-    - Datasets: docs/api/datasets.md
-    - Large Language Models: docs/api/llms.md
-    - Text Embedding Models: docs/api/text_emb_models.md
-    - Loss Functions: docs/api/losses.md
-    - Prompt Builder: docs/api/prompt_builder.md
-    - Evaluator: docs/api/evaluator.md
+    - KG-index Constructor: api/kg_indexer.md
+    - GFM Retriever: api/gfmrag_retriever.md
+    - GNN Models: api/models.md
+    - Document Ranker: api/doc_ranker.md
+    - Datasets: api/datasets.md
+    - Large Language Models: api/llms.md
+    - Text Embedding Models: api/text_emb_models.md
+    - Loss Functions: api/losses.md
+    - Prompt Builder: api/prompt_builder.md
+    - Evaluator: api/evaluator.md
     - KG Construnction:
-      - KG Constructor: docs/api/kg_construnction/kg_constructor.md
-      - QA Constructor: docs/api/kg_construnction/qa_constructor.md
-      - NER Model: docs/api/kg_construnction/ner_model.md
-      - Entity Linking Model: docs/api/kg_construnction/el_model.md
-      - OpenIE Model: docs/api/kg_construnction/openie_model.md
+      - KG Constructor: api/kg_construnction/kg_constructor.md
+      - QA Constructor: api/kg_construnction/qa_constructor.md
+      - NER Model: api/kg_construnction/ner_model.md
+      - Entity Linking Model: api/kg_construnction/el_model.md
+      - OpenIE Model: api/kg_construnction/openie_model.md
 repo_url: https://github.com/RManLuo/gfm-rag.git
 repo_name: gfm-rag
 
@@ -155,16 +154,3 @@ plugins:
             import:
               - url: https://docs.python.org/3/objects.inv
                 domains: [std, py]
-
-# extra:
-#     # generator: false  #删除页脚显示“使用 MkDocs 材料制造”
-#     social:
-#         - icon: fontawesome/brands/github
-#           link: https://github.com/271374667
-#           name: GitHub
-#         - icon: fontawesome/brands/bilibili
-#           link: https://space.bilibili.com/282527875
-#           name: Bilibili
-#         - icon: material/email
-#           link: Python调包侠:<271374667@qq.com>
-#           name: Email

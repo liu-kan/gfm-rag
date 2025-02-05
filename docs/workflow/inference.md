@@ -1,49 +1,12 @@
 GFM-RAG can be directly used for retrieval on a given dataset without fine-tuning. We provide an easy-to-use [GFMRetriever][gfmrag.GFMRetriever] interface for inference.
 
 ## Config
-You need to create a configuration file for inference. Here is an [example](../../workflow/config/stage3_qa_ircot_inference.yaml):
+You need to create a configuration file for inference.
 
-??? example
+??? example "gfmrag/workflow/config/stage3_qa_ircot_inference.yaml"
 
-    ```yaml title="workflow/config/stage3_qa_ircot_inference.yaml"
-    hydra:
-        run:
-            dir: outputs/qa_agent_inference/${dataset.data_name}/${now:%Y-%m-%d}/${now:%H-%M-%S} # Output directory
-
-    defaults:
-        - _self_
-        - doc_ranker: idf_topk_ranker # The document ranker to use
-        - agent_prompt: hotpotqa_ircot # The agent prompt to use
-        - qa_prompt: hotpotqa # The QA prompt to use
-        - ner_model: llm_ner_model # The NER model to use
-        - el_model: colbert_el_model # The EL model to use
-        - qa_evaluator: hotpotqa # The QA evaluator to use
-
-    seed: 1024
-
-    dataset:
-        root: ./data # data root directory
-        data_name: hotpotqa_test # data name
-
-    llm:
-        _target_: gfmrag.llms.ChatGPT # The language model to use
-        model_name_or_path: gpt-3.5-turbo # The model name or path
-        retry: 5 # Number of retries
-
-    graph_retriever:
-        model_path: rmanluo/GFM-RAG-8M # Checkpoint path of the pre-trained GFM-RAG model
-        doc_ranker: ${doc_ranker} # The document ranker to use
-        ner_model: ${ner_model} # The NER model to usek
-        el_model: ${el_model} # The EL model to use
-        qa_evaluator: ${qa_evaluator} # The QA evaluator to use
-        init_entities_weight: True # Whether to initialize the entities weight
-
-
-    test:
-        top_k: 10 # Number of documents to retrieve
-        max_steps: 2 # Maximum number of steps
-        max_test_samples: -1 # -1 for all samples
-        resume: null # Resume from previous prediction
+    ```yaml title="gfmrag/workflow/config/stage3_qa_ircot_inference.yaml"
+    --8<-- "gfmrag/workflow/config/stage3_qa_ircot_inference.yaml"
     ```
 
 Details of the configuration parameters are explained in the [GFM-RAG Configuration][gfm-rag-configuration] page.
@@ -103,17 +66,33 @@ You can also integrate the GFM-RAG with arbitrary reasoning agents to perform mu
 
 You can run the following command to perform multi-step reasoning:
 
-[stage3_qa_ircot_inference.py](../../workflow/stage3_qa_ircot_inference.py)
+??? example "gfmrag/workflow/stage3_qa_ircot_inference.py"
+
+    ```python title="gfmrag/workflow/stage3_qa_ircot_inference.py"
+    --8 < --"gfmrag/workflow/stage3_qa_ircot_inference.py"
+    ```
+
 ```bash
-python workflow/stage3_qa_ircot_inference.py
+python -m gfmrag.workflow.stage3_qa_ircot_inference
 ```
 
 ## Batch Retrieval
 You can also perform batch retrieval with GFM-RAG with multi GPUs supports by running the following command:
 
-[stage3_qa_inference.py](../../workflow/stage3_qa_inference.py)
+??? example "gfmrag/workflow/config/stage3_qa_inference.yaml"
+
+    ```yaml title="gfmrag/workflow/config/stage3_qa_inference.yaml"
+    --8<-- "gfmrag/workflow/config/stage3_qa_inference.yaml"
+    ```
+
+??? example "gfmrag/workflow/stage3_qa_inference.py"
+
+    ```python title="gfmrag/workflow/stage3_qa_inference.py"
+    --8 < --"gfmrag/workflow/stage3_qa_inference.py"
+    ```
+
 ```bash
-python workflow/stage3_qa_inference.py
+python -m gfmrag.workflow.stage3_qa_inference
 # Multi-GPU retrieval
-torchrun --nproc_per_node=4 workflow/stage3_qa_inference.py
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage3_qa_inference
 ```
