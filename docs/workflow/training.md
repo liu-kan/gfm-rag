@@ -35,7 +35,7 @@ fred gehrke,was,executive
 fred gehrke,played for,cleveland   los angeles rams
 ```
 
-You need to create a configuration file for pre-training. Here is an [example](../../workflow/config/stage2_kg_pretrain.yaml):
+You need to create a configuration file for pre-training.
 
 ??? example "gfmrag/workflow/config/stage2_kg_pretrain.yaml"
 

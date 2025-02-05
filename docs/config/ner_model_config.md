@@ -2,12 +2,11 @@
 
 An example of a LLM NER model configuration file is shown below:
 
-```yaml
-_target_: gfmrag.kg_construction.ner_model.LLMNERModel
-llm_api: openai
-model_name: gpt-4o-mini
-max_tokens: 300
-```
+!!! example
+
+    ```yaml title="gfmrag/workflow/config/ner_model/llm_ner_model.yaml"
+    --8<-- "gfmrag/workflow/config/ner_model/llm_ner_model.yaml"
+    ```
 
 |  Parameter   |                       Options                       |                                      Note                                       |
 | :----------: | :-------------------------------------------------: | :-----------------------------------------------------------------------------: |

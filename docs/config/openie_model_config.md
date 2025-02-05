@@ -2,13 +2,12 @@
 
 An example of a LLM OpenIE model configuration file is shown below:
 
-```yaml
-_target_: gfmrag.kg_construction.openie_model.LLMOPENIEModel
-llm_api: openai
-model_name: gpt-4o-mini
-max_ner_tokens: 300
-max_triples_tokens: 4096
-```
+!!! example
+
+    ```yaml title="gfmrag/workflow/config/openie_model/llm_openie_model.yaml"
+    --8<-- "gfmrag/workflow/config/openie_model/llm_openie_model.yaml"
+    ```
+
 
 |      Parameter       |                       Options                       |                                           Note                                           |
 | :------------------: | :-------------------------------------------------: | :--------------------------------------------------------------------------------------: |

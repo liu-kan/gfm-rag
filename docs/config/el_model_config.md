@@ -3,13 +3,11 @@
 
 An example of a Colbert EL model configuration file is shown below:
 
-```yaml
-_target_: gfmrag.kg_construction.entity_linking_model.ColbertELModel
-checkpint_path: tmp/colbertv2.0
-root: tmp
-doc_index_name: nbits_2
-phrase_index_name: nbits_2
-```
+!!! example "colbertv2.0"
+
+    ```yaml title="gfmrag/workflow/config/el_model/colbert_el_model.yaml"
+    --8<-- "gfmrag/workflow/config/el_model/colbert_el_model.yaml"
+    ```
 
 To use colbertv2.0 model, you need to download the [checkpoint file](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz) and unzip it into the `checkpint_path`.
 
@@ -40,16 +38,11 @@ Please refer to [ColbertELModel][gfmrag.kg_construction.entity_linking_model.Col
 
 This configuration supports most of the dense pre-train text embedding models of [SentenceTransformer](https://huggingface.co/sentence-transformers). An example of a dense pre-train text embedding model configuration file is shown below:
 
-```yaml
-_target_: gfmrag.kg_construction.entity_linking_model.DPRELModel
-model_name: BAAI/bge-large-en-v1.5
-root: tmp
-use_cache: True
-normalize: True
-query_instruct: null
-passage_instruct: null
-model_kwargs: null
-```
+!!! example "DPR EL Model"
+
+    ```yaml title="gfmrag/workflow/config/el_model/dpr_el_model.yaml"
+    --8<-- "gfmrag/workflow/config/el_model/dpr_el_model.yaml"
+    ```
 
 
 |     Parameter      |                         Options                          |                                                       Note                                                       |
@@ -69,17 +62,11 @@ Please refer to [DPR EL Model][gfmrag.kg_construction.entity_linking_model.DPREL
 
 This configuration supports most of the [Nvidia embedding models](https://huggingface.co/nvidia/NV-Embed-v2). An example of a Nvidia embedding model configuration file is shown below:
 
-```yaml
-_target_: gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel
-model_name: nvidia/NV-Embed-v2
-root: tmp
-use_cache: True
-normalize: True
-query_instruct: "Instruct: Given a entity, retrieve entities that are semantically equivalent to the given entity\nQuery: "
-passage_instruct: null
-model_kwargs:
-  torch_dtype: bfloat16
-```
+!!! example "nvidia/NV-Embed-v2"
+
+    ```yaml title="gfmrag/workflow/config/el_model/nv_embed_v2.yaml"
+    --8<-- "gfmrag/workflow/config/el_model/nv_embed_v2.yaml"
+    ```
 
 |     Parameter      |                                                   Options                                                   |                                                   Note                                                   |
 | :----------------: | :---------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
@@ -90,7 +77,7 @@ model_kwargs:
 |    `normalize`     |                                               `True`, `False`                                               |                                   Whether to normalize the embeddings.                                   |
 |  `query_instruct`  | `Instruct: Given a entity, retrieve entities that are semantically equivalent to the given entity\nQuery: ` |                                      The instruction for the query.                                      |
 | `passage_instruct` |                                                    None                                                     |                                     The instruction for the passage.                                     |
-|   `model_kwargs`   |                                                    None                                                     |                                     The additional model arguments.                                      |
+|   `model_kwargs`   |                                                    `{}`                                                     |                                     The additional model arguments.                                      |
 
 
 Please refer to [NVEmbedV2 EL Model][gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel] for details on the other parameters.

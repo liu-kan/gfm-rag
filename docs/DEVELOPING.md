@@ -2,10 +2,10 @@
 
 # Requirements
 
-| Name                | Installation                                                 | Purpose                                                                             |
-| ------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Python 3.10 or 3.11 | [Download](https://www.python.org/downloads/)                | The library is Python-based.                                                        |
-| Poetry              | [Instructions](https://python-poetry.org/docs/#installation) | Poetry is used for package management and virtualenv management in Python codebases |
+| Name        | Installation                                                 | Purpose                                                                             |
+| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Python 3.12 | [Download](https://www.python.org/downloads/)                | The library is Python-based.                                                        |
+| Poetry      | [Instructions](https://python-poetry.org/docs/#installation) | Poetry is used for package management and virtualenv management in Python codebases |
 
 # Getting Started
 
@@ -65,18 +65,18 @@ gfm_rag/                     # Root directory
 │   │   ├── models.py
 │   │   ├── layers.py
 │   │   └── ...
+|   ├── workflow/              # Training and inference scripts
+|   │   ├── config/           # Configuration files
+|   │   │   ├── stage1_index_dataset.yaml
+|   │   │   ├── stage2_qa_finetune.yaml
+|   │   │   ├── stage3_qa_inference.yaml
+|   │   │   └── ...
+|   │   ├── stage1_index_dataset.py
+|   │   ├── stage2_qa_finetune.py
+|   │   └── stage3_qa_inference.py
 │   ├── llms/              # Language models
 │   ├── evaluation/         # Evaluator for QA
 │   └── utils/             # Utility functions
-├── workflow/              # Training and inference scripts
-│   ├── config/           # Configuration files
-│   │   ├── stage1_index_dataset.yaml
-│   │   ├── stage2_qa_finetune.yaml
-│   │   ├── stage3_qa_inference.yaml
-│   │   └── ...
-│   ├── stage1_index_dataset.py
-│   ├── stage2_qa_finetune.py
-│   └── stage3_qa_inference.py
 ├── DEVELOPING.md         # Development guide
 ├── mkdocs.yml           # Documentation configuration
 ├── poetry.lock         # Poetry lock file
