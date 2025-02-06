@@ -1,4 +1,4 @@
-This guide explains how to create a knowledge graph index and processing QA data that can be used by GFM-RAG for training and testing.
+This guide explains how to create a knowledge graph index and process QA data that can be used by GFM-RAG for training and testing.
 
 ## Data Preparation
 Please follow the instructions in the [Data Preparation](data_preparation.md) to prepare your dataset in the following structure:
@@ -58,7 +58,7 @@ To index the data, run the following command:
 ??? example "gfmrag/workflow/stage1_index_dataset.py"
 
     ```python title="gfmrag/workflow/stage1_index_dataset.py"
-    --8 < --"gfmrag/workflow/stage1_index_dataset.py"
+    --8<-- "gfmrag/workflow/stage1_index_dataset.py"
     ```
 
 ```bash

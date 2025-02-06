@@ -62,5 +62,5 @@ Please refer to the [LLMs][gfmrag.llms] page for more details.
 | :----------------: | :-----: | :----------------------------------------------------: |
 |      `top_k`       |  None   |            Number of documents to retrieve             |
 |    `max_steps`     |  None   |      Maximum number of steps, `1` for single step      |
-| `max_test_samples` |  None   | Maximum number of samples to test (-1 for all samples) |
+| `max_test_samples` |  None   | Maximum number of samples to test (`-1` for all samples) |
 |      `resume`      |  None   |            Resume from previous prediction             |

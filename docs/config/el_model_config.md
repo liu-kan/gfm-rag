@@ -9,7 +9,12 @@ An example of a Colbert EL model configuration file is shown below:
     --8<-- "gfmrag/workflow/config/el_model/colbert_el_model.yaml"
     ```
 
-To use colbertv2.0 model, you need to download the [checkpoint file](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz) and unzip it into the `checkpint_path`.
+To use colbertv2.0 model, you need to download the [checkpoint file](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz) and unzip it into the `checkpoint_path` (default: `tmp/`).
+
+```bash
+wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz 
+tar -zxvf colbertv2.0.tar.gz -C tmp/
+```
 
 An example checkpoint file structure is shown below:
 

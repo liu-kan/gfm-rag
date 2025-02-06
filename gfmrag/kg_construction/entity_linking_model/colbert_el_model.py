@@ -33,7 +33,7 @@ class ColbertELModel(BaseELModel):
 
     Notes:
         You need to download the checkpoint by running the following command:
-        `wget -O https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf tmp/colbertv2.0.tar.gz -C tmp/`
+        `wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf colbertv2.0.tar.gz -C tmp/`
 
     Examples:
         >>> model = ColbertELModel("path/to/checkpoint")
@@ -46,7 +46,7 @@ class ColbertELModel(BaseELModel):
 
     def __init__(
         self,
-        checkpint_path: str,
+        checkpoint_path: str,
         root: str = "tmp",
         doc_index_name: str = "nbits_2",
         phrase_index_name: str = "nbits_2",
@@ -58,7 +58,7 @@ class ColbertELModel(BaseELModel):
         This initializes a ColBERT model for entity linking using pre-trained checkpoints and indices.
 
         Args:
-            checkpint_path (str): Path to the ColBERT checkpoint file. Model weights will be loaded from this path. Can be downloaded [here](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz)
+            checkpoint_path (str): Path to the ColBERT checkpoint file. Model weights will be loaded from this path. Can be downloaded [here](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz)
             root (str, optional): Root directory for storing indices. Defaults to "tmp".
             doc_index_name (str, optional): Name of the document index. Defaults to "nbits_2".
             phrase_index_name (str, optional): Name of the phrase index. Defaults to "nbits_2".
@@ -71,11 +71,11 @@ class ColbertELModel(BaseELModel):
             None
         """
 
-        if not os.path.exists(checkpint_path):
+        if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(
-                "Checkpoint not found, download the checkpoint with: 'wget -O https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf tmp/colbertv2.0.tar.gz -C tmp/'"
+                "Checkpoint not found, download the checkpoint with: 'wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf tmp/colbertv2.0.tar.gz -C tmp/'"
             )
-        self.checkpoint_path = checkpint_path
+        self.checkpoint_path = checkpoint_path
         self.root = root
         self.doc_index_name = doc_index_name
         self.phrase_index_name = phrase_index_name

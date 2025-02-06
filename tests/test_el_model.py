@@ -7,7 +7,7 @@ def test_colbert_el_model() -> None:
     cfg = OmegaConf.create(
         {
             "_target_": "gfmrag.kg_construction.entity_linking_model.ColbertELModel",
-            "checkpint_path": "tmp/colbertv2.0",
+            "checkpoint_path": "tmp/colbertv2.0",
             "root": "tmp",
         }
     )

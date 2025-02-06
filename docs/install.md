@@ -92,13 +92,13 @@ For more information, visit the following resources:
 
 
 ### CUDA errors when compiling `rspmm` kernel
-GFM-RAG require the `nvcc` compiler to compile the `rspmm` kernel. If you encounter errors related to CUDA, make sure you have the CUDA toolkit installed and the `nvcc` compiler is in your PATH. Meanwhile, make sure your CUDA_HOME variable is set properly to avoid potential compilation errors, eg
+GFM-RAG requires the `nvcc` compiler to compile the `rspmm` kernel. If you encounter errors related to CUDA, make sure you have the CUDA toolkit installed and the `nvcc` compiler is in your PATH. Meanwhile, make sure your CUDA_HOME variable is set properly to avoid potential compilation errors, eg
 
 ```bash
 export CUDA_HOME=/usr/local/cuda-12.4
 ```
 
-Usually, if your install CUDA toolkit via conda, the CUDA_HOME variable is set automatically.
+Usually, if you install CUDA toolkit via conda, the CUDA_HOME variable is set automatically.
 
 ### Stuck when compiling `rspmm` kernel
 

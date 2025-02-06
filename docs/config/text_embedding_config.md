@@ -2,7 +2,7 @@
 
 ## Pre-train Text Embedding Model Configuration
 
-This configuration supports most of the pre-train text embedding models of [SentenceTransformer](https://huggingface.co/sentence-transformers). Examples of DPR text embedding model configuration file are shown below:
+This configuration supports most of the pre-train text embedding models of [SentenceTransformer](https://huggingface.co/sentence-transformers). Examples of DPR text embedding model configuration files are shown below:
 
 
 !!! example "all-mpnet-base-v2"
@@ -40,6 +40,6 @@ This configuration supports the [Nvidia embedding models](https://huggingface.co
 |      `_target_`       |                       `gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel`                        | The class name of [Nvidia Embedding model][gfmrag.kg_construction.entity_linking_model.NVEmbedV2ELModel] |
 | `text_emb_model_name` |                                            `nvidia/NV-Embed-v2`                                             |                                 The name of the Nvidia embedding model.                                  |
 |      `normalize`      |                                               `True`, `False`                                               |                                   Whether to normalize the embeddings.                                   |
-|   `query_instruct`    | `Instruct: Given a entity, retrieve entities that are semantically equivalent to the given entity\nQuery: ` |                                      The instruction for the query.                                      |
+|   `query_instruct`    | `Instruct: Given an entity, retrieve entities that are semantically equivalent to the given entity\nQuery: ` |                                      The instruction for the query.                                      |
 |  `passage_instruct`   |                                                    None                                                     |                                     The instruction for the passage.                                     |
 |    `model_kwargs`     |                                                    `{}`                                                     |                                     The additional model arguments.                                      |

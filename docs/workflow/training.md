@@ -24,9 +24,9 @@ data_name/
 
 During fine-tuning, the GFM model will be trained on the query-documents pairs `train.json` from the labeled dataset to learn complex relationships for retrieval.
 
-It can be conduced on your own dataset to improve the performance of the model on your specific domain.
+It can be conducted on your own dataset to improve the performance of the model on your specific domain.
 
-A example of the training data:
+An example of the training data:
 
 ```json
 [
@@ -78,7 +78,7 @@ You can fine-tune the pre-trained GFM-RAG model on your dataset using the follow
 ??? example "gfmrag/workflow/stage2_qa_finetune.py"
 
     ```python title="gfmrag/workflow/stage2_qa_finetune.py"
-    --8 < --"gfmrag/workflow/stage2_qa_finetune.py"
+    --8<-- "gfmrag/workflow/stage2_qa_finetune.py"
     ```
 
 ```bash
@@ -105,7 +105,7 @@ During pre-training, the GFM model will sample triples from the KG-index `kg.txt
 !!! tip
     It is recommended to conduct [fine-tuning][gfm-fine-tuning] after the pre-training to empower the model with the ability to understand user queries and retrieve relevant documents.
 
-A example of the KG-index:
+An example of the KG-index:
 
 ```txt
 fred gehrke,was,american football player
@@ -128,7 +128,7 @@ You can pre-train the GFM-RAG model on your dataset using the following command:
 ??? example "gfmrag/workflow/stage2_kg_pretrain.py"
 
     ```python title="gfmrag/workflow/stage2_kg_pretrain.py"
-    --8 < --"gfmrag/workflow/stage2_kg_pretrain.py"
+    --8<-- "gfmrag/workflow/stage2_kg_pretrain.py"
     ```
 
 ```bash

@@ -37,7 +37,7 @@ For more details, please refer to our [project page](https://rmanluo.github.io/g
 
 - **Graph Foundation Model (GFM)**: A graph neural network-based retriever that can reason over the KG-index.
 - **Knowledge Graph Index**: A knowledge graph index that captures the relationships between knowledge.
-- **Efficiency**: The GFM-RAG pipeline is efficient in conduct multi-hop reasoning with single step retrieval.
+- **Efficiency**: The GFM-RAG pipeline is efficient in conducting multi-hop reasoning with single-step retrieval.
 - **Generalizability**: The GFM-RAG can be directly applied to unseen datasets without fine-tuning.
 - **Transferability**: The GFM-RAG can be fine-tuned on your own dataset to improve performance on specific domains.
 - **Compatibility**: The GFM-RAG is compatible with arbitrary agent-based framework to conduct multi-step reasoning.
@@ -103,11 +103,11 @@ The `dataset_corpus.json` is a dictionary where each key is the title or unique 
 ```
 
 #### `train.json` and `test.json` (optional)
-If you want to train and evaluate the model, you need to provide training and test data in the form of a JSON file. Each entry in the JSON file should contain the following fields:
+If you want to train and evaluate the model, you need to provide training and testing data in the form of a JSON file. Each entry in the JSON file should contain the following fields:
 
 - `id`: A unique identifier for the example.
 - `question`: The question or query.
-- `supporting_facts`: A list of supporting facts for the question. Each supporting fact is a list containing the title of the document that can be found in the `dataset_corpus.json` file.
+- `supporting_facts`: A list of supporting facts relevant to the question. Each supporting fact is a list containing the title of the document that can be found in the `dataset_corpus.json` file.
 
 Each entry can also contain additional fields depending on the task. For example:
 
@@ -152,7 +152,7 @@ python -m gfmrag.workflow.stage1_index_dataset
 
 This method performs two main tasks:
 
-1. Creates and saves knowledge graph related files (`kg.txt` and `document2entities.json`) from the `dataset_corpus.json` file
+1. Create and save knowledge graph related files (`kg.txt` and `document2entities.json`) from the `dataset_corpus.json` file
 2. Identify the query entities and supporting entities in training and testing data if available in the raw data directory.
 
 Files created:
@@ -160,7 +160,7 @@ Files created:
 - `kg.txt`: Contains knowledge graph triples
 - `document2entities.json`: Maps documents to their entities
 - `train.json`: Processed training data (if raw exists)
-- `test.json`: Processed test data (if raw exists)
+- `test.json`: Processed testing data (if raw exists)
 
 Directory structure:
 ```
@@ -238,9 +238,9 @@ answer = llm.generate_sentence(message)  # Answer: "Emmanuel Macron"
 
 During fine-tuning, the GFM model will be trained on the query-documents pairs `train.json` from the labeled dataset to learn complex relationships for retrieval.
 
-It can be conduced on your own dataset to improve the performance of the model on your specific domain.
+It can be conducted on your own dataset to improve the performance of the model on your specific domain.
 
-A example of the training data:
+An example of the training data:
 
 ```json
 [
@@ -313,7 +313,7 @@ git lfs pull
 
 ### Index Dataset
 
-We have provided the indexed test datasets in the `data` directory. You can build the index for the testing dataset with the following command:
+We have provided the indexed testing datasets in the `data` directory. You can build the index for the testing dataset with the following command:
 
 ```bash
 # Build the index for testing dataset
@@ -434,7 +434,7 @@ python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=musique qa_evaluat
 python -m gfmrag.workflow.stage3_qa_ircot_inference qa_prompt=2wikimultihopqa qa_evaluator=2wikimultihopqa agent_prompt=2wikimultihopqa_ircot dataset.data_name=2wikimultihopqa_test test.max_steps=2
 ```
 
-### Visualize Paths
+### Path Interpretations
 ```bash
 python -m gfmrag.workflow.experiments.visualize_path dataset.data_name=hotpotqa_test
 ```

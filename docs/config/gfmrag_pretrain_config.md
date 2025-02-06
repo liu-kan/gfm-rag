@@ -27,7 +27,7 @@ An example configuration file for GFM pre-training is shown below:
 |        `_target_`        |  None   |                 [KGDataset][gfmrag.datasets.KGDataset]                  |
 |        `cfgs.root`         |  None   |               root dictionary of the datasets saving path               |
 |    `cfgs.force_rebuild`    |  None   |                  whether to force rebuild the dataset                   |
-| `cfgs.text_emb_model_cfgs` |  None   | [text embedding model][text-embedding-model-configuration]configuration |
+| `cfgs.text_emb_model_cfgs` |  None   | [text embedding model][text-embedding-model-configuration] configuration |
 |       `train_names`        |  `[]`   |                     List of training dataset names                      |
 |       `valid_names`        |  `[]`   |                    List of validation dataset names                     |
 

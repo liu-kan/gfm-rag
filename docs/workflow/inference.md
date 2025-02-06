@@ -69,7 +69,7 @@ You can run the following command to perform multi-step reasoning:
 ??? example "gfmrag/workflow/stage3_qa_ircot_inference.py"
 
     ```python title="gfmrag/workflow/stage3_qa_ircot_inference.py"
-    --8 < --"gfmrag/workflow/stage3_qa_ircot_inference.py"
+    --8<-- "gfmrag/workflow/stage3_qa_ircot_inference.py"
     ```
 
 ```bash
@@ -94,7 +94,7 @@ You can also perform batch retrieval with GFM-RAG with multi GPUs supports by ru
 ??? example "gfmrag/workflow/stage3_qa_inference.py"
 
     ```python title="gfmrag/workflow/stage3_qa_inference.py"
-    --8 < --"gfmrag/workflow/stage3_qa_inference.py"
+    --8<-- "gfmrag/workflow/stage3_qa_inference.py"
     ```
 
 ```bash
