@@ -12,7 +12,7 @@ An example of a Colbert EL model configuration file is shown below:
 To use colbertv2.0 model, you need to download the [checkpoint file](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz) and unzip it into the `checkpoint_path` (default: `tmp/`).
 
 ```bash
-wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz 
+wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz
 tar -zxvf colbertv2.0.tar.gz -C tmp/
 ```
 
