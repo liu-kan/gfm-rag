@@ -70,6 +70,8 @@ pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH
 
 ### Prepare Data
 
+We have provided the testing split and an example of the training data in [here](https://drive.google.com/drive/folders/11xuSKD20c1X0bJRZRVvRc8ocW7wgX7Rw?usp=sharing).
+
 You need to prepare the following files:
 
 - `dataset_corpus.json`: A JSON file containing the entire document corpus.
@@ -296,7 +298,7 @@ torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
 
 We are working on releasing the full training datasets.
 
-We have provided the testing split and an example of the training data in the [here](https://drive.google.com/drive/folders/11xuSKD20c1X0bJRZRVvRc8ocW7wgX7Rw?usp=sharing).
+We have provided the testing split and an example of the training data in [here](https://drive.google.com/drive/folders/11xuSKD20c1X0bJRZRVvRc8ocW7wgX7Rw?usp=sharing).
 
 Download the datasets and put them under the `data` directory.
 
