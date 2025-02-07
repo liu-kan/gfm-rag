@@ -294,26 +294,32 @@ torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
 
 ### Download datasets
 
-We are working on releasing the full training datasets. We have provided the testing split and an example of the training data in the `data` directory.
+We are working on releasing the full training datasets.
 
-Download the datasets with `git lfs`:
+We have provided the testing split and an example of the training data in the [here](https://drive.google.com/drive/folders/11xuSKD20c1X0bJRZRVvRc8ocW7wgX7Rw?usp=sharing).
 
-Install `git lfs`:
+Download the datasets and put them under the `data` directory.
 
-```bash
-git lfs install
-```
-
-Download the datasets:
-
-```bash
-git lfs pull
+```text
+data/
+├── 2wikimultihopqa_test
+│   ├── processed
+│   └── raw
+├── hotpotqa_test
+│   ├── processed
+│   └── raw
+├── hotpotqa_train_example
+│   ├── processed
+│   └── raw
+└── musique_test
+    ├── processed
+    └── raw
 ```
 
 
 ### Index Dataset
 
-We have provided the indexed testing datasets in the `data` directory. You can build the index for the testing dataset with the following command:
+We have provided the indexed testing datasets in the `data/*/processed/stage1` directory. You can build the index for the testing dataset with the following command:
 
 ```bash
 # Build the index for testing dataset
