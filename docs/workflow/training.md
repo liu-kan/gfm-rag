@@ -77,9 +77,11 @@ You can fine-tune the pre-trained GFM-RAG model on your dataset using the follow
 
 ??? example "gfmrag/workflow/stage2_qa_finetune.py"
 
+	<!-- blacken-docs:off -->
     ```python title="gfmrag/workflow/stage2_qa_finetune.py"
     --8<-- "gfmrag/workflow/stage2_qa_finetune.py"
     ```
+	<!-- blacken-docs:on -->
 
 ```bash
 python -m gfmrag.workflow.stage2_qa_finetune
@@ -127,9 +129,11 @@ You can pre-train the GFM-RAG model on your dataset using the following command:
 
 ??? example "gfmrag/workflow/stage2_kg_pretrain.py"
 
+	<!-- blacken-docs:off -->
     ```python title="gfmrag/workflow/stage2_kg_pretrain.py"
-    --8<-- "gfmrag/workflow/stage2_kg_pretrain.py"
+    --8<--"gfmrag/workflow/stage2_kg_pretrain.py"
     ```
+	<!-- blacken-docs:on -->
 
 ```bash
 python -m gfmrag.workflow.stage2_kg_pretrain

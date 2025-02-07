@@ -57,9 +57,11 @@ To index the data, run the following command:
 
 ??? example "gfmrag/workflow/stage1_index_dataset.py"
 
+	<!-- blacken-docs:off -->
     ```python title="gfmrag/workflow/stage1_index_dataset.py"
     --8<-- "gfmrag/workflow/stage1_index_dataset.py"
     ```
+	<!-- blacken-docs:on -->
 
 ```bash
 python -m gfmrag.workflow.stage1_index_dataset

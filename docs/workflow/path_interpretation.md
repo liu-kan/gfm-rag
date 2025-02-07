@@ -20,9 +20,11 @@ You can visualize the paths and their importance using the following code:
 
 ??? example "gfmrag/workflow/experiments/visualize_path.py"
 
+    <!-- blacken-docs:off -->
     ```python title="gfmrag/workflow/experiments/visualize_path.py"
-    --8<-- "gfmrag/workflow/experiments/visualize_path.py"
+    --8<--"gfmrag/workflow/experiments/visualize_path.py"
     ```
+    <!-- blacken-docs:on -->
 
 ```bash
 python -m gfmrag.workflow.experiments.visualize_path
