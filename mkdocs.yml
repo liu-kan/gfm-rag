@@ -135,7 +135,7 @@ nav:
           - NER Model: api/kg_construnction/ner_model.md
           - Entity Linking Model: api/kg_construnction/el_model.md
           - OpenIE Model: api/kg_construnction/openie_model.md
-repo_url: https://github.com/RManLuo/gfm-rag.git
+repo_url: https://github.com/RManLuo/gfm-rag
 repo_name: gfm-rag
 
 plugins:
