@@ -166,18 +166,17 @@ Files created:
 
 Directory structure:
 ```
-root/
-└── data_name/
-	├── raw/
-	│   ├── dataset_corpus.json
-	│   ├── train.json (optional)
-	│   └── test.json (optional)
-	└── processed/
-		└── stage1/
-			├── kg.txt
-			├── document2entities.json
-			├── train.json
-			└── test.json
+data_name/
+├── raw/
+│   ├── dataset_corpus.json
+│   ├── train.json (optional)
+│   └── test.json (optional)
+└── processed/
+    └── stage1/
+        ├── kg.txt
+        ├── document2entities.json
+        ├── train.json
+        └── test.json
 ```
 
 ### GFM-RAG Retrieval
