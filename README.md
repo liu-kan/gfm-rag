@@ -68,6 +68,8 @@ pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH
 
 ## Quick Start
 
+Read the full documentation at: https://rmanluo.github.io/gfm-rag/
+
 ### Prepare Data
 
 We have provided the testing split and an example of the training data in [here](https://drive.google.com/drive/folders/11xuSKD20c1X0bJRZRVvRc8ocW7wgX7Rw?usp=sharing).
