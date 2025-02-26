@@ -121,15 +121,14 @@ class LLMOPENIEModel(BaseOPENIEModel):
             elif isinstance(self.client, ChatOllama) or isinstance(
                 self.client, ChatLlamaCpp
             ):
-                response_content = self.client.invoke(ner_messages.to_messages())
+                response_content = self.client.invoke(ner_messages.to_messages()).content
                 response_content = extract_json_dict(response_content)
 
             else:  # no JSON mode
                 chat_completion = self.client.invoke(
                     ner_messages.to_messages(), temperature=0
                 )
-                response = chat_completion.content
-                response_content = response.content
+                response_content = chat_completion.content
                 response_content = extract_json_dict(response_content)
 
             if "named_entities" not in response_content:
@@ -180,7 +179,7 @@ class LLMOPENIEModel(BaseOPENIEModel):
             elif isinstance(self.client, ChatOllama) or isinstance(
                 self.client, ChatLlamaCpp
             ):
-                response_content = self.client.invoke(openie_messages.to_messages())
+                response_content = self.client.invoke(openie_messages.to_messages()).content
                 response_content = extract_json_dict(response_content)
                 response_content = str(response_content)
             else:  # no JSON mode
