@@ -128,7 +128,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
                 chat_completion = self.client.invoke(
                     ner_messages.to_messages(), temperature=0
                 )
-                response_content = chat_completion.content
+                response = chat_completion.content
+                response_content = response.content
                 response_content = extract_json_dict(response_content)
 
             if "named_entities" not in response_content:
@@ -188,7 +189,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
                     temperature=0,
                     max_tokens=self.max_triples_tokens,
                 )
-                response_content = chat_completion.content
+                response = chat_completion.content
+                response_content = response.content
                 response_content = extract_json_dict(response_content)
                 response_content = str(response_content)
 
