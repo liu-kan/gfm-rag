@@ -68,7 +68,8 @@ pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH
 
 ## Quick Start
 
-Read the full documentation at: https://rmanluo.github.io/gfm-rag/
+> [!NOTE]
+> Read the full documentation at: https://rmanluo.github.io/gfm-rag/
 
 ### Prepare Data
 
@@ -185,6 +186,13 @@ data_name/
 
 You need to create a [configuration file](gfmrag/workflow/config/stage3_qa_ircot_inference.yaml) for inference.
 
+> [!NOTE]
+> We have already released the pre-trained model [here](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used directly for retrieval. The model will be automatically downloaded by specifying it in the configuration.
+> ```yaml
+> graph_retriever:
+>     model_path: rmanluo/GFM-RAG-8M
+> ```
+
 Details of the configuration parameters are explained in the [GFM-RAG Configuration](https://rmanluo.github.io/gfm-rag/config/gfmrag_retriever_config/) page.
 
 #### Initialize GFMRetriever
@@ -280,6 +288,12 @@ An example of the training data:
 ```
 
 You need to create a [configuration file](gfmrag/workflow/config/stage2_qa_finetune.yaml) for fine-tuning.
+
+> [!NOTE]
+> We have already released the pre-trained model checkpoint [here](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used for further finetuning. The model will be automatically downloaded by specifying it in the configuration.
+> ```yaml
+> checkpoint: rmanluo/GFM-RAG-8M
+> ```
 
 Details of the configuration parameters are explained in the [GFM-RAG Fine-tuning Configuration](https://rmanluo.github.io/gfm-rag/config/gfmrag_finetune_config/) page.
 
