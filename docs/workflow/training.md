@@ -62,6 +62,12 @@ An example of the training data:
 ]
 ```
 
+!!! NOTE
+	We have already released the [pre-trained model checkpoint](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used for further finetuning. The model will be automatically downloaded by specifying it in the configuration.
+	```yaml
+	checkpoint: rmanluo/GFM-RAG-8M
+	```
+
 You need to create a configuration file for fine-tuning.
 
 ??? example "gfmrag/workflow/config/stage2_qa_finetune.yaml"

@@ -11,3 +11,4 @@ logs/
 *.ipynb
 dist/*
 site/
+.DS_Store

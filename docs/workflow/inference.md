@@ -1,6 +1,14 @@
 GFM-RAG can be directly used for retrieval on a given dataset without fine-tuning. We provide an easy-to-use [GFMRetriever][gfmrag.GFMRetriever] interface for inference.
 
+!!! NOTE
+    We have already released the [pre-trained model](https://huggingface.co/rmanluo/GFM-RAG-8M), which can be used directly for retrieval. The model will be automatically downloaded by specifying it in the configuration.
+    ```yaml
+    graph_retriever:
+      model_path: rmanluo/GFM-RAG-8M
+    ```
+
 ## Config
+
 You need to create a configuration file for inference.
 
 ??? example "gfmrag/workflow/config/stage3_qa_ircot_inference.yaml"
