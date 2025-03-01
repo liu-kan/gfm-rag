@@ -22,6 +22,8 @@
   </p>
 </div>
 
+[\[中文解读\]](https://rman.top/2025/03/01/gfm-rag/)
+
 The GFM-RAG is the first graph foundation model-powered RAG pipeline that combines the power of graph neural networks to reason over knowledge graphs and retrieve relevant documents for question answering.
 
 ![](docs/images/intro.png)
