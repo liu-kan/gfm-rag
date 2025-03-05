@@ -60,7 +60,9 @@ class LLMOPENIEModel(BaseOPENIEModel):
 
     def __init__(
         self,
-        llm_api: Literal["openai", "together", "ollama", "llama.cpp"] = "openai",
+        llm_api: Literal[
+            "openai", "nvidia", "together", "ollama", "llama.cpp"
+        ] = "openai",
         model_name: str = "gpt-4o-mini",
         max_ner_tokens: int = 1024,
         max_triples_tokens: int = 4096,
@@ -68,7 +70,7 @@ class LLMOPENIEModel(BaseOPENIEModel):
         """Initialize LLM-based OpenIE model.
 
         Args:
-            llm_api (Literal["openai", "together", "ollama", "llama.cpp"]): The LLM API provider to use.
+            llm_api (Literal["openai", "nvidia", "together", "ollama", "llama.cpp"]): The LLM API provider to use.
                 Defaults to "openai".
             model_name (str): Name of the language model to use. Defaults to "gpt-4o-mini".
             max_ner_tokens (int): Maximum number of tokens for NER processing. Defaults to 1024.
@@ -222,7 +224,9 @@ class LLMOPENIEModel(BaseOPENIEModel):
             logger.error(f"Results has nested lists: {e}")
             doc_entities = list(np.unique(list(chain.from_iterable(doc_entities))))
         if not doc_entities:
-            logger.warning(f"No entities extracted. Possibly model not following instructions")
+            logger.warning(
+                "No entities extracted. Possibly model not following instructions"
+            )
         triples = self.openie_post_ner_extract(text, doc_entities)
         res["extracted_entities"] = doc_entities
         try:

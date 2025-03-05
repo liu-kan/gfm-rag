@@ -41,7 +41,7 @@ class LLMNERModel(BaseNERModel):
     through the Langchain interface. It processes text input and returns a list of extracted named entities.
 
     Args:
-        llm_api (Literal["openai", "together", "ollama", "llama.cpp"]): The LLM backend to use. Defaults to "openai".
+        llm_api (Literal["openai", "nvidia", "together", "ollama", "llama.cpp"]): The LLM backend to use. Defaults to "openai".
         model_name (str): Name of the specific model to use. Defaults to "gpt-4o-mini".
         max_tokens (int): Maximum number of tokens in the response. Defaults to 1024.
 
@@ -54,14 +54,16 @@ class LLMNERModel(BaseNERModel):
 
     def __init__(
         self,
-        llm_api: Literal["openai", "together", "ollama", "llama.cpp"] = "openai",
+        llm_api: Literal[
+            "openai", "nvidia", "together", "ollama", "llama.cpp"
+        ] = "openai",
         model_name: str = "gpt-4o-mini",
         max_tokens: int = 1024,
     ):
         """Initialize the LLM-based NER model.
 
         Args:
-            llm_api (Literal["openai", "together", "ollama", "llama.cpp"]): The LLM API provider to use.
+            llm_api (Literal["openai", "nvidia", "together", "ollama", "llama.cpp"]): The LLM API provider to use.
                 Defaults to "openai".
             model_name (str): Name of the language model to use.
                 Defaults to "gpt-4o-mini".
