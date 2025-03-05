@@ -221,7 +221,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
         except Exception as e:
             logger.error(f"Results has nested lists: {e}")
             doc_entities = list(np.unique(list(chain.from_iterable(doc_entities))))
-
+        if not doc_entities:
+            logger.warning(f"No entities extracted. Possibly model not following instructions")
         triples = self.openie_post_ner_extract(text, doc_entities)
         res["extracted_entities"] = doc_entities
         try:

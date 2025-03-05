@@ -4,6 +4,7 @@ from typing import Any
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
 from langchain_openai import ChatOpenAI
 from langchain_together import ChatTogether
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 
 def init_langchain_model(
@@ -31,6 +32,14 @@ def init_langchain_model(
             timeout=timeout,
             **kwargs,
         )
+    elif llm  == "nvidia":
+        # https://python.langchain.com/docs/integrations/chat/nvidia_ai_endpoints/
+
+        return ChatNVIDIA(nvidia_api_key=os.environ.get("NVIDIA_API_KEY"),
+                          base_url="https://integrate.api.nvidia.com/v1",
+                          model=model_name,
+                          temperature=temperature,
+                          **kwargs)
     elif llm == "together":
         # https://python.langchain.com/v0.1/docs/integrations/chat/together/
 
