@@ -66,7 +66,7 @@ class DPRELModel(BaseELModel):
         self.use_cache = use_cache
         self.normalize = normalize
         self.batch_size = batch_size
-        self.root = os.path.join(root, f"{self.model_name.replace("/", "_")}_dpr_cache")
+        self.root = os.path.join(root, f"{self.model_name.replace('/', '_')}_dpr_cache")
         if self.use_cache and not os.path.exists(self.root):
             os.makedirs(self.root)
         self.model = SentenceTransformer(

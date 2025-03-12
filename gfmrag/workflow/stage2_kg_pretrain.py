@@ -102,7 +102,7 @@ def train_and_validate(
 
         if utils.get_rank() == 0:
             logger.warning(separator)
-            logger.warning("Epoch %d begin" % epoch)
+            logger.warning(f"Epoch {epoch} begin")
 
         losses = []
         sampler.set_epoch(epoch)
@@ -146,7 +146,7 @@ def train_and_validate(
         if utils.get_rank() == 0:
             avg_loss = sum(losses) / len(losses)
             logger.warning(separator)
-            logger.warning("Epoch %d end" % epoch)
+            logger.warning(f"Epoch {epoch} end")
             logger.warning(line)
             logger.warning(f"average binary cross entropy: {avg_loss:g}")
 
@@ -173,14 +173,12 @@ def train_and_validate(
                 }
                 torch.save(state, os.path.join(output_dir, "model_best.pth"))
             if not cfg.train.save_best_only:
-                logger.warning("Save checkpoint to model_epoch_%d.pth" % epoch)
+                logger.warning(f"Save checkpoint to model_epoch_{epoch}.pth")
                 state = {
                     "model": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                 }
-                torch.save(
-                    state, os.path.join(output_dir, "model_epoch_%d.pth" % epoch)
-                )
+                torch.save(state, os.path.join(output_dir, f"model_epoch_{epoch}.pth"))
             logger.warning(f"Best mrr: {best_result:g} at epoch {best_epoch}")
     utils.synchronize()
     if rank == 0:
@@ -371,9 +369,9 @@ def main(cfg: DictConfig) -> None:
     kg_data_list = [g.to(device) for g in kg_datasets.values()]
 
     rel_emb_dim = {kg.rel_emb.shape[-1] for kg in kg_data_list}
-    assert (
-        len(rel_emb_dim) == 1
-    ), "All datasets should have the same relation embedding dimension"
+    assert len(rel_emb_dim) == 1, (
+        "All datasets should have the same relation embedding dimension"
+    )
 
     model = instantiate(cfg.model, rel_emb_dim=rel_emb_dim.pop())
 

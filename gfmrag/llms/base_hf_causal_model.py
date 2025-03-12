@@ -56,9 +56,9 @@ class HfCausalModel(BaseLanguageModel):
         attn_implementation: str = "flash_attention_2",
     ):
         assert quant in self.QUANT, f"quant should be one of {self.QUANT}"
-        assert (
-            attn_implementation in self.ATTEN_IMPLEMENTATION
-        ), f"attn_implementation should be one of {self.ATTEN_IMPLEMENTATION}"
+        assert attn_implementation in self.ATTEN_IMPLEMENTATION, (
+            f"attn_implementation should be one of {self.ATTEN_IMPLEMENTATION}"
+        )
         assert dtype in self.DTYPE, f"dtype should be one of {self.DTYPE}"
         self.maximun_token = maximun_token
         self.max_new_tokens = max_new_tokens

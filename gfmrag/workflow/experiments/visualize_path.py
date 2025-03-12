@@ -83,11 +83,11 @@ def main(cfg: DictConfig) -> None:
         result_str = (
             cleandoc(f"""
         >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        Question: {raw_sample['question']}
-        Answer: {raw_sample['answer']}
-        Question Entities: {raw_sample['question_entities']}
-        Supporting Facts: {raw_sample['supporting_facts']}
-        Supporting Entities: {raw_sample['supporting_entities']}
+        Question: {raw_sample["question"]}
+        Answer: {raw_sample["answer"]}
+        Question Entities: {raw_sample["question_entities"]}
+        Supporting Facts: {raw_sample["supporting_facts"]}
+        Supporting Entities: {raw_sample["supporting_entities"]}
         Predicted Paths:
         """)
             + "\n"

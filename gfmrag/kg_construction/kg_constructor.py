@@ -401,7 +401,7 @@ class KGConstructor(BaseKGConstructor):
                         unclean_triples.append(triple)
                     else:
                         clean_triple = [processing_phrases(p) for p in triple]
-                         # filter triples with '' or None
+                        # filter triples with '' or None
                         if "" in clean_triple or None in clean_triple:
                             incorrectly_formatted_triples.append(triple)  # modify
                             unclean_triples.append(triple)
