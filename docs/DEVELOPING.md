@@ -15,7 +15,7 @@
 poetry install
 ```
 
-## Install  Pre-commit Hooks
+## Install Pre-commit Hooks
 Set up pre-commit hooks for development:
 
 ```bash

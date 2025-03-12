@@ -136,7 +136,9 @@ def batch_evaluate(pred, target, limit_nodes=None):
     order = pred.argsort(dim=-1, descending=True)
 
     range = torch.arange(num_entity, device=pred.device)
-    ranking = variadic.native_scatter(range.expand_as(order), order, dim=-1, reduce='sum')
+    ranking = variadic.native_scatter(
+        range.expand_as(order), order, dim=-1, reduce="sum"
+    )
 
     target_ranking = ranking[target]
     # unfiltered rankings of all answers
@@ -146,7 +148,7 @@ def batch_evaluate(pred, target, limit_nodes=None):
     )
 
     ranking_among_answer = variadic.native_scatter(
-        variadic.variadic_arange(num_target), order_among_answer, reduce='sum'
+        variadic.variadic_arange(num_target), order_among_answer, reduce="sum"
     )
 
     # filtered rankings of all answers

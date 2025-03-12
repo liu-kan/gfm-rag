@@ -25,7 +25,6 @@ pip install gfmrag
 ```bash
 pip install gfmrag
 ```
-Install relevant packages.
 
 
 ### Install from Source
