@@ -18,8 +18,6 @@ conda create -n gfmrag python=3.12
 conda activate gfmrag
 conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desired CUDA version
 pip install gfmrag
-TORCH=$(python -c "import torch; print(torch.__version__)")
-pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
 
 ### Install via Pip
@@ -27,11 +25,7 @@ pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH
 ```bash
 pip install gfmrag
 ```
-Install relevant packages, please make sure to install the correct version of torch_scatter and torch_sparse based on your PyTorch and CUDA versions:
-```bash
-TORCH=$(python -c "import torch; print(torch.__version__)")
-pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
-```
+Install relevant packages.
 
 
 ### Install from Source
@@ -56,8 +50,6 @@ conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desir
 4. Install project dependencies:
 ```bash
 poetry install
-TORCH=$(python -c "import torch; print(torch.__version__)")
-pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
 
 ## Optional Components

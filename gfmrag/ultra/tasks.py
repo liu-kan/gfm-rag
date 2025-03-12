@@ -3,7 +3,6 @@ from functools import reduce
 
 import torch
 from torch_geometric.data import Data
-from torch_scatter import scatter_add
 
 
 def edge_match(edge_index, query_index):
@@ -166,7 +165,8 @@ def build_relation_graph(graph):
     device = edge_index.device
 
     Eh = torch.vstack([edge_index[0], edge_type]).T.unique(dim=0)  # (num_edges, 2)
-    Dh = scatter_add(torch.ones_like(Eh[:, 1]), Eh[:, 0])
+    Dh = torch.zeros(Eh[:, 0].max() + 1, device=Eh.device, dtype=Eh.dtype)
+    Dh.scatter_add_(dim=0, index=Eh[:, 0], src=torch.ones_like(Eh[:, 0]))
 
     EhT = torch.sparse_coo_tensor(
         torch.flip(Eh, dims=[1]).T,
@@ -178,7 +178,8 @@ def build_relation_graph(graph):
     )
     Et = torch.vstack([edge_index[1], edge_type]).T.unique(dim=0)  # (num_edges, 2)
 
-    Dt = scatter_add(torch.ones_like(Et[:, 1]), Et[:, 0])
+    Dt = torch.zeros(Et[:, 0].max() + 1, device=Et.device, dtype=Et.dtype)
+    Dt.scatter_add_(dim=0, index=Et[:, 0], src=torch.ones_like(Et[:, 0]))
     assert not (Dt[Et[:, 0]] == 0).any()
 
     EtT = torch.sparse_coo_tensor(

@@ -62,12 +62,6 @@ conda install cuda-toolkit -c nvidia/label/cuda-12.4.1 # Replace with your desir
 pip install gfmrag
 ```
 
-Install other dependencies
-```bash
-TORCH=$(python -c "import torch; print(torch.__version__)")
-pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
-```
-
 ## Quick Start
 
 > [!NOTE]

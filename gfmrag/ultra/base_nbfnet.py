@@ -4,10 +4,10 @@ from collections.abc import Sequence
 
 import torch
 from torch import autograd, nn
-from torch_scatter import scatter_add
 
 from . import tasks
 
+from gfmrag.ultra import variadic
 
 class BaseNBFNet(nn.Module):
     def __init__(
@@ -277,12 +277,12 @@ class BaseNBFNet(nn.Module):
                 back_edge = msg_source[abs_index]  # (len(node_out_set) * num_beam, 4)
                 distance = distance.view(len(node_out_set), num_beam)
                 back_edge = back_edge.view(len(node_out_set), num_beam, 4)
-                # scatter distance / back_edge back to all nodes
-                distance = scatter_add(
-                    distance, node_out_set, dim=0, dim_size=num_nodes
+
+                distance = variadic.native_scatter(
+                    distance, node_out_set, dim=0, dim_size=num_nodes, reduce='sum'
                 )  # (num_nodes, num_beam)
-                back_edge = scatter_add(
-                    back_edge, node_out_set, dim=0, dim_size=num_nodes
+                back_edge = variadic.native_scatter(
+                    back_edge, node_out_set, dim=0, dim_size=num_nodes, reduce='sum'
                 )  # (num_nodes, num_beam, 4)
             else:
                 distance = torch.full(
@@ -343,7 +343,8 @@ def size_to_index(size):
 def multi_slice_mask(starts, ends, length):
     values = torch.cat([torch.ones_like(starts), -torch.ones_like(ends)])
     slices = torch.cat([starts, ends])
-    mask = scatter_add(values, slices, dim=0, dim_size=length + 1)[:-1]
+    mask = variadic.native_scatter(values, slices, dim=0, dim_size=length + 1, reduce='sum')[:-1]
+
     mask = mask.cumsum(0).bool()
     return mask
 

@@ -1,7 +1,75 @@
 # mypy: ignore-errors
 import torch
-from torch_scatter import scatter_add, scatter_max, scatter_mean
-from torch_scatter.composite import scatter_log_softmax, scatter_softmax
+
+def native_scatter_softmax(src, index, dim=-1, eps=1e-12):
+    """
+    Implementation of scatter_softmax using PyTorch's native scatter operations.
+
+    Args:
+        src (Tensor): The source tensor.
+        index (LongTensor): The indices of elements to scatter.
+        dim (int, optional): The axis along which to index. (default: -1)
+        eps (float, optional): Small value for numerical stability. (default: 1e-12)
+
+    Returns:
+        Tensor: Output tensor with softmax applied over elements sharing the same index.
+    """
+    max_value_per_index = torch.zeros_like(src)
+    max_value_per_index = max_value_per_index.scatter_reduce(
+        dim=dim,
+        index=index,
+        src=src,
+        reduce="amax",
+        include_self=False,
+    )
+    gathered_max = max_value_per_index.gather(dim, index)
+    src_stable = src - gathered_max
+
+    exp_src = torch.exp(src_stable)
+
+    sum_per_index = torch.zeros_like(src)
+    sum_per_index = sum_per_index.scatter_add(
+        dim=dim,
+        index=index,
+        src=exp_src
+    )
+
+    gathered_sum = sum_per_index.gather(dim, index) + eps
+
+    return exp_src / gathered_sum
+
+
+def native_scatter(src, index, dim=0, dim_size=None, reduce='sum'):
+    """
+    Implements torch_scatter style functions using PyTorch's native  method.
+
+    Args:
+        src (torch.Tensor): Source tensor containing values to scatter
+        index (torch.Tensor): Index tensor specifying where to scatter values.
+                             Must have the same shape as src.
+        dim (int, optional): Dimension along which to scatter. Default: 0
+        dim_size (int, optional): Size of the output tensor in the given dimension.
+                                 If None, will be automatically determined. Default: None
+
+    Returns:
+        torch.Tensor: Result of scatter operation
+    """
+    assert index.shape == src.shape, "Index and source tensors must have the same shape"
+
+    if dim < 0:
+        dim = src.dim() + dim
+
+    if dim_size is None:
+        dim_size = index.max().item() + 1
+
+    output_shape = list(src.shape)
+    output_shape[dim] = dim_size
+
+    output = torch.zeros(tuple(output_shape), device=src.device, dtype=src.dtype)
+    output.scatter_reduce_(dim=dim, index=index, src=src, reduce=reduce, include_self=False)
+
+    return output
+
 
 """
 Some variadic functions adopted from TorchDrug
@@ -84,7 +152,7 @@ def multi_slice_mask(starts, ends, length):
     slices = torch.cat([starts, ends])
     if slices.numel():
         assert slices.min() >= 0 and slices.max() <= length
-    mask = scatter_add(values, slices, dim=0, dim_size=length + 1)[:-1]
+    mask = native_scatter(values, slices, dim=0, dim_size=length + 1,reduce='sum')[:-1]
     mask = mask.cumsum(0).bool()
     return mask
 
@@ -140,7 +208,7 @@ def variadic_sum(input, size):
     index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
     index2sample = index2sample.expand_as(input)
 
-    value = scatter_add(input, index2sample, dim=0)
+    value = native_scatter(input, index2sample, dim=0, reduce='sum')
     return value
 
 
@@ -158,49 +226,8 @@ def variadic_mean(input, size):
     index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
     index2sample = index2sample.expand_as(input)
 
-    value = scatter_mean(input, index2sample, dim=0)
+    value = native_scatter(input, index2sample, dim=0, reduce='mean')
     return value
-
-
-def variadic_max(input, size):
-    """
-    Compute max over sets with variadic sizes.
-
-    Suppose there are :math:`N` sets, and the sizes of all sets are summed to :math:`B`.
-
-    Parameters:
-        input (Tensor): input of shape :math:`(B, ...)`
-        size (LongTensor): size of sets of shape :math:`(N,)`
-
-    Returns
-        (Tensor, LongTensor): max values and indexes
-    """
-    index2sample = torch.repeat_interleave(size)
-    index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
-    index2sample = index2sample.expand_as(input)
-
-    value, index = scatter_max(input, index2sample, dim=0)
-    index = index + (size - size.cumsum(0)).view([-1] + [1] * (index.ndim - 1))
-    return value, index
-
-
-def variadic_log_softmax(input, size):
-    """
-    Compute log softmax over categories with variadic sizes.
-
-    Suppose there are :math:`N` samples, and the numbers of categories in all samples are summed to :math:`B`.
-
-    Parameters:
-        input (Tensor): input of shape :math:`(B, ...)`
-        size (LongTensor): number of categories of shape :math:`(N,)`
-    """
-    index2sample = torch.repeat_interleave(size)
-    index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
-    index2sample = index2sample.expand_as(input)
-
-    log_likelihood = scatter_log_softmax(input, index2sample, dim=0)
-    return log_likelihood
-
 
 def variadic_softmax(input, size):
     """
@@ -216,106 +243,8 @@ def variadic_softmax(input, size):
     index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
     index2sample = index2sample.expand_as(input)
 
-    log_likelihood = scatter_softmax(input, index2sample, dim=0)
+    log_likelihood = native_scatter_softmax(input, index2sample, dim=0)
     return log_likelihood
-
-
-def variadic_cross_entropy(input, target, size, reduction="mean"):
-    """
-    Compute cross entropy loss over categories with variadic sizes.
-
-    Suppose there are :math:`N` samples, and the numbers of categories in all samples are summed to :math:`B`.
-
-    Parameters:
-        input (Tensor): prediction of shape :math:`(B, ...)`
-        target (Tensor): target of shape :math:`(N, ...)`. Each target is a relative index in a sample.
-        size (LongTensor): number of categories of shape :math:`(N,)`
-        reduction (string, optional): reduction to apply to the output.
-            Available reductions are ``none``, ``sum`` and ``mean``.
-    """
-    index2sample = torch.repeat_interleave(size)
-    index2sample = index2sample.view([-1] + [1] * (input.ndim - 1))
-    index2sample = index2sample.expand_as(input)
-
-    log_likelihood = scatter_log_softmax(input, index2sample, dim=0)
-    size = size.view([-1] + [1] * (input.ndim - 1))
-    assert (target >= 0).all() and (target < size).all()
-    target_index = target + size.cumsum(0) - size
-    loss = -log_likelihood.gather(0, target_index)
-    if reduction == "mean":
-        return loss.mean()
-    elif reduction == "sum":
-        return loss.sum()
-    elif reduction == "none":
-        return loss
-    else:
-        raise ValueError(f"Unknown reduction `{reduction}`")
-
-
-def variadic_topk(input, size, k, largest=True):
-    """
-    Compute the :math:`k` largest elements over sets with variadic sizes.
-
-    Suppose there are :math:`N` sets, and the sizes of all sets are summed to :math:`B`.
-
-    If any set has less than than :math:`k` elements, the size-th largest element will be
-    repeated to pad the output to :math:`k`.
-
-    Parameters:
-        input (Tensor): input of shape :math:`(B, ...)`
-        size (LongTensor): size of sets of shape :math:`(N,)`
-        k (int or LongTensor): the k in "top-k". Can be a fixed value for all sets,
-            or different values for different sets of shape :math:`(N,)`.
-        largest (bool, optional): return largest or smallest elements
-
-    Returns
-        (Tensor, LongTensor): top-k values and indexes
-    """
-    index2graph = torch.repeat_interleave(size)
-    index2graph = index2graph.view([-1] + [1] * (input.ndim - 1))
-
-    mask = ~torch.isinf(input)
-    max = input[mask].max().item()
-    min = input[mask].min().item()
-    abs_max = input[mask].abs().max().item()
-    # special case: max = min
-    gap = max - min + abs_max * 1e-6
-    safe_input = input.clamp(min - gap, max + gap)
-    offset = gap * 4
-    if largest:
-        offset = -offset
-    input_ext = safe_input + offset * index2graph
-    index_ext = input_ext.argsort(dim=0, descending=largest)
-    if isinstance(k, torch.Tensor) and k.shape == size.shape:
-        num_actual = torch.min(size, k)
-    else:
-        num_actual = size.clamp(max=k)
-    num_padding = k - num_actual
-    starts = size.cumsum(0) - size
-    ends = starts + num_actual
-    mask = multi_slice_mask(starts, ends, len(index_ext)).nonzero().flatten()
-
-    if (num_padding > 0).any():
-        # special case: size < k, pad with the last valid index
-        padding = ends - 1
-        padding2graph = torch.repeat_interleave(num_padding)
-        mask = _extend(mask, num_actual, padding[padding2graph], num_padding)[0]
-
-    index = index_ext[mask]  # (N * k, ...)
-    value = input.gather(0, index)
-    if isinstance(k, torch.Tensor) and k.shape == size.shape:
-        value = value.view(-1, *input.shape[1:])
-        index = index.view(-1, *input.shape[1:])
-        index = index - (size.cumsum(0) - size).repeat_interleave(k).view(
-            [-1] + [1] * (index.ndim - 1)
-        )
-    else:
-        value = value.view(-1, k, *input.shape[1:])
-        index = index.view(-1, k, *input.shape[1:])
-        index = index - (size.cumsum(0) - size).view([-1] + [1] * (index.ndim - 1))
-
-    return value, index
-
 
 def variadic_sort(input, size, descending=False):
     """

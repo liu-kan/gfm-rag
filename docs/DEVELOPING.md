@@ -13,8 +13,6 @@
 ```shell
 # install python dependencies
 poetry install
-TORCH=$(python -c "import torch; print(torch.__version__)")
-pip install torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
 ```
 
 ## Install  Pre-commit Hooks
