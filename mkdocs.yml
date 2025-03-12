@@ -153,3 +153,7 @@ plugins:
           import:
             - url: https://docs.python.org/3/objects.inv
               domains: [std, py]
+
+extra:
+  version:
+    provider: mike
