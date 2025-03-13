@@ -2,7 +2,6 @@
 
 import torch
 from torch import distributed as dist
-from torch_scatter import scatter_add
 
 from gfmrag.ultra import variadic
 
@@ -137,7 +136,9 @@ def batch_evaluate(pred, target, limit_nodes=None):
     order = pred.argsort(dim=-1, descending=True)
 
     range = torch.arange(num_entity, device=pred.device)
-    ranking = scatter_add(range.expand_as(order), order, dim=-1)
+    ranking = variadic.native_scatter(
+        range.expand_as(order), order, dim=-1, reduce="sum"
+    )
 
     target_ranking = ranking[target]
     # unfiltered rankings of all answers
@@ -145,8 +146,9 @@ def batch_evaluate(pred, target, limit_nodes=None):
     order_among_answer = (
         order_among_answer + (num_target.cumsum(0) - num_target)[answer2query]
     )
-    ranking_among_answer = scatter_add(
-        variadic.variadic_arange(num_target), order_among_answer
+
+    ranking_among_answer = variadic.native_scatter(
+        variadic.variadic_arange(num_target), order_among_answer, reduce="sum"
     )
 
     # filtered rankings of all answers

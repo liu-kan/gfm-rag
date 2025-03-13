@@ -5,7 +5,7 @@ from torch import nn
 from torch.nn import functional as F  # noqa:N812
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.utils import degree
-from torch_scatter import scatter
+from gfmrag.ultra import variadic
 
 
 class GeneralizedRelationalConv(MessagePassing):
@@ -15,6 +15,10 @@ class GeneralizedRelationalConv(MessagePassing):
         "transe": "add",
         "distmult": "mul",
     }
+    aggr2reduce = {'sum':'sum',
+                   'mean':'mean',
+                   'min':'amin',
+                   'max':'amax'}
 
     # TODO for compile() - doesn't work currently
     # propagate_type = {"edge_index": torch.LongTensor, "size": Tuple[int, int]}
@@ -194,33 +198,33 @@ class GeneralizedRelationalConv(MessagePassing):
         edge_weight = edge_weight.view(shape)
 
         if self.aggregate_func == "pna":
-            mean = scatter(
+            mean = variadic.native_scatter(
                 input * edge_weight,
                 index,
                 dim=self.node_dim,
                 dim_size=dim_size,
                 reduce="mean",
             )
-            sq_mean = scatter(
+            sq_mean = variadic.native_scatter(
                 input**2 * edge_weight,
                 index,
                 dim=self.node_dim,
                 dim_size=dim_size,
                 reduce="mean",
             )
-            max = scatter(
+            max = variadic.native_scatter(
                 input * edge_weight,
                 index,
                 dim=self.node_dim,
                 dim_size=dim_size,
-                reduce="max",
+                reduce="amax",
             )
-            min = scatter(
+            min = variadic.native_scatter(
                 input * edge_weight,
                 index,
                 dim=self.node_dim,
                 dim_size=dim_size,
-                reduce="min",
+                reduce="amin",
             )
             std = (sq_mean - mean**2).clamp(min=self.eps).sqrt()
             features = torch.cat(
@@ -241,12 +245,12 @@ class GeneralizedRelationalConv(MessagePassing):
             )
             output = (features.unsqueeze(-1) * scales.unsqueeze(-2)).flatten(-2)
         else:
-            output = scatter(
+            output = variadic.native_scatter(
                 input * edge_weight,
                 index,
                 dim=self.node_dim,
                 dim_size=dim_size,
-                reduce=self.aggregate_func,
+                reduce=self.aggr2reduce[self.aggregate_func],
             )
 
         return output

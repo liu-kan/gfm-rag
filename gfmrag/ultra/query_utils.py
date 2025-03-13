@@ -5,7 +5,6 @@ import csv
 import torch
 from torch import Tensor
 from torch import distributed as dist
-from torch_scatter import scatter_add, scatter_max, scatter_mean
 
 from . import variadic
 
@@ -328,7 +327,7 @@ def batch_evaluate(pred, target, limit_nodes=None):
     order = pred.argsort(dim=-1, descending=True)
 
     range = torch.arange(num_entity, device=pred.device)
-    ranking = scatter_add(range.expand_as(order), order, dim=-1)
+    ranking = variadic.native_scatter(range.expand_as(order), order, dim=-1, reduce='sum')
 
     easy_ranking = ranking[easy_answer]
     hard_ranking = ranking[hard_answer]
@@ -338,10 +337,9 @@ def batch_evaluate(pred, target, limit_nodes=None):
     order_among_answer = (
         order_among_answer + (num_answer.cumsum(0) - num_answer)[answer2query]
     )
-    ranking_among_answer = scatter_add(
-        variadic.variadic_arange(num_answer), order_among_answer
+    ranking_among_answer = variadic.native_scatter(
+        variadic.variadic_arange(num_answer), order_among_answer, reduce='sum'
     )
-
     # filtered rankings of all answers
     ranking = answer_ranking - ranking_among_answer + 1
     ends = num_answer.cumsum(0)
@@ -362,17 +360,27 @@ def evaluate(pred, target, metrics, id2type):
         if _metric == "mrr":
             answer_score = 1 / ranking.float()
             query_score = variadic.variadic_mean(answer_score, num_hard)
-            type_score = scatter_mean(query_score, type, dim_size=len(id2type))
+            type_score = variadic.native_scatter(query_score,
+                                                 type,
+                                                 dim_size=len(id2type),
+                                                 reduce='mean')
+
         elif _metric.startswith("hits@"):
             threshold = int(_metric[5:])
             answer_score = (ranking <= threshold).float()
             query_score = variadic.variadic_mean(answer_score, num_hard)
-            type_score = scatter_mean(query_score, type, dim_size=len(id2type))
+            type_score = variadic.native_scatter(query_score,
+                                                 type,
+                                                 dim_size=len(id2type),
+                                                 reduce='mean')
         elif _metric == "mape":
             query_score = (num_pred - num_easy - num_hard).abs() / (
                 num_easy + num_hard
             ).float()
-            type_score = scatter_mean(query_score, type, dim_size=len(id2type))
+            type_score = variadic.native_scatter(query_score,
+                                                 type,
+                                                 dim_size=len(id2type),
+                                                 reduce='mean')
         elif _metric == "spearmanr":
             type_score = []
             for i in range(len(id2type)):
@@ -391,7 +399,10 @@ def evaluate(pred, target, metrics, id2type):
             )
             mask = (num_easy > 0) & (num_hard > 0)
             query_score = answer_score[mask]
-            type_score = scatter_mean(query_score, type[mask], dim_size=len(id2type))
+            type_score = variadic.native_scatter(query_score,
+                                                 type[mask],
+                                                 dim_size=len(id2type),
+                                                 reduce='mean')
         else:
             raise ValueError(f"Unknown metric `{_metric}`")
 
@@ -457,8 +468,8 @@ def spearmanr(pred, target):
         )
 
         # for elements that have the same value, replace their rankings with the mean of their rankings
-        mean_ranking = scatter_mean(
-            ranking, input_inverse, dim=0, dim_size=len(input_set)
+        mean_ranking = variadic.native_scatter(
+            ranking, input_inverse, dim=0, dim_size=len(input_set), reduce='mean'
         )
         ranking = mean_ranking[input_inverse]
         return ranking
@@ -470,42 +481,6 @@ def spearmanr(pred, target):
     target_std = target.std(unbiased=False)
     spearmanr = covariance / (pred_std * target_std + 1e-10)
     return spearmanr
-
-
-def spmm_max(index: Tensor, value: Tensor, m: int, n: int, matrix: Tensor) -> Tensor:
-    """
-    The same spmm kernel from torch_sparse
-    https://github.com/rusty1s/pytorch_sparse/blob/master/torch_sparse/spmm.py#L29
-
-    with the only change that instead of scatter_add aggregation
-    we keep scatter_max
-
-    Matrix product of sparse matrix with dense matrix.
-
-    Args:
-        index (:class:`LongTensor`): The index tensor of sparse matrix.
-        value (:class:`Tensor`): The value tensor of sparse matrix, either of
-            floating-point or integer type. Does not work for boolean and
-            complex number data types.
-        m (int): The first dimension of sparse matrix.
-        n (int): The second dimension of sparse matrix.
-        matrix (:class:`Tensor`): The dense matrix of same type as
-            :obj:`value`.
-
-    :rtype: :class:`Tensor`
-    """
-
-    assert n == matrix.size(-2)
-
-    row, col = index[0], index[1]
-    matrix = matrix if matrix.dim() > 1 else matrix.unsqueeze(-1)
-
-    out = matrix.index_select(-2, col)
-    out = out * value.unsqueeze(-1)
-    out = scatter_max(out, row, dim=-2, dim_size=m)[0]
-
-    return out
-
 
 def cat(objs, *args, **kwargs):
     """
