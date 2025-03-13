@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    tags:
+      - 'v*'
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
@@ -53,9 +55,18 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root --with dev,doc
 
-      - name: mkdocs build
+      - name: mkdocs latest build
         shell: bash
         run: |
           git fetch origin gh-pages --depth=1
           source .venv/bin/activate
           mike deploy --push --update-aliases main latest
+      - name: mkdocs release build
+        shell: bash
+        if: startsWith(github.ref_name, 'v')
+        run: |
+          git fetch origin gh-pages --depth=1
+          source .venv/bin/activate
+          VERSION="${{ github.ref_name }}"
+          VERSION_NO_V="${VERSION#v}"
+          mike deploy --push --update-aliases "$VERSION_NO_V" stable
