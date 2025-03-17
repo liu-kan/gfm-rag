@@ -38,6 +38,16 @@ def native_scatter_softmax(src, index, dim=-1, eps=1e-12):
 
     return exp_src / gathered_sum
 
+def broadcast(src: torch.Tensor, other: torch.Tensor, dim: int):
+    if dim < 0:
+        dim = other.dim() + dim
+    if src.dim() == 1:
+        for _ in range(0, dim):
+            src = src.unsqueeze(0)
+    for _ in range(src.dim(), other.dim()):
+        src = src.unsqueeze(-1)
+    src = src.expand(other.size())
+    return src
 
 def native_scatter(src, index, dim=0, dim_size=None, reduce='sum'):
     """
@@ -54,6 +64,9 @@ def native_scatter(src, index, dim=0, dim_size=None, reduce='sum'):
     Returns:
         torch.Tensor: Result of scatter operation
     """
+    if index.shape != src.shape:
+        index = broadcast(index, src, dim) # Try to broadcast index to src shape
+
     assert index.shape == src.shape, "Index and source tensors must have the same shape"
 
     if dim < 0:
