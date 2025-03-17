@@ -8,6 +8,7 @@
   </p>
   <p>
   <img src='https://img.shields.io/github/stars/RManLuo/gfm-rag?color=green&style=social' />
+  <a href="https://pypi.org/project/gfmrag/">
     <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/gfmrag">
   </a>
   <a href="https://pypi.org/project/gfmrag/">
