@@ -299,9 +299,9 @@ You can fine-tune the pre-trained GFM-RAG model on your dataset using the follow
 ```bash
 python -m gfmrag.workflow.stage2_qa_finetune
 # Multi-GPU training
-torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_qa_finetune
 # Multi-node Multi-GPU training
-torchrun --nproc_per_node=4 --nnodes=2 gfmrag.workflow.stage2_qa_finetune
+torchrun --nproc_per_node=4 --nnodes=2 -m gfmrag.workflow.stage2_qa_finetune
 ```
 
 ## Reproduce Results reported in the paper
@@ -356,7 +356,7 @@ Unsupervised training on the constructed KG.
 ```bash
 python -m gfmrag.workflow.stage2_kg_pretrain
 # Multi-GPU training
-torchrun --nproc_per_node=4 gfmrag.workflow.stage2_kg_pretrain
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_kg_pretrain
 ```
 
 Full script is available at [scripts/stage2_pretrain.sh](scripts/stage2_pretrain.sh).
@@ -366,7 +366,7 @@ Supervised training on the QA dataset.
 ```bash
 python -m gfmrag.workflow.stage2_qa_finetune
 # Multi-GPU training
-torchrun --nproc_per_node=4 gfmrag.workflow.stage2_qa_finetune
+torchrun --nproc_per_node=4 -m gfmrag.workflow.stage2_qa_finetune
 ```
 
 Full script is available at [scripts/stage2_finetune.sh](scripts/stage2_finetune.sh).
