@@ -79,7 +79,7 @@ def train_and_validate(
     rank = utils.get_rank()
 
     optimizer = instantiate(cfg.optimizer, model.parameters())
-    start_epoch = 4
+    start_epoch = 0
     # Load optimizer state and epoch if exists
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
         if os.path.exists(cfg.train.checkpoint):
