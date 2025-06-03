@@ -132,7 +132,7 @@ class QADataset(InMemoryDataset):
             self.raw_test_data = []
 
         self.ent2docs = torch.load(
-            os.path.join(self.processed_dir, "ent2doc.pt"), weights_only=False
+            os.path.join(self.processed_dir, "ent2doc.pt"), weights_only=True
         )  # (n_nodes, n_docs)
         self.id2doc = {i: doc for i, doc in enumerate(self.doc2entities)}
 

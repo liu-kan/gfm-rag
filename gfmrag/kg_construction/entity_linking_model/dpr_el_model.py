@@ -102,7 +102,9 @@ class DPRELModel(BaseELModel):
         cache_file = f"{self.root}/{fingerprint}.pt"
         if os.path.exists(cache_file):
             self.entity_embeddings = torch.load(
-                cache_file, map_location="cuda" if torch.cuda.is_available() else "cpu"
+                cache_file,
+                map_location="cuda" if torch.cuda.is_available() else "cpu",
+                weights_only=True,
             )
         else:
             self.entity_embeddings = self.model.encode(

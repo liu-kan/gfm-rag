@@ -83,7 +83,9 @@ def train_and_validate(
     # Load optimizer state and epoch if exists
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
         if os.path.exists(cfg.train.checkpoint):
-            state = torch.load(cfg.train.checkpoint, map_location="cpu")
+            state = torch.load(
+                cfg.train.checkpoint, map_location="cpu", weights_only=True
+            )
             if "optimizer" in state:
                 optimizer.load_state_dict(state["optimizer"])
             else:
@@ -239,7 +241,7 @@ def train_and_validate(
     state = torch.load(
         os.path.join(output_dir, "model_best.pth"),
         map_location=device,
-        weights_only=False,
+        weights_only=True,
     )
     model.load_state_dict(state["model"])
 
@@ -397,7 +399,9 @@ def main(cfg: DictConfig) -> None:
 
     if "checkpoint" in cfg.train and cfg.train.checkpoint is not None:
         if os.path.exists(cfg.train.checkpoint):
-            state = torch.load(cfg.train.checkpoint, map_location="cpu")
+            state = torch.load(
+                cfg.train.checkpoint, map_location="cpu", weights_only=True
+            )
             model.load_state_dict(state["model"])
         # Try to load the model from the remote dictionary
         else:
