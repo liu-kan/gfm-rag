@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gfmrag"
-version = "0.2.0"
+version = "0.2.1"
 description = "Graph Foundation Model for Retrieval Augmented Generation"
 authors = [
     "Linhao Luo <linhao.luo@monash.edu>",
@@ -11,7 +11,7 @@ packages = [{include = "gfmrag"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-torch = ">=2.4.1,<2.6.0"
+torch = ">=2.4.1"
 torch-geometric = "^2.4.0"
 ninja = "^1.11.1.1"
 easydict = "^1.13"
@@ -29,7 +29,7 @@ langchain-openai = "^0.2.11"
 langchain-together = "^0.2.0"
 langchain-community = "^0.3.9"
 langchain-nvidia-ai-endpoints = "^0.3.9"
-colbert-ai = "^0.2.21"
+colbert-ai = {git = "https://github.com/stanford-futuredata/ColBERT.git", rev = "2b14566f8120ba57c47e879150ec73eca0286b2c"}
 faiss-gpu-cu12 = "^1.9.0.post1"
 
 
