@@ -2,9 +2,7 @@ import hashlib
 import os
 import shutil
 
-from colbert import Indexer, Searcher
-from colbert.data import Queries
-from colbert.infra import ColBERTConfig, Run, RunConfig
+from ragatouille import RAGPretrainedModel
 
 from gfmrag.kg_construction.utils import processing_phrases
 
@@ -19,24 +17,17 @@ class ColbertELModel(BaseELModel):
     similar entities in the index for given named entities.
 
     Attributes:
-        checkpoint_path (str): Path to the ColBERT checkpoint file
+        model_name_or_path (str): Path to the ColBERT checkpoint file
         root (str): Root directory for storing indices
-        doc_index_name (str): Name of document index
-        phrase_index_name (str): Name of phrase index
         force (bool): Whether to force reindex if index exists
         entity_list (list): List of entities to be indexed
-        phrase_searcher: ColBERT phrase searcher object
+        index_path (str): Path to the index created by ColBERT
 
     Raises:
-        FileNotFoundError: If the checkpoint file is not found at the specified path.
         AttributeError: If entity linking is attempted before indexing.
 
-    Notes:
-        You need to download the checkpoint by running the following command:
-        `wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf colbertv2.0.tar.gz -C tmp/`
-
     Examples:
-        >>> model = ColbertELModel("path/to/checkpoint")
+        >>> model = ColbertELModel("colbert-ir/colbertv2.0")
         >>> model.index(["entity1", "entity2", "entity3"])
         >>> results = model(["query1", "query2"], topk=3)
         >>> print(results)
@@ -46,11 +37,10 @@ class ColbertELModel(BaseELModel):
 
     def __init__(
         self,
-        checkpoint_path: str,
+        model_name_or_path: str = "colbert-ir/colbertv2.0",
         root: str = "tmp",
-        doc_index_name: str = "nbits_2",
-        phrase_index_name: str = "nbits_2",
         force: bool = False,
+        **kwargs: str,
     ) -> None:
         """
         Initialize the ColBERT entity linking model.
@@ -58,10 +48,8 @@ class ColbertELModel(BaseELModel):
         This initializes a ColBERT model for entity linking using pre-trained checkpoints and indices.
 
         Args:
-            checkpoint_path (str): Path to the ColBERT checkpoint file. Model weights will be loaded from this path. Can be downloaded [here](https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz)
+            model_name_or_path (str, optional): Path to the ColBERT checkpoint file. Defaults to "colbert-ir/colbertv2.0".
             root (str, optional): Root directory for storing indices. Defaults to "tmp".
-            doc_index_name (str, optional): Name of the document index. Defaults to "nbits_2".
-            phrase_index_name (str, optional): Name of the phrase index. Defaults to "nbits_2".
             force (bool, optional): Whether to force recomputation of existing indices. Defaults to False.
 
         Raises:
@@ -70,16 +58,13 @@ class ColbertELModel(BaseELModel):
         Returns:
             None
         """
-
-        if not os.path.exists(checkpoint_path):
-            raise FileNotFoundError(
-                "Checkpoint not found, download the checkpoint with: 'wget https://downloads.cs.stanford.edu/nlp/data/colbert/colbertv2/colbertv2.0.tar.gz && tar -zxvf tmp/colbertv2.0.tar.gz -C tmp/'"
-            )
-        self.checkpoint_path = checkpoint_path
+        self.model_name_or_path = model_name_or_path
         self.root = root
-        self.doc_index_name = doc_index_name
-        self.phrase_index_name = phrase_index_name
         self.force = force
+        self.colbert_model = RAGPretrainedModel.from_pretrained(
+            self.model_name_or_path,
+            index_root=self.root,
+        )
 
     def index(self, entity_list: list) -> None:
         """
@@ -102,40 +87,20 @@ class ColbertELModel(BaseELModel):
             - Sets up ColBERT indexer and searcher with specified configuration
             - Stores phrase_searcher as instance variable for later use
         """
-        self.entity_list = entity_list
         # Get md5 fingerprint of the whole given entity list
         fingerprint = hashlib.md5("".join(entity_list).encode()).hexdigest()
-        exp_name = f"Entity_index_{fingerprint}"
+        index_name = f"Entity_index_{fingerprint}"
         if os.path.exists(f"{self.root}/colbert/{fingerprint}") and self.force:
             shutil.rmtree(f"{self.root}/colbert/{fingerprint}")
-        colbert_config = {
-            "root": f"{self.root}/colbert/{fingerprint}",
-            "doc_index_name": self.doc_index_name,
-            "phrase_index_name": self.phrase_index_name,
-        }
         phrases = [processing_phrases(p) for p in entity_list]
-        with Run().context(
-            RunConfig(nranks=1, experiment=exp_name, root=colbert_config["root"])
-        ):
-            config = ColBERTConfig(
-                nbits=2,
-                root=colbert_config["root"],
-            )
-            indexer = Indexer(checkpoint=self.checkpoint_path, config=config)
-            indexer.index(
-                name=self.phrase_index_name, collection=phrases, overwrite="reuse"
-            )
-
-        with Run().context(
-            RunConfig(nranks=1, experiment=exp_name, root=colbert_config["root"])
-        ):
-            config = ColBERTConfig(
-                root=colbert_config["root"],
-            )
-            phrase_searcher = Searcher(
-                index=colbert_config["phrase_index_name"], config=config, verbose=1
-            )
-        self.phrase_searcher = phrase_searcher
+        index_path = self.colbert_model.index(
+            index_name=index_name,
+            collection=phrases,
+            overwrite_index=self.force if self.force else "reuse",
+            split_documents=False,
+            use_faiss=True,
+        )
+        self.index_path = index_path
 
     def __call__(self, ner_entity_list: list, topk: int = 1) -> dict:
         """
@@ -157,31 +122,32 @@ class ColbertELModel(BaseELModel):
         """
 
         try:
-            self.__getattribute__("phrase_searcher")
+            self.__getattribute__("index_path")
         except AttributeError as e:
             raise AttributeError("Index the entities first using index method") from e
 
-        ner_entity_list = [processing_phrases(p) for p in ner_entity_list]
-        query_data: dict[int, str] = {
-            i: query for i, query in enumerate(ner_entity_list)
-        }
+        queries = [processing_phrases(p) for p in ner_entity_list]
 
-        queries = Queries(path=None, data=query_data)
-        ranking = self.phrase_searcher.search_all(queries, k=topk)
+        results = self.colbert_model.search(
+            queries,
+            k=topk,
+        )
 
         linked_entity_dict: dict[str, list] = {}
         for i in range(len(queries)):
             query = queries[i]
-            rank = ranking.data[i]
+            result = results[i]
             linked_entity_dict[query] = []
-            max_score = rank[0][2]
+            max_score = (
+                max([r["score"] for r in result]) if result else 1.0
+            )  # Avoid division by zero
 
-            for phrase_id, _rank, score in rank:
+            for r in result:
                 linked_entity_dict[query].append(
                     {
-                        "entity": self.entity_list[phrase_id],
-                        "score": score,
-                        "norm_score": score / max_score,
+                        "entity": r["content"],
+                        "score": r["score"],
+                        "norm_score": r["score"] / max_score,
                     }
                 )
 
