@@ -151,6 +151,34 @@ You need to create a KG-index [configuration file](gfmrag/workflow/config/stage1
 
 Details of the configuration parameters are explained in the [KG-index Configuration](https://rmanluo.github.io/gfm-rag/config/kg_index_config/) page.
 
+**🆕 New: Environment Variable Support**
+
+You can now configure third-party LLM and Embedding services using environment variables:
+
+```bash
+# Example: Using third-party vLLM service + HuggingFace embeddings
+export GFMRAG_CHAT_PROVIDER="third-party"
+export GFMRAG_CHAT_MODEL_NAME="llama-2-7b-chat"
+export GFMRAG_CHAT_BASE_URL="http://localhost:8000/v1"
+# GFMRAG_CHAT_KEY not set = no authentication mode
+
+export GFMRAG_EMBEDDING_PROVIDER="huggingface"
+export GFMRAG_EMBEDDING_MODEL_NAME="sentence-transformers/all-MiniLM-L6-v2"
+
+# Validate configuration
+python scripts/validate_env_config.py
+
+# Run with environment variables
+python -m gfmrag.workflow.stage1_index_dataset
+```
+
+For detailed configuration options, see:
+- 📖 [Environment Variables Guide](docs/ENVIRONMENT_VARIABLES_GUIDE.md)
+- 🚀 [Quick Start Guide](docs/ENVIRONMENT_VARIABLES_QUICKSTART.md)
+- 📝 [Configuration Examples](.env.gfmrag.example)
+
+**Standard Usage:**
+
 ```bash
 python -m gfmrag.workflow.stage1_index_dataset
 ```
