@@ -15,7 +15,9 @@ one_shot_passage_entities = """{"named_entities":
 ## NER Prompts
 
 ner_instruction = """Your task is to extract named entities from the given paragraph.
-Respond with a JSON list of entities.
+The paragraph may contain English or non-English (e.g., Chinese) text.
+Return the entities exactly as they appear (do not translate or paraphrase).
+Respond with a JSON object that contains the key "named_entities" pointing to a list of strings.
 Strictly follow the required JSON format.
 """
 
@@ -57,6 +59,7 @@ one_shot_passage_triples = """{"triples": [
 """
 
 openie_post_ner_instruction = """Your task is to construct an RDF (Resource Description Framework) graph from the given passages and named entity lists.
+The passage may include content in languages other than English (for example, Chinese). Keep every entity and relation string in its original language.
 Respond with a JSON list of triples, with each triple representing a relationship in the RDF graph.
 
 Pay attention to the following requirements:

@@ -1,4 +1,8 @@
 _target_: gfmrag.kg_construction.ner_model.LLMNERModel
-llm_api: openai
-model_name: gpt-4o-mini
-max_tokens: 300
+llm_api: ${oc.env:GFMRAG_CHAT_PROVIDER,openai}
+model_name: ${oc.env:GFMRAG_CHAT_MODEL_NAME,gpt-4o-mini}
+base_url: ${oc.env:GFMRAG_CHAT_BASE_URL,null}
+api_key: ${oc.env:GFMRAG_CHAT_KEY,null}
+max_tokens: ${oc.env:GFMRAG_NER_MAX_TOKENS,800}
+max_retries: ${oc.env:GFMRAG_NER_MAX_RETRIES,3}
+retry_delay: ${oc.env:GFMRAG_NER_RETRY_DELAY,1.0}
