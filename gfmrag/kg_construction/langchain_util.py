@@ -62,10 +62,16 @@ def init_langchain_model(
     """
     Initialize a language model with enhanced environment variable support.
     
-    This function now prioritizes environment variables over function parameters,
-    enabling seamless integration with GFMRAG_* environment variables.
+    This function now prioritizes function parameters over environment variables,
+    enabling seamless integration with GFMRAG_* environment variables while
+    allowing explicit parameter overrides.
     
-    Environment variables (highest priority):
+    Parameter priority order:
+    1. Explicit function parameters (highest priority)
+    2. Environment variables via GFMRAG_* 
+    3. Configuration defaults (lowest priority)
+    
+    Environment variables:
     - GFMRAG_CHAT_PROVIDER: Chat service provider 
     - GFMRAG_CHAT_MODEL_NAME: Chat model name
     - GFMRAG_CHAT_BASE_URL: Chat service base URL
@@ -94,27 +100,19 @@ def init_langchain_model(
             base_config = config_manager.get_chat_config(llm)
             model_name = base_config.model_name
             
-        # Create configuration, prioritizing environment variables
-        config = ChatConfig(
-            provider=llm,
-            model_name=model_name,
-            temperature=temperature,
-            max_retries=max_retries,
-            timeout=timeout,
-            base_url=base_url,
-            api_key=api_key,
-        )
-        
-        # Override with environment variables if available
+        # Get environment configuration
         env_config = config_manager.get_chat_config(llm)
+        
+        # Create final configuration with parameter priority
+        # Parameters override environment variables
         final_config = ChatConfig(
             provider=llm,
             model_name=model_name,
             temperature=temperature,
             max_retries=max_retries,
             timeout=timeout,
-            base_url=base_url or env_config.base_url,
-            api_key=api_key or env_config.api_key,
+            base_url=base_url if base_url is not None else env_config.base_url,
+            api_key=api_key if api_key is not None else env_config.api_key,
         )
         
         model = _langchain_factory.create_chat_model(final_config, **kwargs)

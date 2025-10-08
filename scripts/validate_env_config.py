@@ -1,267 +1,220 @@
 #!/usr/bin/env python3
 """
-GFMRAG环境变量配置验证脚本
+GFM-RAG 环境变量配置验证脚本
 
-该脚本用于验证GFMRAG环境变量配置的正确性，
-包括语法验证、连接测试和兼容性检查。
+该脚本用于验证和检查GFM-RAG系统的环境变量配置状态，
+确保Hydra配置文件能够正确读取和使用环境变量。
 
-使用方法:
+用法:
     python scripts/validate_env_config.py
     
-或者:
+    # 或者
     python -m scripts.validate_env_config
 """
 
 import os
 import sys
 import logging
-from typing import Dict, List, Optional
-from urllib.parse import urlparse
+from typing import Dict, Any
+from pathlib import Path
 
-# 添加项目路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# 添加项目根目录到路径
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-from gfmrag.config_manager import (
-    ConfigurationManager, 
-    get_config_manager,
-    log_environment_config
-)
+try:
+    from gfmrag.config_manager import get_config_manager
+    from gfmrag.kg_construction.langchain_util import init_langchain_model
+    from hydra import compose, initialize_config_dir
+    from omegaconf import DictConfig, OmegaConf
+except ImportError as e:
+    print(f"错误：无法导入必要的模块: {e}")
+    print("请确保您在项目根目录中运行此脚本，并且已安装所有依赖项。")
+    sys.exit(1)
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-class EnvironmentConfigValidator:
-    """环境变量配置验证器"""
+def check_environment_variables() -> Dict[str, Any]:
+    """检查GFMRAG相关环境变量的设置状态"""
+    print("=" * 60)
+    print("🔧 GFM-RAG 环境变量配置检查")
+    print("=" * 60)
     
-    def __init__(self):
-        self.config_manager = get_config_manager()
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
-        self.success_count = 0
-        self.total_checks = 0
+    env_vars = {
+        'GFMRAG_CHAT_PROVIDER': 'Chat服务提供商',
+        'GFMRAG_CHAT_MODEL_NAME': 'Chat模型名称', 
+        'GFMRAG_CHAT_BASE_URL': '第三方服务Base URL',
+        'GFMRAG_CHAT_KEY': 'Chat服务API密钥'
+    }
     
-    def validate_all(self) -> bool:
-        """执行所有验证检查
-        
-        Returns:
-            bool: 是否通过所有验证
-        """
-        logger.info("开始验证GFMRAG环境变量配置...")
-        
-        # 显示环境变量设置
-        log_environment_config()
-        
-        # 执行各项检查
-        self._check_environment_variables()
-        self._check_config_syntax()
-        self._check_provider_compatibility()
-        self._check_url_validity()
-        self._check_authentication_setup()
-        
-        # 显示结果
-        self._display_results()
-        
-        return len(self.errors) == 0
-    
-    def _check_environment_variables(self) -> None:
-        """检查环境变量设置"""
-        logger.info("检查环境变量设置...")
-        self.total_checks += 1
-        
-        env_vars = self.config_manager.get_environment_variables_summary()
-        
-        if not env_vars:
-            self.warnings.append("未设置任何GFMRAG环境变量，将使用配置文件或默认值")
-        else:
-            self.success_count += 1
-            logger.info(f"检测到 {len(env_vars)} 个GFMRAG环境变量")
-    
-    def _check_config_syntax(self) -> None:
-        """检查配置语法"""
-        logger.info("验证配置语法...")
-        self.total_checks += 1
-        
-        try:
-            # 验证chat配置
-            chat_config = self.config_manager.get_chat_config()
-            logger.debug(f"Chat配置: {chat_config.provider}/{chat_config.model_name}")
-            
-            # 验证embedding配置
-            embedding_config = self.config_manager.get_embedding_config()
-            logger.debug(f"Embedding配置: {embedding_config.provider}/{embedding_config.model_name}")
-            
-            # 使用内置验证
-            validation_errors = self.config_manager.validate_config()
-            
-            if validation_errors:
-                for category, errors in validation_errors.items():
-                    for error in errors:
-                        self.errors.append(f"{category}配置错误: {error}")
+    env_status = {}
+    print("\n1️⃣ 环境变量状态:")
+    for var, description in env_vars.items():
+        value = os.getenv(var)
+        if value:
+            env_status[var] = value
+            if var == 'GFMRAG_CHAT_KEY':
+                print(f"   ✅ {var}: 已设置 (***隐藏***)")
             else:
-                self.success_count += 1
-                logger.info("配置语法验证通过")
-                
-        except Exception as e:
-            self.errors.append(f"配置语法验证失败: {e}")
-    
-    def _check_provider_compatibility(self) -> None:
-        """检查提供商兼容性"""
-        logger.info("检查提供商兼容性...")
-        self.total_checks += 1
-        
-        try:
-            chat_config = self.config_manager.get_chat_config()
-            embedding_config = self.config_manager.get_embedding_config()
-            
-            # 检查已知提供商
-            known_chat_providers = {
-                "openai", "nvidia", "together", "anthropic", 
-                "ollama", "llama.cpp", "third-party", "vllm"
-            }
-            known_embedding_providers = {
-                "openai", "nvidia", "huggingface", "third-party"
-            }
-            
-            if chat_config.provider not in known_chat_providers:
-                self.warnings.append(f"未知的Chat提供商: {chat_config.provider}")
-            
-            if embedding_config.provider not in known_embedding_providers:
-                self.warnings.append(f"未知的Embedding提供商: {embedding_config.provider}")
-            
-            # 检查第三方服务配置
-            if chat_config.provider in ["third-party", "vllm"]:
-                if not chat_config.base_url:
-                    self.errors.append(f"第三方Chat服务 '{chat_config.provider}' 需要设置 GFMRAG_CHAT_BASE_URL")
-            
-            if embedding_config.provider == "third-party":
-                if not embedding_config.base_url:
-                    self.errors.append("第三方Embedding服务需要设置 GFMRAG_EMBEDDING_BASE_URL")
-            
-            if not self.errors:
-                self.success_count += 1
-                logger.info("提供商兼容性检查通过")
-                
-        except Exception as e:
-            self.errors.append(f"提供商兼容性检查失败: {e}")
-    
-    def _check_url_validity(self) -> None:
-        """检查URL有效性"""
-        logger.info("检查URL有效性...")
-        self.total_checks += 1
-        
-        try:
-            chat_config = self.config_manager.get_chat_config()
-            embedding_config = self.config_manager.get_embedding_config()
-            
-            # 检查Chat base_url
-            if chat_config.base_url:
-                if not self._is_valid_url(chat_config.base_url):
-                    self.errors.append(f"无效的Chat base_url: {chat_config.base_url}")
-            
-            # 检查Embedding base_url
-            if embedding_config.base_url:
-                if not self._is_valid_url(embedding_config.base_url):
-                    self.errors.append(f"无效的Embedding base_url: {embedding_config.base_url}")
-            
-            if not self.errors:
-                self.success_count += 1
-                logger.info("URL有效性检查通过")
-                
-        except Exception as e:
-            self.errors.append(f"URL有效性检查失败: {e}")
-    
-    def _check_authentication_setup(self) -> None:
-        """检查认证设置"""
-        logger.info("检查认证设置...")
-        self.total_checks += 1
-        
-        try:
-            chat_config = self.config_manager.get_chat_config()
-            embedding_config = self.config_manager.get_embedding_config()
-            
-            # 检查需要认证的服务
-            auth_required_providers = {"openai", "nvidia", "together", "anthropic"}
-            
-            # Chat认证检查
-            if chat_config.provider in auth_required_providers:
-                if not chat_config.api_key:
-                    self.warnings.append(
-                        f"Chat服务 '{chat_config.provider}' 通常需要API密钥，"
-                        "但未设置 GFMRAG_CHAT_KEY"
-                    )
-            elif chat_config.provider in ["ollama", "llama.cpp"]:
-                if chat_config.api_key:
-                    self.warnings.append(
-                        f"Chat服务 '{chat_config.provider}' 通常不需要API密钥，"
-                        "但设置了 GFMRAG_CHAT_KEY"
-                    )
-            
-            # Embedding认证检查
-            if embedding_config.provider in auth_required_providers:
-                if not embedding_config.api_key:
-                    self.warnings.append(
-                        f"Embedding服务 '{embedding_config.provider}' 通常需要API密钥，"
-                        "但未设置 GFMRAG_EMBEDDING_KEY"
-                    )
-            
-            self.success_count += 1
-            logger.info("认证设置检查完成")
-            
-        except Exception as e:
-            self.errors.append(f"认证设置检查失败: {e}")
-    
-    def _is_valid_url(self, url: str) -> bool:
-        """验证URL格式"""
-        try:
-            result = urlparse(url)
-            return all([result.scheme, result.netloc])
-        except Exception:
-            return False
-    
-    def _display_results(self) -> None:
-        """显示验证结果"""
-        print("\n" + "="*60)
-        print("GFMRAG环境变量配置验证结果")
-        print("="*60)
-        
-        print(f"总检查项: {self.total_checks}")
-        print(f"通过检查: {self.success_count}")
-        print(f"错误数量: {len(self.errors)}")
-        print(f"警告数量: {len(self.warnings)}")
-        
-        if self.errors:
-            print("\n❌ 错误:")
-            for i, error in enumerate(self.errors, 1):
-                print(f"  {i}. {error}")
-        
-        if self.warnings:
-            print("\n⚠️  警告:")
-            for i, warning in enumerate(self.warnings, 1):
-                print(f"  {i}. {warning}")
-        
-        if not self.errors and not self.warnings:
-            print("\n✅ 所有检查通过！配置验证成功。")
-        elif not self.errors:
-            print("\n✅ 配置验证通过，但有一些警告需要注意。")
+                print(f"   ✅ {var}: {value}")
         else:
-            print("\n❌ 配置验证失败，请修正错误后重试。")
+            env_status[var] = None
+            print(f"   ❌ {var}: 未设置")
+    
+    return env_status
+
+
+def check_configuration_manager():
+    """检查配置管理器的状态"""
+    print("\n2️⃣ 配置管理器状态:")
+    try:
+        config_manager = get_config_manager()
+        chat_config = config_manager.get_chat_config()
         
-        print("="*60)
+        print(f"   ✅ Provider: {chat_config.provider}")
+        print(f"   ✅ Model: {chat_config.model_name}")
+        print(f"   ✅ Base URL: {chat_config.base_url or '默认'}")
+        print(f"   ✅ API Key: {'已设置' if chat_config.api_key else '未设置'}")
+        
+        return chat_config
+    except Exception as e:
+        print(f"   ❌ 配置管理器错误: {e}")
+        return None
+
+
+def test_hydra_config_loading():
+    """测试Hydra配置文件的加载"""
+    print("\n3️⃣ Hydra配置文件测试:")
+    
+    config_dir = project_root / "gfmrag" / "workflow" / "config"
+    
+    try:
+        # 测试 NER 模型配置
+        with initialize_config_dir(config_dir=str(config_dir), version_base=None):
+            cfg = compose(config_name="ner_model/llm_ner_model.yaml")
+            print(f"   ✅ NER配置加载成功:")
+            print(f"      - llm_api: {cfg.llm_api}")
+            print(f"      - model_name: {cfg.model_name}")
+            print(f"      - base_url: {cfg.base_url}")
+            print(f"      - api_key: {'已设置' if cfg.api_key and cfg.api_key != 'null' else '未设置'}")
+        
+        # 测试 OpenIE 模型配置
+        with initialize_config_dir(config_dir=str(config_dir), version_base=None):
+            cfg = compose(config_name="openie_model/llm_openie_model.yaml")
+            print(f"   ✅ OpenIE配置加载成功:")
+            print(f"      - llm_api: {cfg.llm_api}")
+            print(f"      - model_name: {cfg.model_name}")
+            print(f"      - base_url: {cfg.base_url}")
+            print(f"      - api_key: {'已设置' if cfg.api_key and cfg.api_key != 'null' else '未设置'}")
+            
+        return True
+    except Exception as e:
+        print(f"   ❌ Hydra配置加载失败: {e}")
+        return False
+
+
+def test_model_initialization():
+    """测试模型初始化是否正常"""
+    print("\n4️⃣ 模型初始化测试:")
+    try:
+        print("   🔄 正在测试LangChain模型初始化...")
+        model = init_langchain_model()
+        print(f"   ✅ 模型初始化成功: {type(model).__name__}")
+        
+        # 尝试简单的模型调用（如果可能）
+        try:
+            response = model.invoke("Hello, this is a test message.")
+            print("   ✅ 模型调用测试成功")
+            print(f"      响应预览: {response.content[:100]}...")
+            return True
+        except Exception as e:
+            print(f"   ⚠️ 模型调用测试失败（可能是网络或认证问题）: {e}")
+            return False
+            
+    except Exception as e:
+        print(f"   ❌ 模型初始化失败: {e}")
+        return False
+
+
+def generate_configuration_recommendations(env_status: Dict[str, Any]):
+    """生成配置建议"""
+    print("\n5️⃣ 配置建议:")
+    
+    provider = env_status.get('GFMRAG_CHAT_PROVIDER')
+    base_url = env_status.get('GFMRAG_CHAT_BASE_URL')
+    api_key = env_status.get('GFMRAG_CHAT_KEY')
+    
+    if not provider:
+        print("   📝 建议设置 GFMRAG_CHAT_PROVIDER 环境变量")
+        print("      例如: export GFMRAG_CHAT_PROVIDER='third-party'")
+    
+    if provider == 'third-party' and not base_url:
+        print("   📝 使用第三方服务时，建议设置 GFMRAG_CHAT_BASE_URL")
+        print("      例如: export GFMRAG_CHAT_BASE_URL='http://localhost:8000/v1'")
+    
+    if provider in ['openai', 'together', 'nvidia'] and not api_key:
+        print(f"   📝 使用 {provider} 服务时，建议设置 GFMRAG_CHAT_KEY")
+        print("      例如: export GFMRAG_CHAT_KEY='your-api-key'")
+    
+    print("\n   📋 完整的第三方服务配置示例:")
+    print("      export GFMRAG_CHAT_PROVIDER='third-party'")
+    print("      export GFMRAG_CHAT_MODEL_NAME='Qwen3-VL-30B-A3B-Instruct-FP8'")
+    print("      export GFMRAG_CHAT_BASE_URL='http://192.168.110.11:8888/v1'")
+    print("      export GFMRAG_CHAT_KEY='your-api-key'  # 可选")
+
+
+def print_summary(results: Dict[str, bool]):
+    """打印测试结果摘要"""
+    print("\n" + "=" * 60)
+    print("📊 测试结果摘要")
+    print("=" * 60)
+    
+    all_passed = all(results.values())
+    
+    for test_name, passed in results.items():
+        status = "✅ 通过" if passed else "❌ 失败"
+        print(f"   {test_name}: {status}")
+    
+    print("\n" + "=" * 60)
+    if all_passed:
+        print("🎉 所有测试通过！GFM-RAG配置正常。")
+    else:
+        print("⚠️ 部分测试失败。请检查上述建议并修复配置问题。")
+    print("=" * 60)
 
 
 def main():
     """主函数"""
-    validator = EnvironmentConfigValidator()
-    success = validator.validate_all()
+    print("启动 GFM-RAG 环境变量配置验证...")
+    
+    results = {}
+    
+    # 1. 检查环境变量
+    env_status = check_environment_variables()
+    
+    # 2. 检查配置管理器
+    config_manager_ok = check_configuration_manager() is not None
+    results["配置管理器"] = config_manager_ok
+    
+    # 3. 测试Hydra配置加载
+    hydra_ok = test_hydra_config_loading()
+    results["Hydra配置加载"] = hydra_ok
+    
+    # 4. 测试模型初始化
+    model_ok = test_model_initialization()
+    results["模型初始化"] = model_ok
+    
+    # 5. 生成建议
+    generate_configuration_recommendations(env_status)
+    
+    # 6. 打印摘要
+    print_summary(results)
     
     # 返回适当的退出码
-    sys.exit(0 if success else 1)
+    return 0 if all(results.values()) else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

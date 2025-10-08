@@ -1,5 +1,7 @@
 _target_: gfmrag.kg_construction.openie_model.LLMOPENIEModel
-llm_api: openai
-model_name: gpt-4o-mini
+llm_api: ${oc.env:GFMRAG_CHAT_PROVIDER,openai}
+model_name: ${oc.env:GFMRAG_CHAT_MODEL_NAME,gpt-4o-mini}
+base_url: ${oc.env:GFMRAG_CHAT_BASE_URL,null}
+api_key: ${oc.env:GFMRAG_CHAT_KEY,null}
 max_ner_tokens: 300
 max_triples_tokens: 4096

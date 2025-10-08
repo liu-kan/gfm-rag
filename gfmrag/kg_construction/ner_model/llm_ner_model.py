@@ -1,6 +1,6 @@
 # Adapt from: https://github.com/OSU-NLP-Group/HippoRAG/blob/main/src/named_entity_extraction_parallel.py
 import logging
-from typing import Literal
+from typing import Literal, Optional
 
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -43,6 +43,8 @@ class LLMNERModel(BaseNERModel):
     Args:
         llm_api (Literal["openai", "nvidia", "together", "ollama", "llama.cpp"]): The LLM backend to use. Defaults to "openai".
         model_name (str): Name of the specific model to use. Defaults to "gpt-4o-mini".
+        base_url (Optional[str]): Base URL for the LLM API. Defaults to None.
+        api_key (Optional[str]): API key for the LLM service. Defaults to None.
         max_tokens (int): Maximum number of tokens in the response. Defaults to 1024.
 
     Methods:
@@ -58,6 +60,8 @@ class LLMNERModel(BaseNERModel):
             "openai", "nvidia", "together", "ollama", "llama.cpp"
         ] = "openai",
         model_name: str = "gpt-4o-mini",
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
         max_tokens: int = 1024,
     ):
         """Initialize the LLM-based NER model.
@@ -67,15 +71,26 @@ class LLMNERModel(BaseNERModel):
                 Defaults to "openai".
             model_name (str): Name of the language model to use.
                 Defaults to "gpt-4o-mini".
+            base_url (Optional[str]): Base URL for the LLM API.
+                Defaults to None.
+            api_key (Optional[str]): API key for the LLM service.
+                Defaults to None.
             max_tokens (int): Maximum number of tokens for model output.
                 Defaults to 1024.
         """
 
         self.llm_api = llm_api
         self.model_name = model_name
+        self.base_url = base_url
+        self.api_key = api_key
         self.max_tokens = max_tokens
 
-        self.client = init_langchain_model(llm_api, model_name)
+        self.client = init_langchain_model(
+            llm=llm_api,
+            model_name=model_name,
+            base_url=base_url,
+            api_key=api_key
+        )
 
     def __call__(self, text: str) -> list:
         """Process text input to extract named entities using different chat models.

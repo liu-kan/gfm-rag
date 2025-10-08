@@ -2,7 +2,7 @@
 import json
 import logging
 from itertools import chain
-from typing import Literal
+from typing import Literal, Optional
 
 import numpy as np
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
@@ -35,6 +35,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
         llm_api (Literal["openai", "together", "ollama", "llama.cpp"]): The LLM backend to use.
             Defaults to "openai".
         model_name (str): Name of the specific model to use. Defaults to "gpt-4o-mini".
+        base_url (Optional[str]): Base URL for the LLM API. Defaults to None.
+        api_key (Optional[str]): API key for the LLM service. Defaults to None.
         max_ner_tokens (int): Maximum number of tokens for NER output. Defaults to 1024.
         max_triples_tokens (int): Maximum number of tokens for relation triples output.
             Defaults to 4096.
@@ -64,6 +66,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
             "openai", "nvidia", "together", "ollama", "llama.cpp"
         ] = "openai",
         model_name: str = "gpt-4o-mini",
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
         max_ner_tokens: int = 1024,
         max_triples_tokens: int = 4096,
     ):
@@ -73,22 +77,33 @@ class LLMOPENIEModel(BaseOPENIEModel):
             llm_api (Literal["openai", "nvidia", "together", "ollama", "llama.cpp"]): The LLM API provider to use.
                 Defaults to "openai".
             model_name (str): Name of the language model to use. Defaults to "gpt-4o-mini".
+            base_url (Optional[str]): Base URL for the LLM API. Defaults to None.
+            api_key (Optional[str]): API key for the LLM service. Defaults to None.
             max_ner_tokens (int): Maximum number of tokens for NER processing. Defaults to 1024.
             max_triples_tokens (int): Maximum number of tokens for triple extraction. Defaults to 4096.
 
         Attributes:
             llm_api: The selected LLM API provider
             model_name: Name of the language model
+            base_url: Base URL for the LLM API
+            api_key: API key for the LLM service
             max_ner_tokens: Token limit for NER
             max_triples_tokens: Token limit for triples
             client: Initialized language model client
         """
         self.llm_api = llm_api
         self.model_name = model_name
+        self.base_url = base_url
+        self.api_key = api_key
         self.max_ner_tokens = max_ner_tokens
         self.max_triples_tokens = max_triples_tokens
 
-        self.client = init_langchain_model(llm_api, model_name)
+        self.client = init_langchain_model(
+            llm=llm_api,
+            model_name=model_name,
+            base_url=base_url,
+            api_key=api_key
+        )
 
     def ner(self, text: str) -> list:
         """
