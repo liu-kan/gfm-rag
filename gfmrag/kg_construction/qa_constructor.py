@@ -4,6 +4,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from multiprocessing.dummy import Pool as ThreadPool
+from typing import Any
 
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -15,6 +16,15 @@ from .entity_linking_model import BaseELModel
 from .ner_model import BaseNERModel
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_positive_int(value: Any, default: int = 1) -> int:
+    """Safely convert a value to a positive integer, falling back to default if conversion fails."""
+    try:
+        coerced = int(value)
+    except (TypeError, ValueError):
+        return default
+    return coerced if coerced > 0 else default
 
 
 class BaseQAConstructor(ABC):
@@ -109,7 +119,7 @@ class QAConstructor(BaseQAConstructor):
         self.ner_model = ner_model
         self.el_model = el_model
         self.root = root
-        self.num_processes = num_processes
+        self.num_processes = _coerce_positive_int(num_processes, 1)
         self.data_name = None
         self.force = force
 

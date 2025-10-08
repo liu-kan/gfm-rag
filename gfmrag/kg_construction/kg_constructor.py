@@ -21,6 +21,17 @@ from .openie_model.base_model import BaseOPENIEModel
 logger = logging.getLogger(__name__)
 
 
+def _coerce_positive_int(value: Any, default: int = 1) -> int:
+    """
+    Safely convert a value to a positive integer, falling back to default if conversion fails.
+    """
+    try:
+        coerced = int(value)
+    except (TypeError, ValueError):
+        return default
+    return coerced if coerced > 0 else default
+
+
 class BaseKGConstructor(ABC):
     """
     Abstract base class for knowledge graph construction.
@@ -145,7 +156,7 @@ class KGConstructor(BaseKGConstructor):
         self.open_ie_model = open_ie_model
         self.el_model = el_model
         self.root = root
-        self.num_processes = num_processes
+        self.num_processes = _coerce_positive_int(num_processes, 1)
         self.cosine_sim_edges = cosine_sim_edges
         self.threshold = threshold
         self.max_sim_neighbors = max_sim_neighbors
