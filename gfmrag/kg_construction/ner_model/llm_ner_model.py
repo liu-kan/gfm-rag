@@ -125,7 +125,9 @@ class LLMNERModel(BaseNERModel):
         query_ner_messages = query_ner_prompts.format_prompt()
 
         json_mode = False
-        if isinstance(self.client, ChatOpenAI):  # JSON mode
+        if self.llm_api == "openai" and isinstance(
+            self.client, ChatOpenAI
+        ):  # JSON mode only for OpenAI
             chat_completion = self.client.invoke(
                 query_ner_messages.to_messages(),
                 temperature=0,

@@ -124,7 +124,9 @@ class LLMOPENIEModel(BaseOPENIEModel):
         ner_messages = ner_prompts.format_prompt(user_input=text)
 
         try:
-            if isinstance(self.client, ChatOpenAI):  # JSON mode
+            if self.llm_api == "openai" and isinstance(
+                self.client, ChatOpenAI
+            ):  # JSON mode
                 chat_completion = self.client.invoke(
                     ner_messages.to_messages(),
                     temperature=0,
@@ -186,7 +188,9 @@ class LLMOPENIEModel(BaseOPENIEModel):
             passage=text, named_entity_json=json.dumps(named_entity_json)
         )
         try:
-            if isinstance(self.client, ChatOpenAI):  # JSON mode
+            if self.llm_api == "openai" and isinstance(
+                self.client, ChatOpenAI
+            ):  # JSON mode
                 chat_completion = self.client.invoke(
                     openie_messages.to_messages(),
                     temperature=0,
