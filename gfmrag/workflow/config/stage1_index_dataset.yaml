@@ -18,7 +18,7 @@ kg_constructor:
   ner_model: ${ner_model}
   el_model: ${el_model}
   root: tmp/kg_construction # Temporary directory for storing intermediate files during KG construction
-  num_processes: 2 # Number of processes to use
+  num_processes: ${oc.env:GFMRAG_KG_NUM_PROCESSES,2} # Number of processes to use
   cosine_sim_edges: True # Whether to conduct entities resolution using cosine similarity
   threshold: 0.8 # Threshold for cosine similarity
   max_sim_neighbors: 100 # Maximum number of similar neighbors to add
@@ -30,5 +30,5 @@ qa_constructor:
   root: tmp/qa_construction # Temporary directory for storing intermediate files during QA construction
   ner_model: ${ner_model}
   el_model: ${el_model}
-  num_processes: 2 # Number of processes to use
+  num_processes: ${oc.env:GFMRAG_QA_NUM_PROCESSES,2} # Number of processes to use
   force: False # Whether to force recompute the QA data
