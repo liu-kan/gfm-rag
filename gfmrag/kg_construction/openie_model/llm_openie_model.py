@@ -255,7 +255,11 @@ class LLMOPENIEModel(BaseOPENIEModel):
         """
         named_entity_json = {"named_entities": entities}
         openie_messages = openie_post_ner_prompts.format_prompt(
-            passage=text, named_entity_json=json.dumps(named_entity_json)
+            passage=text,
+            named_entity_json=json.dumps(
+                named_entity_json,
+                ensure_ascii=False,
+            ),
         )
         last_error: Optional[Exception] = None
         for attempt in range(1, self.max_retries + 1):

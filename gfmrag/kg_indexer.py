@@ -88,7 +88,11 @@ class KGIndexer:
         if not os.path.exists(os.path.join(prosessed_data_dir, "kg.txt")):
             logger.info("Stage1 KG construction")
             kg = self.kg_constructor.create_kg(root, data_name)
-            with open(os.path.join(prosessed_data_dir, "kg.txt"), "w") as f:
+            with open(
+                os.path.join(prosessed_data_dir, "kg.txt"),
+                "w",
+                encoding="utf-8",
+            ) as f:
                 for triple in kg:
                     f.write(self.DELIMITER.join(triple) + "\n")
         if not os.path.exists(
@@ -97,9 +101,11 @@ class KGIndexer:
             logger.info("Stage1 Get document2entities")
             doc2entities = self.kg_constructor.get_document2entities(root, data_name)
             with open(
-                os.path.join(prosessed_data_dir, "document2entities.json"), "w"
+                os.path.join(prosessed_data_dir, "document2entities.json"),
+                "w",
+                encoding="utf-8",
             ) as f:
-                json.dump(doc2entities, f, indent=4)
+                json.dump(doc2entities, f, indent=4, ensure_ascii=False)
 
         # Try to prepare training and testing data from dataset
         if os.path.exists(
@@ -107,13 +113,21 @@ class KGIndexer:
         ) and not os.path.exists(os.path.join(prosessed_data_dir, "train.json")):
             logger.info(f"Preparing {os.path.join(raw_data_dir, 'train.json')}")
             train_data = self.qa_constructor.prepare_data(root, data_name, "train.json")
-            with open(os.path.join(prosessed_data_dir, "train.json"), "w") as f:
-                json.dump(train_data, f, indent=4)
+            with open(
+                os.path.join(prosessed_data_dir, "train.json"),
+                "w",
+                encoding="utf-8",
+            ) as f:
+                json.dump(train_data, f, indent=4, ensure_ascii=False)
 
         if os.path.exists(
             os.path.join(raw_data_dir, "test.json")
         ) and not os.path.exists(os.path.join(prosessed_data_dir, "test.json")):
             logger.info(f"Preparing {os.path.join(raw_data_dir, 'test.json')}")
             test_data = self.qa_constructor.prepare_data(root, data_name, "test.json")
-            with open(os.path.join(prosessed_data_dir, "test.json"), "w") as f:
-                json.dump(test_data, f, indent=4)
+            with open(
+                os.path.join(prosessed_data_dir, "test.json"),
+                "w",
+                encoding="utf-8",
+            ) as f:
+                json.dump(test_data, f, indent=4, ensure_ascii=False)

@@ -216,11 +216,12 @@ class KGConstructor(BaseKGConstructor):
         base_tmp_dir = os.path.join(cfg.root, fingerprint)
         if not os.path.exists(base_tmp_dir):
             os.makedirs(base_tmp_dir)
-            json.dump(
-                config,
-                open(os.path.join(base_tmp_dir, "config.json"), "w"),
-                indent=4,
-            )
+            with open(
+                os.path.join(base_tmp_dir, "config.json"),
+                "w",
+                encoding="utf-8",
+            ) as config_file:
+                json.dump(config, config_file, indent=4, ensure_ascii=False)
         return KGConstructor(
             root=base_tmp_dir,
             open_ie_model=instantiate(cfg.open_ie_model),
@@ -291,7 +292,10 @@ class KGConstructor(BaseKGConstructor):
             )
             self.create_kg(data_root, data_name)
 
-        with open(os.path.join(self.tmp_dir, "passage_info.json")) as fin:
+        with open(
+            os.path.join(self.tmp_dir, "passage_info.json"),
+            encoding="utf-8",
+        ) as fin:
             passage_info = json.load(fin)
         document2entities = {doc["title"]: doc["entities"] for doc in passage_info}
         return document2entities
@@ -307,7 +311,10 @@ class KGConstructor(BaseKGConstructor):
             str: Path to the openie results
         """
         # Read data corpus
-        with open(os.path.join(raw_path, "dataset_corpus.json")) as f:
+        with open(
+            os.path.join(raw_path, "dataset_corpus.json"),
+            encoding="utf-8",
+        ) as f:
             corpus = json.load(f)
             if self.add_title:
                 corpus = {
@@ -322,7 +329,7 @@ class KGConstructor(BaseKGConstructor):
         # check if the openie results are already computed
         if os.path.exists(open_ie_result_path):
             logger.info(f"OpenIE results already exist at {open_ie_result_path}")
-            with open(open_ie_result_path) as f:
+            with open(open_ie_result_path, encoding="utf-8") as f:
                 for line in f:
                     data = json.loads(line)
                     open_ie_results[data["passage"]] = data
@@ -335,7 +342,7 @@ class KGConstructor(BaseKGConstructor):
         )
 
         if len(remining_passages) > 0:
-            with open(open_ie_result_path, "a") as f:
+            with open(open_ie_result_path, "a", encoding="utf-8") as f:
                 with ThreadPool(processes=self.num_processes) as pool:
                     for result in tqdm(
                         pool.imap(self.open_ie_model, remining_passages),
@@ -345,7 +352,7 @@ class KGConstructor(BaseKGConstructor):
                         if isinstance(result, dict):
                             passage_title = passage_to_title[result["passage"]]
                             result["title"] = passage_title
-                            f.write(json.dumps(result) + "\n")
+                            f.write(json.dumps(result, ensure_ascii=False) + "\n")
                             f.flush()
 
         logger.info(f"OpenIE results saved to {open_ie_result_path}")
@@ -365,7 +372,7 @@ class KGConstructor(BaseKGConstructor):
                 - value: relation
         """
 
-        with open(open_ie_result_path) as f:
+        with open(open_ie_result_path, encoding="utf-8") as f:
             extracted_triples = [json.loads(line) for line in f]
 
         # Create a knowledge graph from the openie results
@@ -432,8 +439,12 @@ class KGConstructor(BaseKGConstructor):
 
                 passage_json.append(doc_json)
 
-        with open(os.path.join(self.tmp_dir, "passage_info.json"), "w") as f:
-            json.dump(passage_json, f, indent=4)
+        with open(
+            os.path.join(self.tmp_dir, "passage_info.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(passage_json, f, indent=4, ensure_ascii=False)
 
         logging.info(f"Total number of processed data: {len(triple_tuples)}")
 
