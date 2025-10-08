@@ -4,3 +4,5 @@ model_name: ${oc.env:GFMRAG_CHAT_MODEL_NAME,gpt-4o-mini}
 base_url: ${oc.env:GFMRAG_CHAT_BASE_URL,null}
 api_key: ${oc.env:GFMRAG_CHAT_KEY,null}
 max_tokens: ${oc.env:GFMRAG_NER_MAX_TOKENS,800}
+max_retries: ${oc.env:GFMRAG_NER_MAX_RETRIES,3}
+retry_delay: ${oc.env:GFMRAG_NER_RETRY_DELAY,1.0}

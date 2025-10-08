@@ -1,8 +1,9 @@
 # Adapt from: https://github.com/OSU-NLP-Group/HippoRAG/blob/main/src/openie_with_retrieval_option_parallel.py
 import json
 import logging
+import time
 from itertools import chain
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import numpy as np
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
@@ -70,6 +71,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
         api_key: Optional[str] = None,
         max_ner_tokens: int = 1024,
         max_triples_tokens: int = 4096,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ):
         """Initialize LLM-based OpenIE model.
 
@@ -97,6 +100,8 @@ class LLMOPENIEModel(BaseOPENIEModel):
         self.api_key = api_key
         self.max_ner_tokens = max_ner_tokens
         self.max_triples_tokens = max_triples_tokens
+        self.max_retries = max(1, max_retries)
+        self.retry_delay = max(0.0, retry_delay)
 
         self.client = init_langchain_model(
             llm=llm_api,
@@ -105,7 +110,32 @@ class LLMOPENIEModel(BaseOPENIEModel):
             api_key=api_key
         )
 
-    def ner(self, text: str) -> list:
+    @staticmethod
+    def _truncate_text(raw: Any, limit: int = 300) -> str:
+        if not isinstance(raw, str):
+            raw = str(raw)
+        raw = raw.replace("\n", "\\n")
+        if len(raw) <= limit:
+            return raw
+        return raw[:limit] + "..."
+
+    @staticmethod
+    def _normalize_entity_list(entities: Any) -> list[str]:
+        if isinstance(entities, list):
+            cleaned = []
+            for entity in entities:
+                if entity is None:
+                    continue
+                text = str(entity).strip()
+                if text:
+                    cleaned.append(text)
+            return cleaned
+        if entities is None:
+            return []
+        text = str(entities).strip()
+        return [text] if text else []
+
+    def ner(self, text: str) -> list[str]:
         """
         Performs Named Entity Recognition (NER) on the input text using different LLM clients.
 
@@ -123,47 +153,73 @@ class LLMOPENIEModel(BaseOPENIEModel):
         """
         ner_messages = ner_prompts.format_prompt(user_input=text)
 
-        try:
-            if self.llm_api == "openai" and isinstance(
-                self.client, ChatOpenAI
-            ):  # JSON mode
-                chat_completion = self.client.invoke(
-                    ner_messages.to_messages(),
-                    temperature=0,
-                    max_tokens=self.max_ner_tokens,
-                    stop=["\n\n"],
-                    response_format={"type": "json_object"},
+        last_error: Optional[Exception] = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                if self.llm_api == "openai" and isinstance(
+                    self.client, ChatOpenAI
+                ):  # JSON mode
+                    chat_completion = self.client.invoke(
+                        ner_messages.to_messages(),
+                        temperature=0,
+                        max_tokens=self.max_ner_tokens,
+                        stop=["\n\n"],
+                        response_format={"type": "json_object"},
+                    )
+                    response_content = chat_completion.content
+                elif isinstance(self.client, ChatOllama) or isinstance(
+                    self.client, ChatLlamaCpp
+                ):
+                    response_content = self.client.invoke(
+                        ner_messages.to_messages()
+                    ).content
+                else:  # no JSON mode
+                    chat_completion = self.client.invoke(
+                        ner_messages.to_messages(), temperature=0
+                    )
+                    response_content = chat_completion.content
+
+                parsed_response = extract_json_dict(response_content)
+                if not parsed_response:
+                    logger.warning(
+                        "NER response missing JSON content (attempt %s/%s): %s",
+                        attempt,
+                        self.max_retries,
+                        self._truncate_text(response_content),
+                    )
+                else:
+                    entities = self._normalize_entity_list(
+                        parsed_response.get("named_entities")
+                    )
+                    if entities:
+                        return entities
+                    logger.warning(
+                        "NER response missing 'named_entities' key or empty list (attempt %s/%s): %s",
+                        attempt,
+                        self.max_retries,
+                        self._truncate_text(parsed_response),
+                    )
+            except Exception as exc:
+                last_error = exc
+                logger.error(
+                    "Error in extracting named entities (attempt %s/%s): %s",
+                    attempt,
+                    self.max_retries,
+                    exc,
                 )
-                response_content = chat_completion.content
-                response_content = eval(response_content)
 
-            elif isinstance(self.client, ChatOllama) or isinstance(
-                self.client, ChatLlamaCpp
-            ):
-                response_content = self.client.invoke(
-                    ner_messages.to_messages()
-                ).content
-                response_content = extract_json_dict(response_content)
+            if attempt < self.max_retries:
+                time.sleep(self.retry_delay)
 
-            else:  # no JSON mode
-                chat_completion = self.client.invoke(
-                    ner_messages.to_messages(), temperature=0
-                )
-                response_content = chat_completion.content
-                response_content = extract_json_dict(response_content)
+        if last_error:
+            logger.error(
+                "Failed to extract named entities after %s attempts: %s",
+                self.max_retries,
+                last_error,
+            )
+        return []
 
-            if "named_entities" not in response_content:
-                response_content = []
-            else:
-                response_content = response_content["named_entities"]
-
-        except Exception as e:
-            logger.error(f"Error in extracting named entities: {e}")
-            response_content = []
-
-        return response_content
-
-    def openie_post_ner_extract(self, text: str, entities: list) -> str:
+    def openie_post_ner_extract(self, text: str, entities: list[str]) -> dict[str, Any]:
         """
         Extracts open information (triples) from text using LLM, considering pre-identified named entities.
 
@@ -187,41 +243,64 @@ class LLMOPENIEModel(BaseOPENIEModel):
         openie_messages = openie_post_ner_prompts.format_prompt(
             passage=text, named_entity_json=json.dumps(named_entity_json)
         )
-        try:
-            if self.llm_api == "openai" and isinstance(
-                self.client, ChatOpenAI
-            ):  # JSON mode
-                chat_completion = self.client.invoke(
-                    openie_messages.to_messages(),
-                    temperature=0,
-                    max_tokens=self.max_triples_tokens,
-                    response_format={"type": "json_object"},
+        last_error: Optional[Exception] = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                if self.llm_api == "openai" and isinstance(
+                    self.client, ChatOpenAI
+                ):  # JSON mode
+                    chat_completion = self.client.invoke(
+                        openie_messages.to_messages(),
+                        temperature=0,
+                        max_tokens=self.max_triples_tokens,
+                        response_format={"type": "json_object"},
+                    )
+                    response_content = chat_completion.content
+                elif isinstance(self.client, ChatOllama) or isinstance(
+                    self.client, ChatLlamaCpp
+                ):
+                    response_content = self.client.invoke(
+                        openie_messages.to_messages()
+                    ).content
+                else:  # no JSON mode
+                    chat_completion = self.client.invoke(
+                        openie_messages.to_messages(),
+                        temperature=0,
+                        max_tokens=self.max_triples_tokens,
+                    )
+                    response_content = chat_completion.content
+
+                parsed_response = extract_json_dict(response_content)
+                if parsed_response and isinstance(parsed_response.get("triples"), list):
+                    return parsed_response
+
+                logger.warning(
+                    "OpenIE response missing 'triples' list (attempt %s/%s): %s",
+                    attempt,
+                    self.max_retries,
+                    self._truncate_text(
+                        parsed_response if parsed_response else response_content
+                    ),
                 )
-                response_content = chat_completion.content
-
-            elif isinstance(self.client, ChatOllama) or isinstance(
-                self.client, ChatLlamaCpp
-            ):
-                response_content = self.client.invoke(
-                    openie_messages.to_messages()
-                ).content
-                response_content = extract_json_dict(response_content)
-                response_content = str(response_content)
-            else:  # no JSON mode
-                chat_completion = self.client.invoke(
-                    openie_messages.to_messages(),
-                    temperature=0,
-                    max_tokens=self.max_triples_tokens,
+            except Exception as exc:
+                last_error = exc
+                logger.error(
+                    "Error in OpenIE triple extraction (attempt %s/%s): %s",
+                    attempt,
+                    self.max_retries,
+                    exc,
                 )
-                response_content = chat_completion.content
-                response_content = extract_json_dict(response_content)
-                response_content = str(response_content)
 
-        except Exception as e:
-            logger.error(f"Error in OpenIE: {e}")
-            response_content = "{}"
+            if attempt < self.max_retries:
+                time.sleep(self.retry_delay)
 
-        return response_content
+        if last_error:
+            logger.error(
+                "Failed to extract triples after %s attempts: %s",
+                self.max_retries,
+                last_error,
+            )
+        return {"triples": []}
 
     def __call__(self, text: str) -> dict:
         """
@@ -250,11 +329,21 @@ class LLMOPENIEModel(BaseOPENIEModel):
             logger.warning(
                 "No entities extracted. Possibly model not following instructions"
             )
-        triples = self.openie_post_ner_extract(text, doc_entities)
+        triples_result = self.openie_post_ner_extract(text, doc_entities)
         res["extracted_entities"] = doc_entities
-        try:
-            res["extracted_triples"] = eval(triples)["triples"]
-        except Exception:
-            logger.error(f"Error in parsing triples: {triples}")
+        if isinstance(triples_result, dict):
+            extracted_triples = triples_result.get("triples", [])
+            if isinstance(extracted_triples, list):
+                res["extracted_triples"] = extracted_triples
+            else:
+                logger.error(
+                    "Triples payload is not a list; received type %s",
+                    type(extracted_triples).__name__,
+                )
+        else:
+            logger.error(
+                "Unexpected triples result type: %s",
+                type(triples_result).__name__,
+            )
 
         return res

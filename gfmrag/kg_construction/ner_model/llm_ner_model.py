@@ -1,5 +1,6 @@
 # Adapt from: https://github.com/OSU-NLP-Group/HippoRAG/blob/main/src/named_entity_extraction_parallel.py
 import logging
+import time
 from typing import Literal, Optional
 
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
@@ -63,6 +64,8 @@ class LLMNERModel(BaseNERModel):
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         max_tokens: int = 1024,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ):
         """Initialize the LLM-based NER model.
 
@@ -84,6 +87,8 @@ class LLMNERModel(BaseNERModel):
         self.base_url = base_url
         self.api_key = api_key
         self.max_tokens = max_tokens
+        self.max_retries = max(1, max_retries)
+        self.retry_delay = max(0.0, retry_delay)
 
         self.client = init_langchain_model(
             llm=llm_api,
@@ -124,49 +129,68 @@ class LLMNERModel(BaseNERModel):
         )
         query_ner_messages = query_ner_prompts.format_prompt()
 
-        json_mode = False
-        if self.llm_api == "openai" and isinstance(
-            self.client, ChatOpenAI
-        ):  # JSON mode only for OpenAI
-            chat_completion = self.client.invoke(
-                query_ner_messages.to_messages(),
-                temperature=0,
-                max_tokens=self.max_tokens,
-                stop=["\n\n"],
-                response_format={"type": "json_object"},
-            )
-            response_content = chat_completion.content
-            chat_completion.response_metadata["token_usage"]["total_tokens"]
-            json_mode = True
-        elif isinstance(self.client, ChatOllama) or isinstance(
-            self.client, ChatLlamaCpp
-        ):
-            response_content = self.client.invoke(query_ner_messages.to_messages())
-            response_content = extract_json_dict(response_content)
-            len(response_content.split())
-        else:  # no JSON mode
-            chat_completion = self.client.invoke(
-                query_ner_messages.to_messages(),
-                temperature=0,
-                max_tokens=self.max_tokens,
-                stop=["\n\n"],
-            )
-            response_content = chat_completion.content
-            response_content = extract_json_dict(response_content)
-            chat_completion.response_metadata["token_usage"]["total_tokens"]
-
-        if not json_mode:
+        last_error: Optional[Exception] = None
+        for attempt in range(1, self.max_retries + 1):
             try:
-                assert "named_entities" in response_content
-                response_content = str(response_content)
-            except Exception as e:
-                print("Query NER exception", e)
-                response_content = {"named_entities": []}
+                if self.llm_api == "openai" and isinstance(
+                    self.client, ChatOpenAI
+                ):  # JSON mode only for OpenAI
+                    chat_completion = self.client.invoke(
+                        query_ner_messages.to_messages(),
+                        temperature=0,
+                        max_tokens=self.max_tokens,
+                        stop=["\n\n"],
+                        response_format={"type": "json_object"},
+                    )
+                    response_content = chat_completion.content
+                elif isinstance(self.client, ChatOllama) or isinstance(
+                    self.client, ChatLlamaCpp
+                ):
+                    response_content = self.client.invoke(
+                        query_ner_messages.to_messages()
+                    ).content
+                else:  # no JSON mode
+                    chat_completion = self.client.invoke(
+                        query_ner_messages.to_messages(),
+                        temperature=0,
+                        max_tokens=self.max_tokens,
+                        stop=["\n\n"],
+                    )
+                    response_content = chat_completion.content
 
-        try:
-            ner_list = eval(response_content)["named_entities"]
-            query_ner_list = [processing_phrases(ner) for ner in ner_list]
-            return query_ner_list
-        except Exception as e:
-            logger.error(f"Error in extracting named entities: {e}")
-            return []
+                parsed_response = extract_json_dict(response_content)
+                if not parsed_response:
+                    logger.warning(
+                        "NER model response missing JSON content (attempt %s/%s).",
+                        attempt,
+                        self.max_retries,
+                    )
+                else:
+                    entities = parsed_response.get("named_entities")
+                    if isinstance(entities, list):
+                        processed = [processing_phrases(ner) for ner in entities if ner]
+                        return [ner for ner in processed if ner]
+                    logger.warning(
+                        "NER model response missing 'named_entities' list (attempt %s/%s).",
+                        attempt,
+                        self.max_retries,
+                    )
+            except Exception as exc:
+                last_error = exc
+                logger.error(
+                    "Error in extracting named entities (attempt %s/%s): %s",
+                    attempt,
+                    self.max_retries,
+                    exc,
+                )
+
+            if attempt < self.max_retries:
+                time.sleep(self.retry_delay)
+
+        if last_error:
+            logger.error(
+                "Failed to extract named entities after %s attempts: %s",
+                self.max_retries,
+                last_error,
+            )
+        return []
