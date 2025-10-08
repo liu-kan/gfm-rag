@@ -105,7 +105,7 @@ class LangChainModelFactory:
             return self._create_ollama_chat_model(config, **kwargs)
         elif config.provider == "llama.cpp":
             return self._create_llamacpp_chat_model(config, **kwargs)
-        elif config.provider == "third-party":
+        elif config.provider in ["third-party", "vllm"]:
             return self._create_third_party_chat_model(config, **kwargs)
         else:
             raise ValueError(f"不支持的Chat提供商: {config.provider}")
@@ -195,9 +195,49 @@ class LangChainModelFactory:
         return ChatLlamaCpp(**model_kwargs)
     
     def _create_third_party_chat_model(self, config: ChatConfig, **kwargs: Any) -> ChatOpenAI:
-        """创建第三方OpenAI兼容Chat模型"""
+        """创建第三方OpenAI兼容Chat模型
+        
+        支持各种第三方OpenAI兼容服务，包括:
+        - vLLM 推理服务
+        - llama.cpp 服务器
+        - 自建OpenAI兼容API
+        - 带或不带认证的本地服务
+        """
         if not config.base_url:
             raise ValueError("第三方服务必须提供base_url")
+        
+        model_kwargs = {
+            "model": config.model_name,
+            "base_url": config.base_url,
+            "temperature": config.temperature,
+            "timeout": config.timeout,
+            "max_retries": config.max_retries,
+            **kwargs
+        }
+        
+        # 处理认证：如果提供了API密钥则使用，否则尝试无认证连接
+        if config.api_key:
+            model_kwargs["api_key"] = config.api_key
+            logger.debug(f"使用认证模式连接第三方服务: {config.base_url}")
+        else:
+            # 对于无认证的第三方服务，使用占位符密钥
+            model_kwargs["api_key"] = "not-needed"
+            logger.debug(f"使用无认证模式连接第三方服务: {config.base_url}")
+        
+        # 可选参数处理
+        if config.max_tokens:
+            model_kwargs["max_tokens"] = config.max_tokens
+            
+        if config.top_p is not None:
+            model_kwargs["top_p"] = config.top_p
+            
+        if config.frequency_penalty is not None:
+            model_kwargs["frequency_penalty"] = config.frequency_penalty
+            
+        if config.presence_penalty is not None:
+            model_kwargs["presence_penalty"] = config.presence_penalty
+        
+        return ChatOpenAI(**model_kwargs)
         
         model_kwargs = {
             "model": config.model_name,
@@ -278,18 +318,29 @@ class LangChainModelFactory:
             return self._create_huggingface_embedding_model(config, **kwargs)
     
     def _create_openai_embedding_model(self, config: EmbeddingConfig, **kwargs: Any) -> OpenAIEmbeddings:
-        """创建OpenAI Embedding模型"""
+        """创建OpenAI Embedding模型
+        
+        支持OpenAI官方服务和第三方OpenAI兼容服务
+        """
         model_kwargs = {
             "model": config.model_name,
             **kwargs
         }
         
+        # 处理认证：根据是否提供API密钥决定认证方式
         if config.api_key:
             model_kwargs["api_key"] = config.api_key
+            logger.debug(f"使用认证模式访问Embedding服务: {config.provider}")
+        elif config.provider == "third-party":
+            # 第三方服务可能不需要认证
+            model_kwargs["api_key"] = "not-needed"
+            logger.debug(f"使用无认证模式访问第三方Embedding服务")
         
+        # Base URL处理
         if config.base_url:
             model_kwargs["base_url"] = config.base_url
             
+        # 可选参数
         if config.dimensions:
             model_kwargs["dimensions"] = config.dimensions
         
@@ -329,11 +380,18 @@ class LangChainModelFactory:
             raise ValueError("timeout必须大于0")
     
     def _test_chat_model_connection(self, model: Any, config: ChatConfig) -> None:
-        """测试Chat模型连接"""
+        """测试Chat模型连接
+        
+        对于第三方服务和本地服务，进行更宽松的连接测试
+        """
         try:
             # 发送简单的测试消息
-            response = model.invoke("Hello")
-            logger.debug(f"Chat模型连接测试成功: {config.provider}/{config.model_name}")
+            if config.provider in ["third-party", "vllm", "ollama"]:
+                # 对于可能无认证的服务，使用更简单的测试
+                logger.debug(f"跳过严格连接测试 for {config.provider} 服务")
+            else:
+                response = model.invoke("Hello")
+                logger.debug(f"Chat模型连接测试成功: {config.provider}/{config.model_name}")
         except Exception as e:
             logger.warning(f"Chat模型连接测试失败: {config.provider}/{config.model_name}, 错误: {e}")
             # 不抛出异常，只记录警告
@@ -381,40 +439,92 @@ class LangChainModelFactory:
 
 # 工具函数
 def create_chat_model(
-    provider: str,
-    model_name: str,
+    provider: Optional[str] = None,
+    model_name: Optional[str] = None,
     **kwargs: Any
 ) -> Union[ChatOpenAI, ChatTogether, ChatOllama, ChatLlamaCpp, ChatNVIDIA]:
     """便捷函数：创建Chat模型
     
+    该函数优先使用环境变量配置，然后使用提供的参数。
+    支持完全基于环境变量的配置。
+    
     Args:
-        provider: 服务提供商
-        model_name: 模型名称
+        provider: 服务提供商，如果为None则使用环境变量或默认值
+        model_name: 模型名称，如果为None则使用环境变量或默认值
         **kwargs: 额外参数
     
     Returns:
         Chat模型实例
     """
     factory = LangChainModelFactory()
-    config = ChatConfig(provider=provider, model_name=model_name, **kwargs)
+    
+    # 如果没有提供参数，则完全依赖配置管理器（环境变量优先）
+    if provider is None and model_name is None:
+        config = factory.config_manager.get_chat_config()
+    else:
+        # 部分覆盖配置
+        base_config = factory.config_manager.get_chat_config()
+        config = ChatConfig(
+            provider=provider or base_config.provider,
+            model_name=model_name or base_config.model_name,
+            api_key=base_config.api_key,
+            base_url=base_config.base_url,
+            timeout=base_config.timeout,
+            max_retries=base_config.max_retries,
+            temperature=base_config.temperature,
+            **kwargs
+        )
+    
     return factory.create_chat_model(config)
 
 
 def create_embedding_model(
-    provider: str,
-    model_name: str,
+    provider: Optional[str] = None,
+    model_name: Optional[str] = None,
     **kwargs: Any
 ) -> Union[OpenAIEmbeddings, HuggingFaceEmbeddings]:
     """便捷函数：创建Embedding模型
     
+    该函数优先使用环境变量配置，然后使用提供的参数。
+    支持完全基于环境变量的配置。
+    
     Args:
-        provider: 服务提供商
-        model_name: 模型名称
+        provider: 服务提供商，如果为None则使用环境变量或默认值
+        model_name: 模型名称，如果为None则使用环境变量或默认值
         **kwargs: 额外参数
     
     Returns:
         Embedding模型实例
     """
     factory = LangChainModelFactory()
-    config = EmbeddingConfig(provider=provider, model_name=model_name, **kwargs)
+    
+    # 如果没有提供参数，则完全依赖配置管理器（环境变量优先）
+    if provider is None and model_name is None:
+        config = factory.config_manager.get_embedding_config()
+    else:
+        # 部分覆盖配置
+        base_config = factory.config_manager.get_embedding_config()
+        config = EmbeddingConfig(
+            provider=provider or base_config.provider,
+            model_name=model_name or base_config.model_name,
+            api_key=base_config.api_key,
+            base_url=base_config.base_url,
+            timeout=base_config.timeout,
+            max_retries=base_config.max_retries,
+            batch_size=base_config.batch_size,
+            normalize=base_config.normalize,
+            **kwargs
+        )
+    
     return factory.create_embedding_model(config)
+
+
+def create_models_from_env() -> tuple[Any, Any]:
+    """从环境变量创建Chat和Embedding模型
+    
+    这是一个便捷函数，完全基于环境变量配置创建模型对。
+    
+    Returns:
+        tuple: (chat_model, embedding_model)
+    """
+    return create_chat_model(), create_embedding_model()

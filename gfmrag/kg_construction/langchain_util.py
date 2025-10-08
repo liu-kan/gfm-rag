@@ -1,3 +1,36 @@
+"""
+LangChain 模型初始化工具模块
+
+该模块提供了初始化各种LangChain模型的工具函数，
+支持环境变量配置和多种服务提供商。
+
+支持的环境变量：
+- GFMRAG_CHAT_PROVIDER: Chat服务提供商（如 'openai', 'third-party', 'ollama'）
+- GFMRAG_CHAT_MODEL_NAME: Chat模型名称（如 'gpt-3.5-turbo', 'llama3'）
+- GFMRAG_CHAT_BASE_URL: 第三方服务Base URL
+- GFMRAG_CHAT_KEY: Chat服务API密钥（可选，空值表示无认证）
+
+示例用法：
+
+1. 使用环境变量：
+   export GFMRAG_CHAT_PROVIDER="third-party"
+   export GFMRAG_CHAT_MODEL_NAME="llama-2-7b-chat"
+   export GFMRAG_CHAT_BASE_URL="http://localhost:8000/v1"
+   # GFMRAG_CHAT_KEY 未设置，使用无认证模式
+   
+   model = init_langchain_model_from_env()
+
+2. 混合使用：
+   model = init_langchain_model("openai", "gpt-4", temperature=0.5)
+
+3. 完全从参数：
+   model = init_langchain_model(
+       llm="third-party",
+       model_name="custom-model", 
+       base_url="http://localhost:8000/v1"
+   )
+"""
+
 import os
 import logging
 from typing import Any, Optional
@@ -17,8 +50,8 @@ _langchain_factory = LangChainModelFactory()
 
 
 def init_langchain_model(
-    llm: str,
-    model_name: str,
+    llm: Optional[str] = None,
+    model_name: Optional[str] = None,
     temperature: float = 0.0,
     max_retries: int = 5,
     timeout: int = 60,
@@ -27,22 +60,41 @@ def init_langchain_model(
     **kwargs: Any,
 ) -> ChatOpenAI | ChatTogether | ChatOllama | ChatLlamaCpp:
     """
-    Initialize a language model from the langchain library with enhanced configuration support.
+    Initialize a language model with enhanced environment variable support.
     
-    This function now supports third-party OpenAI-compatible services through base_url parameter
-    and integrates with the unified configuration management system.
+    This function now prioritizes environment variables over function parameters,
+    enabling seamless integration with GFMRAG_* environment variables.
     
-    :param llm: The LLM to use, e.g., 'openai', 'together', 'third-party'
-    :param model_name: The model name to use, e.g., 'gpt-3.5-turbo'
+    Environment variables (highest priority):
+    - GFMRAG_CHAT_PROVIDER: Chat service provider 
+    - GFMRAG_CHAT_MODEL_NAME: Chat model name
+    - GFMRAG_CHAT_BASE_URL: Chat service base URL
+    - GFMRAG_CHAT_KEY: Chat service API key
+    
+    :param llm: The LLM provider, if None will use environment variable or default
+    :param model_name: The model name, if None will use environment variable or default
     :param temperature: Temperature for generation
     :param max_retries: Maximum number of retries
     :param timeout: Timeout in seconds
     :param base_url: Base URL for API (supports third-party services)
-    :param api_key: API key (optional, will use config manager if not provided)
+    :param api_key: API key (optional, will use environment variables if not provided)
     :param kwargs: Additional arguments passed to the model
     """
     try:
-        # 使用新的工厂方法创建模型
+        # Get configuration manager to leverage environment variables
+        config_manager = get_config_manager()
+        
+        # If no provider specified, use environment variable or get from config
+        if llm is None:
+            base_config = config_manager.get_chat_config()
+            llm = base_config.provider
+            
+        # If no model_name specified, use environment variable or get from config  
+        if model_name is None:
+            base_config = config_manager.get_chat_config(llm)
+            model_name = base_config.model_name
+            
+        # Create configuration, prioritizing environment variables
         config = ChatConfig(
             provider=llm,
             model_name=model_name,
@@ -53,13 +105,46 @@ def init_langchain_model(
             api_key=api_key,
         )
         
-        model = _langchain_factory.create_chat_model(config, **kwargs)
+        # Override with environment variables if available
+        env_config = config_manager.get_chat_config(llm)
+        final_config = ChatConfig(
+            provider=llm,
+            model_name=model_name,
+            temperature=temperature,
+            max_retries=max_retries,
+            timeout=timeout,
+            base_url=base_url or env_config.base_url,
+            api_key=api_key or env_config.api_key,
+        )
+        
+        model = _langchain_factory.create_chat_model(final_config, **kwargs)
         logger.info(f"Successfully initialized {llm} model: {model_name}")
         return model
         
     except Exception as e:
         logger.error(f"Failed to initialize {llm} model {model_name}: {e}")
         raise
+
+
+def init_langchain_model_from_env(**kwargs: Any) -> ChatOpenAI | ChatTogether | ChatOllama | ChatLlamaCpp:
+    """
+    Initialize a language model entirely from environment variables.
+    
+    This function creates a chat model using only environment variables,
+    making it ideal for containerized environments and CI/CD pipelines.
+    
+    Required environment variables:
+    - GFMRAG_CHAT_PROVIDER: e.g., 'openai', 'third-party', 'ollama'
+    - GFMRAG_CHAT_MODEL_NAME: e.g., 'gpt-3.5-turbo', 'llama3'
+    
+    Optional environment variables:
+    - GFMRAG_CHAT_BASE_URL: for third-party services
+    - GFMRAG_CHAT_KEY: API key (if required by the service)
+    
+    :param kwargs: Additional arguments passed to the model
+    """
+    logger.info("Creating language model from environment variables")
+    return init_langchain_model(**kwargs)
 
 
 # 保持向后兼容的原始实现（已弃用）

@@ -8,6 +8,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from gfmrag import KGIndexer
 from gfmrag.kg_construction import KGConstructor, QAConstructor
+from gfmrag.config_manager import log_environment_config
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,10 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"Config:\n {OmegaConf.to_yaml(cfg)}")
     logger.info(f"Current working directory: {os.getcwd()}")
     logger.info(f"Output directory: {output_dir}")
+    
+    # 记录环境变量配置信息
+    logger.info("Checking for GFMRAG environment variables...")
+    log_environment_config()
 
     kg_constructor = KGConstructor.from_config(cfg.kg_constructor)
     qa_constructor = QAConstructor.from_config(cfg.qa_constructor)
