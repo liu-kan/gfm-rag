@@ -7,3 +7,4 @@ max_ner_tokens: ${oc.env:GFMRAG_OPENIE_NER_TOKENS,800}
 max_triples_tokens: ${oc.env:GFMRAG_OPENIE_TRIPLES_TOKENS,8192}
 max_retries: ${oc.env:GFMRAG_OPENIE_MAX_RETRIES,3}
 retry_delay: ${oc.env:GFMRAG_OPENIE_RETRY_DELAY,1.0}
+request_timeout: ${oc.env:GFMRAG_OPENIE_TIMEOUT,300}

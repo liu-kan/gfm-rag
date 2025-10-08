@@ -87,6 +87,7 @@ class LLMOPENIEModel(BaseOPENIEModel):
         max_triples_tokens: int = 4096,
         max_retries: int = 3,
         retry_delay: float = 1.0,
+        request_timeout: int = 300,
     ):
         """Initialize LLM-based OpenIE model.
 
@@ -98,6 +99,9 @@ class LLMOPENIEModel(BaseOPENIEModel):
             api_key (Optional[str]): API key for the LLM service. Defaults to None.
             max_ner_tokens (int): Maximum number of tokens for NER processing. Defaults to 1024.
             max_triples_tokens (int): Maximum number of tokens for triple extraction. Defaults to 4096.
+            max_retries (int): Number of retries for LLM requests. Defaults to 3.
+            retry_delay (float): Delay (in seconds) between retries. Defaults to 1.0.
+            request_timeout (int): Timeout (in seconds) for each LLM request. Defaults to 300 to accommodate long passages.
 
         Attributes:
             llm_api: The selected LLM API provider
@@ -107,6 +111,7 @@ class LLMOPENIEModel(BaseOPENIEModel):
             max_ner_tokens: Token limit for NER
             max_triples_tokens: Token limit for triples
             client: Initialized language model client
+            request_timeout: Timeout in seconds for each LLM call
         """
         self.llm_api = llm_api
         self.model_name = model_name
@@ -116,12 +121,15 @@ class LLMOPENIEModel(BaseOPENIEModel):
         self.max_triples_tokens = _coerce_int(max_triples_tokens, 4096)
         self.max_retries = max(1, _coerce_int(max_retries, 3))
         self.retry_delay = max(0.0, _coerce_float(retry_delay, 1.0))
+        self.request_timeout = max(1, _coerce_int(request_timeout, 300))
 
         self.client = init_langchain_model(
             llm=llm_api,
             model_name=model_name,
             base_url=base_url,
-            api_key=api_key
+            api_key=api_key,
+            max_retries=self.max_retries,
+            timeout=self.request_timeout,
         )
 
     @staticmethod
