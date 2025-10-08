@@ -3,7 +3,7 @@ import json
 import os
 import re
 import unicodedata
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 KG_DELIMITER = ","
 
@@ -19,7 +19,7 @@ def processing_phrases(phrase: Any) -> str:
         phrase = str(phrase)
 
     normalized = unicodedata.normalize("NFKC", phrase).casefold()
-    cleaned_chars: list[str] = []
+    cleaned_chars: List[str] = []
 
     for char in normalized:
         category = unicodedata.category(char)
@@ -42,7 +42,7 @@ def directory_exists(path: str) -> None:
         os.makedirs(dir)
 
 
-def extract_json_dict(text: Any) -> dict[str, Any] | None:
+def extract_json_dict(text: Any) -> Optional[Dict[str, Any]]:
     if isinstance(text, dict):
         return text
 

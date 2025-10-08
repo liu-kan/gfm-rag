@@ -1,7 +1,7 @@
 # Adapt from: https://github.com/OSU-NLP-Group/HippoRAG/blob/main/src/named_entity_extraction_parallel.py
 import logging
 import time
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from langchain_community.chat_models import ChatLlamaCpp, ChatOllama
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -33,6 +33,20 @@ query_prompt_template = """
 Question: {}
 
 """
+
+
+def _coerce_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _coerce_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 class LLMNERModel(BaseNERModel):
@@ -86,9 +100,9 @@ class LLMNERModel(BaseNERModel):
         self.model_name = model_name
         self.base_url = base_url
         self.api_key = api_key
-        self.max_tokens = max_tokens
-        self.max_retries = max(1, max_retries)
-        self.retry_delay = max(0.0, retry_delay)
+        self.max_tokens = _coerce_int(max_tokens, 1024)
+        self.max_retries = max(1, _coerce_int(max_retries, 3))
+        self.retry_delay = max(0.0, _coerce_float(retry_delay, 1.0))
 
         self.client = init_langchain_model(
             llm=llm_api,

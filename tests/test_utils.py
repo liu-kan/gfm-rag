@@ -1,4 +1,14 @@
-from gfmrag.kg_construction.utils import extract_json_dict, processing_phrases
+from importlib import util
+from pathlib import Path
+
+_UTILS_PATH = Path(__file__).resolve().parents[1] / "gfmrag" / "kg_construction" / "utils.py"
+_SPEC = util.spec_from_file_location("gfmrag.kg_construction.utils", _UTILS_PATH)
+assert _SPEC and _SPEC.loader
+_MODULE = util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_MODULE)
+
+extract_json_dict = getattr(_MODULE, "extract_json_dict")
+processing_phrases = getattr(_MODULE, "processing_phrases")
 
 
 def test_processing_phrases_preserves_non_ascii_characters() -> None:

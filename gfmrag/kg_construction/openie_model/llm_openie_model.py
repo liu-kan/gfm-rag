@@ -25,6 +25,20 @@ logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 
 
+def _coerce_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _coerce_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 class LLMOPENIEModel(BaseOPENIEModel):
     """
     A class for performing Open Information Extraction (OpenIE) using Large Language Models.
@@ -98,10 +112,10 @@ class LLMOPENIEModel(BaseOPENIEModel):
         self.model_name = model_name
         self.base_url = base_url
         self.api_key = api_key
-        self.max_ner_tokens = max_ner_tokens
-        self.max_triples_tokens = max_triples_tokens
-        self.max_retries = max(1, max_retries)
-        self.retry_delay = max(0.0, retry_delay)
+        self.max_ner_tokens = _coerce_int(max_ner_tokens, 1024)
+        self.max_triples_tokens = _coerce_int(max_triples_tokens, 4096)
+        self.max_retries = max(1, _coerce_int(max_retries, 3))
+        self.retry_delay = max(0.0, _coerce_float(retry_delay, 1.0))
 
         self.client = init_langchain_model(
             llm=llm_api,
