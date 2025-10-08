@@ -1,0 +1,86 @@
+# 生产环境配置示例
+
+global:
+  default_provider: openai
+  timeout: 60
+  max_retries: 5
+  fallback_enabled: true
+  logging_level: WARNING
+  cache_enabled: true
+  performance_monitoring: true
+
+chat:
+  provider: openai
+  model_name: gpt-4o-mini
+  temperature: 0.0
+  max_tokens: 4096
+  timeout: 60
+  max_retries: 5
+
+embedding:
+  provider: openai
+  model_name: text-embedding-3-small
+  batch_size: 100
+  normalize: true
+  timeout: 60
+
+# 生产环境错误处理
+error_handling:
+  retry:
+    max_retries: 5
+    base_delay: 1.0
+    max_delay: 60.0
+    backoff_factor: 2.0
+    jitter: true
+  fallback:
+    enabled: true
+    chat_fallbacks:
+      - provider: openai
+        model_name: gpt-3.5-turbo
+      - provider: nvidia
+        model_name: meta/llama3-70b-instruct
+    embedding_fallbacks:
+      - provider: openai
+        model_name: text-embedding-ada-002
+      - provider: huggingface
+        model_name: BAAI/bge-large-en-v1.5
+
+# 生产环境性能优化
+performance:
+  connection_pool:
+    max_connections: 20
+    max_keepalive_connections: 10
+    keepalive_expiry: 300
+  cache:
+    enabled: true
+    max_size: 10000
+    ttl: 3600
+  batch_processing:
+    enabled: true
+    max_batch_size: 200
+    batch_timeout: 10.0
+
+# 生产环境安全配置
+security:
+  verify_ssl: true
+  api_key_protection:
+    mask_in_logs: true
+    rotation_enabled: true
+  header_filtering:
+    enabled: true
+
+# 生产环境监控
+monitoring:
+  metrics:
+    enabled: true
+    export_interval: 60
+    include_request_details: false
+  logging:
+    level: WARNING
+    file: /var/log/gfmrag/langchain.log
+    max_size: 52428800  # 50MB
+    backup_count: 10
+  health_check:
+    enabled: true
+    interval: 120
+    timeout: 10

@@ -1,0 +1,43 @@
+# 第三方OpenAI兼容服务配置示例
+
+# vLLM服务配置
+global:
+  default_provider: third-party
+  timeout: 120
+  max_retries: 3
+  fallback_enabled: true
+
+chat:
+  provider: third-party
+  model_name: llama-2-7b-chat  # 替换为您的实际模型名称
+  base_url: http://localhost:8000/v1  # vLLM服务地址
+  api_key: placeholder  # vLLM通常不需要真实的API key
+  temperature: 0.0
+  max_tokens: 2048
+  timeout: 120
+
+embedding:
+  provider: huggingface  # 通常使用本地embedding模型
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  batch_size: 32
+  normalize: true
+
+# 错误处理配置
+error_handling:
+  retry:
+    max_retries: 5
+    base_delay: 2.0
+    max_delay: 120.0
+  fallback:
+    enabled: true
+    chat_fallbacks:
+      - provider: huggingface
+        model_name: microsoft/DialoGPT-medium
+
+# 性能优化
+performance:
+  connection_pool:
+    max_connections: 5
+  batch_processing:
+    enabled: true
+    max_batch_size: 50
