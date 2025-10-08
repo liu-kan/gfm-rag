@@ -1,0 +1,38 @@
+# llama-server (llama.cpp)配置示例
+
+global:
+  default_provider: third-party
+  timeout: 180
+  max_retries: 3
+  fallback_enabled: true
+
+chat:
+  provider: third-party
+  model_name: llama-2-7b-chat  # 模型名称
+  base_url: http://localhost:8080/v1  # llama-server地址
+  api_key: placeholder  # llama-server通常不需要API key
+  temperature: 0.0
+  max_tokens: 1024
+  timeout: 180
+
+embedding:
+  provider: huggingface
+  model_name: sentence-transformers/all-mpnet-base-v2
+  batch_size: 16
+  normalize: true
+
+# 针对llama-server的优化配置
+error_handling:
+  retry:
+    max_retries: 3
+    base_delay: 3.0
+    max_delay: 180.0
+  fallback:
+    enabled: true
+
+performance:
+  connection_pool:
+    max_connections: 3  # llama-server通常并发能力有限
+  cache:
+    enabled: true
+    max_size: 500

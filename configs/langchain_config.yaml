@@ -1,0 +1,252 @@
+# GFM-RAG LangChain配置文件
+# 该配置文件定义了LangChain集成的完整配置选项
+
+# 全局配置
+global:
+  # 默认服务提供商
+  default_provider: openai
+  
+  # 超时设置（秒）
+  timeout: 60
+  
+  # 最大重试次数
+  max_retries: 3
+  
+  # 是否启用备用方案
+  fallback_enabled: true
+  
+  # 日志级别
+  logging_level: INFO
+  
+  # 是否启用缓存
+  cache_enabled: true
+  
+  # 是否启用性能监控
+  performance_monitoring: false
+
+# Chat服务配置
+chat:
+  # 服务提供商: openai, nvidia, together, ollama, llama.cpp, third-party
+  provider: openai
+  
+  # 模型名称
+  model_name: gpt-3.5-turbo
+  
+  # API密钥（可选，优先使用环境变量）
+  api_key: null
+  
+  # 基础URL（可选，用于第三方服务）
+  base_url: null
+  
+  # 生成参数
+  temperature: 0.0
+  max_tokens: null
+  top_p: null
+  frequency_penalty: null
+  presence_penalty: null
+  
+  # 网络配置
+  timeout: 60
+  max_retries: 3
+  
+  # 自定义HTTP头
+  custom_headers: null
+  
+  # 代理设置
+  proxy_settings: null
+
+# Embedding服务配置
+embedding:
+  # 服务提供商: openai, third-party, huggingface, sentence-transformers, nvidia
+  provider: openai
+  
+  # 模型名称
+  model_name: text-embedding-ada-002
+  
+  # API密钥（可选，优先使用环境变量）
+  api_key: null
+  
+  # 基础URL（可选，用于第三方服务）
+  base_url: null
+  
+  # 处理参数
+  batch_size: 32
+  normalize: true
+  dimensions: null
+  
+  # 指令前缀
+  query_instruct: null
+  passage_instruct: null
+  
+  # 网络配置
+  timeout: 60
+  max_retries: 3
+  
+  # 自定义HTTP头
+  custom_headers: null
+  
+  # 代理设置
+  proxy_settings: null
+
+# 服务提供商特定配置
+providers:
+  # OpenAI配置
+  openai:
+    chat_models:
+      - gpt-4
+      - gpt-4-turbo
+      - gpt-4o
+      - gpt-4o-mini
+      - gpt-3.5-turbo
+      - o1-preview
+      - o1-mini
+    embedding_models:
+      - text-embedding-ada-002
+      - text-embedding-3-small
+      - text-embedding-3-large
+    base_url: https://api.openai.com/v1
+    
+  # NVIDIA配置
+  nvidia:
+    chat_models:
+      - meta/llama3-70b-instruct
+      - microsoft/phi-3-mini-128k-instruct
+    embedding_models:
+      - nvidia/NV-Embed-v1
+    base_url: https://integrate.api.nvidia.com/v1
+  
+  # Together AI配置
+  together:
+    chat_models:
+      - meta-llama/Llama-2-70b-chat-hf
+      - mistralai/Mixtral-8x7B-Instruct-v0.1
+    base_url: https://api.together.xyz/v1
+  
+  # Ollama配置
+  ollama:
+    chat_models:
+      - llama3
+      - llama2
+      - mistral
+    base_url: http://localhost:11434
+  
+  # HuggingFace配置
+  huggingface:
+    embedding_models:
+      - sentence-transformers/all-MiniLM-L6-v2
+      - sentence-transformers/all-mpnet-base-v2
+      - BAAI/bge-large-en-v1.5
+      - Alibaba-NLP/gte-Qwen2-7B-instruct
+
+# 错误处理配置
+error_handling:
+  # 重试配置
+  retry:
+    max_retries: 3
+    base_delay: 1.0
+    max_delay: 60.0
+    backoff_factor: 2.0
+    jitter: true
+    retriable_errors:
+      - connection_error
+      - timeout_error
+      - rate_limit_error
+      - service_error
+  
+  # 备用方案配置
+  fallback:
+    enabled: true
+    chat_fallbacks:
+      - provider: openai
+        model_name: gpt-3.5-turbo
+      - provider: together
+        model_name: meta-llama/Llama-2-7b-chat-hf
+    embedding_fallbacks:
+      - provider: huggingface
+        model_name: sentence-transformers/all-MiniLM-L6-v2
+      - provider: huggingface
+        model_name: sentence-transformers/all-mpnet-base-v2
+  
+  # 优雅降级配置
+  degradation:
+    enabled: false
+    mock_responses: true
+
+# 性能优化配置
+performance:
+  # 连接池配置
+  connection_pool:
+    max_connections: 10
+    max_keepalive_connections: 5
+    keepalive_expiry: 300
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    max_size: 1000
+    ttl: 3600
+  
+  # 批处理配置
+  batch_processing:
+    enabled: true
+    max_batch_size: 100
+    batch_timeout: 5.0
+
+# 安全配置
+security:
+  # TLS验证
+  verify_ssl: true
+  
+  # 代理配置
+  proxy:
+    http: null
+    https: null
+  
+  # 请求头过滤
+  header_filtering:
+    enabled: true
+    allowed_headers:
+      - User-Agent
+      - Authorization
+      - Content-Type
+  
+  # API密钥保护
+  api_key_protection:
+    mask_in_logs: true
+    rotation_enabled: false
+
+# 监控配置
+monitoring:
+  # 性能指标
+  metrics:
+    enabled: false
+    export_interval: 60
+    include_request_details: false
+  
+  # 日志配置
+  logging:
+    level: INFO
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    file: null
+    max_size: 10485760  # 10MB
+    backup_count: 5
+  
+  # 健康检查
+  health_check:
+    enabled: true
+    interval: 300
+    timeout: 10
+    
+# 开发配置
+development:
+  # 调试模式
+  debug: false
+  
+  # 详细日志
+  verbose_logging: false
+  
+  # 性能分析
+  profiling: false
+  
+  # 模拟模式
+  mock_mode: false
